@@ -1,0 +1,78 @@
+[
+  {
+    "id": 6346818,
+    "role": "user",
+    "content": "11123",
+    "createdAt": "2025-11-14T10:50:58.272Z",
+    "parentId": null,
+    "leftChildren": [
+      {
+        "id": 6346819,
+        "role": "assistant",
+        "content": "1",
+        "finished": false,
+        "createdAt": "2025-11-14T10:50:58.272Z",
+        "parentId": 6346818
+      },
+      {
+        "id": 6346821,
+        "role": "assistant",
+        "content": "2",
+        "finished": false,
+        "createdAt": "2025-11-14T10:50:58.273Z",
+        "parentId": 6346818
+      }
+    ],
+    "leftCurrentIndex": 1,
+    "rightChildren": [
+      {
+        "id": 6346820,
+        "role": "assistant",
+        "content": "",
+        "finished": false,
+        "createdAt": "2025-11-14T10:50:58.273Z",
+        "parentId": 6346818
+      }
+    ],
+    "rightCurrentIndex": 0,
+    "fileList": []
+  },
+  {
+    "id": 6346818,
+    "role": "user",
+    "content": "11123",
+    "createdAt": "2025-11-14T10:50:58.272Z",
+    "parentId": null,
+    "leftChildren": [
+      {
+        "id": 6346819,
+        "role": "assistant",
+        "content": "1",
+        "finished": false,
+        "createdAt": "2025-11-14T10:50:58.272Z",
+        "parentId": 6346818
+      },
+      {
+        "id": 6346821,
+        "role": "assistant",
+        "content": "2",
+        "finished": false,
+        "createdAt": "2025-11-14T10:50:58.273Z",
+        "parentId": 6346818
+      }
+    ],
+    "leftCurrentIndex": 1,
+    "rightChildren": [
+      {
+        "id": 6346820,
+        "role": "assistant",
+        "content": "",
+        "finished": false,
+        "createdAt": "2025-11-14T10:50:58.273Z",
+        "parentId": 6346818
+      }
+    ],
+    "rightCurrentIndex": 0,
+    "fileList": []
+  }
+]

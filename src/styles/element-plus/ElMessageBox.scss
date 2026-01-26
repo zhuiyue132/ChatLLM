@@ -1,0 +1,56 @@
+/* 
+ * ElMessageBox为自制封装(非二次封装)，存在样式无法自动挂载
+ * 此处引用目的为初试化message-box样式自动挂载全局
+*/
+@forward "element-plus/theme-chalk/src/message-box.scss";
+
+div.el-message-box {
+  border-radius: 12px;
+  padding: 0;
+
+  &__header {
+    height: 40px;
+    padding: 0 16px;
+    color: #000;
+    font-family: "Source Han Sans CN", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+
+    .el-message-box__title {
+      font-size: 16px;
+      line-height: 40px;
+    }
+
+    .el-message-box__headerbtn {
+      right: 4px;
+      top: 4px;
+      .el-message-box__close {
+        font-size: 20px;
+        font-weight: 500;
+      }
+    }
+  }
+
+  &__content {
+    padding: 16px;
+
+    .el-message-box__status {
+      font-size: 36px;
+    }
+
+    .el-message-box__message {
+      color: #000;
+      font-family: "Source Han Sans CN", sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+    }
+  }
+
+  &__btns {
+    padding: 16px;
+
+    .el-button {
+      --el-border-radius-base: 4px;
+    }
+  }
+}

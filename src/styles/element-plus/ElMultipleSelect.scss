@@ -1,0 +1,11 @@
+.el-select-dropdown.is-multiple {
+  .el-select-dropdown__item.is-selected {
+    font-weight: normal !important;
+    &::after {
+      mask: url(@/assets/images/common/tick.svg) no-repeat;
+      mask-size: 100% 100%;
+      -webkit-mask: url(@/assets/images/common/tick.svg) no-repeat !important;
+      -webkit-mask-size: 100% 100% !important;
+    }
+  }
+}

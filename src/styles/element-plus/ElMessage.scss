@@ -1,0 +1,5 @@
+.el-message {
+  min-width: 380px;
+  --el-message-padding: 15px 15px 15px 20px;
+  margin-top: 20px; // 最新的top计算里 比原版少了20px
+}

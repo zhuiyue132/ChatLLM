@@ -1,0 +1,30 @@
+// 公共el-checkbox样式，非全局改动勿动！！！
+body {
+  .el-checkbox {
+    --el-checkbox-text-color: var(--el-color-black);
+    --el-checkbox-font-weight: 400;
+    --el-checkbox-border-radius: 1px;
+    --el-checkbox-input-width: 14px;
+    --el-checkbox-input-height: 14px;
+    --el-checkbox-input-border: 1px solid #d4dbe9;
+    --el-checkbox-disabled-border-color: #d4dbe9;
+    --el-checkbox-disabled-input-fill: #f3f6ff;
+
+    // 禁用的checkbox整体设置鼠标手指状态
+    &.is-disabled {
+      cursor: not-allowed;
+    }
+
+    // 禁用状态，hover不显示边框主题色
+    .el-checkbox__input.is-disabled {
+      cursor: not-allowed;
+    }
+    .el-checkbox__input.is-disabled .el-checkbox__inner {
+      pointer-events: none;
+    }
+
+    .el-checkbox__inner {
+      outline: none;
+    }
+  }
+}

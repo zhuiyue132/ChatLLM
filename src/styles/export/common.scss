@@ -1,0 +1,236 @@
+[class*="export-temp-"] {
+  overflow: hidden;
+  width: 1080px;
+  font-family: "Source Han Sans CN", sans-serif;
+
+  --base-color: #007e54;
+
+  img {
+    vertical-align: top;
+  }
+
+  .export-header,
+  .export-footer {
+    background: #01713f;
+  }
+
+  .export-header {
+    position: relative;
+    width: 100%;
+
+    img.cover {
+      width: 100%;
+    }
+
+    .cover-value {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 1;
+      padding-top: 318px;
+      text-align: center;
+      color: #fff;
+
+      .time {
+        font-size: 64px;
+        font-weight: 700;
+        line-height: 96px;
+      }
+
+      .title {
+        font-size: 130px;
+        font-weight: 500;
+        line-height: 186px;
+      }
+
+      .tips {
+        font-size: 64px;
+        font-weight: 500;
+        line-height: 96px;
+      }
+    }
+
+    .cover-en {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      padding-top: 778px;
+      text-align: center;
+      color: #fff;
+      font-family: Source Han Sans CN;
+      font-size: 48px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+  }
+
+  .export-body {
+    position: relative;
+    background-color: #fff;
+    background-image: url("@/assets/images/export/page-bk.png");
+    background-size: 100% auto;
+
+    // 所有内容均需要在水印元素的层级至上，水印z-index=7；
+    * {
+      position: relative;
+      z-index: 9;
+    }
+
+    hr {
+      display: none;
+    }
+
+    & > *:first-child {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+
+    h1 {
+      padding-bottom: 0;
+      color: var(--base-color);
+      border-bottom: none;
+      font-family: "Microsoft YaHei UI", sans-serif;
+    }
+
+    h2 {
+      padding-bottom: 0;
+      color: var(--base-color);
+      border-bottom: none;
+      font-family: "Microsoft YaHei UI", sans-serif;
+    }
+  }
+
+  .export-footer {
+    position: relative;
+    width: 100%;
+    text-align: center;
+    color: #fff;
+
+    img.footer {
+      width: 100%;
+    }
+    .footer-value {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 1;
+      padding-top: 610px;
+
+      .ewm-box {
+        display: inline-block;
+        img {
+          width: 244px;
+          height: 244px;
+          background: #fff;
+        }
+      }
+    }
+  }
+
+  &.export-temp-1 {
+    .export-footer {
+      .footer-value {
+        padding-top: 968px;
+
+        .user {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          img.user-photo {
+            width: 48px;
+            height: 48px;
+            margin-right: 16px;
+            border-radius: 50%;
+          }
+
+          span {
+            font-size: 32px;
+            font-weight: 500;
+          }
+        }
+
+        .photo {
+          margin-top: 6px;
+          text-align: center;
+          font-size: 24px;
+          img {
+            width: 36px;
+            height: 36px;
+            margin-right: 16px;
+            vertical-align: top;
+          }
+        }
+
+        .erm {
+          margin-top: 16px;
+          text-align: center;
+
+          .erm-box {
+            display: inline-block;
+            padding: 6px;
+            background: #fff;
+          }
+
+          .erm-img {
+            width: 184px;
+            height: 184px;
+          }
+        }
+      }
+    }
+  }
+
+  // 视频号 特有的样式
+  &.export-temp-zip-sph {
+    width: 1125px;
+    .export-header {
+      height: 2340px;
+
+      .cover-value {
+        padding-top: 778px;
+
+        .time {
+          line-height: 98px;
+        }
+      }
+
+      .cover-en {
+        padding-top: 1238px;
+      }
+    }
+    .export-footer {
+      .footer-value {
+        padding-top: 1080px;
+      }
+    }
+  }
+
+  // 抖音 特有的样式
+  &.export-temp-zip-dy {
+    width: 1170px;
+    .export-header {
+      height: 2532px;
+
+      .cover-value {
+        padding-top: 838px;
+
+        .time {
+          line-height: 98px;
+        }
+      }
+
+      .cover-en {
+        padding-top: 1370px;
+      }
+    }
+    .export-footer {
+      .footer-value {
+        padding-top: 1177px;
+      }
+    }
+  }
+}

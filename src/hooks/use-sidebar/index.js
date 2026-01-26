@@ -1,0 +1,31 @@
+/*
+ * @Author       : zhuiyue132
+ * @Date         : 2025-12-15
+ * @LastEditors  : zhuiyue132
+ * @LastEditTime : 2026-01-26
+ * @FilePath     : /ChatLLM/src/hooks/use-sidebar/index.js
+ * @Description  : 侧边栏钩子
+ *
+ */
+import { ref } from 'vue'
+import { SIDEBAR_COLLAPSED_KEY } from '@/config/app'
+
+// 侧边栏展开/收起状态
+const isCollapsed = ref(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1')
+const widthSidebarCollapsed = ref(210)
+const widthSidebarExpanded = ref(280)
+
+export const useSidebar = () => {
+  const toggleSidebar = () => {
+    isCollapsed.value = !isCollapsed.value
+
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, Number(isCollapsed.value))
+  }
+
+  return {
+    isCollapsed,
+    widthSidebarCollapsed,
+    widthSidebarExpanded,
+    toggleSidebar
+  }
+}

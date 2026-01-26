@@ -1,0 +1,335 @@
+$cell: el-date-table-cell;
+$cell-text: #{$cell}__text;
+
+html {
+  .el-date-picker {
+    width: 308px;
+  }
+}
+
+.el-date-picker {
+  .el-date-picker__header {
+    margin: 8px 16px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .el-picker-panel__content {
+    margin: 8px;
+  }
+
+  &__header-label {
+    font-weight: 400;
+  }
+
+  .el-year-table {
+    tbody tr td {
+      .el-date-table-cell {
+        height: 32px;
+        padding: 0;
+      }
+    }
+  }
+
+  .el-month-table,
+  .el-year-table {
+    td.disabled .el-date-table-cell__text {
+      background-color: #fff;
+    }
+  }
+}
+
+.popover-month {
+  .el-date-picker {
+    .el-date-picker__content {
+      padding: 0 8px;
+    }
+
+    .el-picker-panel__content {
+      width: 320px;
+      margin: 0;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    .el-month-table tbody tr td {
+      width: 64px;
+
+      .el-date-table-cell {
+        padding: 8px 0;
+      }
+    }
+
+    .el-month-table tbody tr td > div {
+      display: flex;
+      justify-content: center;
+    }
+  }
+
+  .el-date-picker__header--bordered {
+    height: 48px;
+    margin: 0;
+    padding: 10px 16px;
+    padding-bottom: 0;
+    text-align: center;
+    color: #000;
+    font-family: "Microsoft YaHei UI";
+    font-size: 16px;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 28px;
+  }
+
+  td.disabled .el-date-table-cell__text {
+    background-color: transparent;
+  }
+}
+
+.popover-monthrange {
+  .el-date-range-picker.has-sidebar {
+    width: 750px;
+  }
+
+  .el-date-range-picker {
+    width: 640px;
+
+    .el-date-range-picker__content {
+      padding: 0 8px;
+    }
+
+    .el-picker-panel__content .el-date-range-picker__header {
+      height: 48px;
+      padding: 10px 16px;
+      padding-bottom: 0;
+      text-align: center;
+      color: #000;
+      border-bottom: solid 1px #ebeef5;
+      font-family: "Microsoft YaHei UI";
+      font-size: 16px;
+      font-weight: 400;
+      font-style: normal;
+      line-height: 28px;
+    }
+
+    .el-month-table {
+      margin: 4px 0;
+
+      td.disabled .el-date-table-cell__text {
+        background-color: transparent;
+      }
+
+      tbody tr td {
+        padding-top: 22px;
+        padding-bottom: 22px;
+
+        .el-date-table-cell__text {
+          width: 100%;
+        }
+      }
+    }
+
+    .el-date-table-cell {
+      height: 32px;
+      padding: 0;
+    }
+
+    .el-month-table tbody tr td > div a {
+      display: block;
+      width: 100%;
+    }
+  }
+}
+
+.popover-month,
+.popover-year {
+  .el-date-picker__header--bordered {
+    margin-right: 0;
+    margin-left: 0;
+    padding-right: 16px;
+    padding-bottom: 8px;
+    padding-left: 16px;
+  }
+}
+
+.popover-month .el-picker-panel__content {
+  margin-bottom: 16px;
+}
+
+.el-date-picker,
+.el-date-range-picker {
+  --el-color-primary: var(--main-color);
+  --el-datepicker-active-color: var(--main-color);
+  --el-datepicker-hover-text-color: var(--main-color);
+  --el-datepicker-inrange-bg-color: #eef3ff;
+  --el-datepicker-inrange-hover-bg-color: #eef3ff;
+  --el-text-color-placeholder: rgba(0, 0, 0, 0.15);
+  --el-text-color-regular: #000;
+
+  .el-date-range-picker__content {
+    padding: 8px;
+  }
+
+  .el-picker-panel__content {
+    .el-date-range-picker__header {
+      height: auto;
+      margin: 0 -8px;
+      padding: 0 16px;
+      padding-bottom: 8px;
+    }
+
+    .el-date-table {
+      tbody {
+        tr {
+          &:first-child {
+            th {
+              border-top: 1px solid #d4dbe9;
+              border-bottom: 0;
+              background: #f3f6ff;
+
+              &:first-child,
+              &:last-child {
+                position: relative;
+
+                &::before {
+                  content: "";
+                  position: absolute;
+                  top: -1px;
+                  left: -7px;
+                  width: 7px;
+                  height: 100%;
+                  border-top: 1px solid #d4dbe9;
+                  background: #f3f6ff;
+                }
+              }
+
+              &:last-child {
+                &::before {
+                  right: -7px;
+                  left: unset;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .el-month-table,
+  .el-year-table {
+    font-size: 16px;
+
+    td.today .cell {
+      font-weight: inherit;
+    }
+
+    tbody tr {
+      td {
+        padding-top: 14px;
+        padding-bottom: 14px;
+
+        &,
+        > div {
+          // height: auto;height
+          // padding: 0;padding
+
+          span {
+            display: block;
+            min-width: 64px;
+            height: 32px;
+            line-height: 32px;
+          }
+        }
+
+        &.current:not(.disabled) {
+          .cell {
+            color: #fff;
+            border-radius: 24px;
+            background: var(--main-color);
+          }
+        }
+      }
+    }
+  }
+
+  .el-date-table {
+    font-size: 16px;
+
+    tbody {
+      tr {
+        height: 38px;
+
+        &.el-date-table__row {
+          font-family: Inter;
+        }
+
+        &.current {
+          td {
+            .#{$cell-text} {
+              color: var(--main-color);
+            }
+          }
+        }
+
+        td {
+          padding: 0;
+
+          &.in-range {
+            &.start-date,
+            &.end-date {
+              .#{$cell-text} {
+                color: #fff;
+              }
+            }
+
+            .#{$cell-text} {
+              color: var(--main-color);
+            }
+          }
+
+          &.today .#{$cell-text} {
+            font-weight: normal;
+          }
+
+          .#{$cell} {
+            height: 32px;
+            padding: 0;
+
+            .#{$cell-text} {
+              width: 32px;
+              height: 32px;
+              line-height: 32px;
+            }
+          }
+
+          &.disabled .#{$cell} {
+            background: none;
+          }
+        }
+      }
+    }
+  }
+
+  // 月，年 表格清除样式
+  .el-month-table,
+  .el-year-table {
+    td.today .el-date-table-cell__text {
+      font-weight: 400;
+    }
+
+    tbody tr > td {
+      &.disabled .cell {
+        background: none;
+      }
+
+      &:first-child {
+        padding-left: 0;
+      }
+
+      &:last-child {
+        padding-right: 0;
+      }
+    }
+  }
+}

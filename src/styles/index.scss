@@ -1,0 +1,83 @@
+@use "./globalVariable.module.scss" as *;
+@use "./thumb.scss" as *;
+@use "./font.scss" as *;
+@use "./mixins.scss" as *;
+@use "./element-plus/ElCommon.scss" as *;
+@use "./element-plus/ElDatePicker.scss" as *;
+@use "./element-plus/ElDialog.scss" as *;
+@use "./element-plus/ElInput.scss" as *;
+@use "./element-plus/ElPopover.scss" as *;
+@use "./element-plus/ElPagination.scss" as *;
+@use "./element-plus/ElSelect.scss" as *;
+@use "./element-plus/ElLoading.scss" as *;
+@use "./element-plus/ElMessage.scss" as *;
+@use "./element-plus/ElMessageBox.scss" as *;
+@use "./element-plus/ElTab.scss" as *;
+@use "./element-plus/ElLink.scss" as *;
+@use "./element-plus/ElOverlay.scss" as *;
+@use "./element-plus/ElButton" as *;
+@use "./element-plus/ElMultipleSelect.scss" as *;
+@use "./element-plus/ElCheckbox.scss" as *;
+@use "./element-plus/ElRadio.scss" as *;
+@use "./element-plus/ElForm.scss" as *;
+@use "./element-plus/ElCascader.scss" as *;
+@use "./element-plus/ElDropdown.scss" as *;
+@use "./element-plus/ElBadge.scss" as *;
+
+html,
+body,
+#app {
+  width: 100% !important;
+  min-width: calc(1440px - var(--agent-scrollbar-width));
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  html,
+  body,
+  #app {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* 覆盖自动填充的背景色 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+/* 字体加默认配置:可以省去写iconfont */
+[class*="icon-"],
+[class^="icon-"] {
+  font-family: "iconfont" !important;
+  font-size: 14px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.truncate {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-pointer:hover {
+  opacity: 0.8;
+}
+
+.cursor-pointer:active {
+  opacity: 0.6;
+}

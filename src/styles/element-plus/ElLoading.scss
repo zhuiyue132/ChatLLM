@@ -1,0 +1,125 @@
+.xs-global-loading {
+  z-index: 1997;
+
+  .el-loading-spinner {
+    /*这个是自己想设置的 gif 加载动图*/
+    background: url(@/assets/images/common/loading.gif) no-repeat center
+      center / 80px 80px;
+    height: 100px;
+    width: 100%;
+    background-position: center;
+    /*覆盖 element-ui  默认的 50%    因为此处设置了height:100%,所以不设置的话，会只显示一半，因为被top顶下去了*/
+    top: 40% !important;
+  }
+  .el-loading-spinner .circular {
+    /*隐藏 之前  element-ui  默认的 loading 动画*/
+    display: none !important;
+    animation: none !important;
+  }
+
+  .el-loading-spinner .el-loading-text {
+    /*为了使得文字在loading图下面*/
+    margin: 105px 0px !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  &.xs-global-loading_circle {
+    .el-loading-spinner {
+      background: none;
+
+      .circular {
+        display: inline !important;
+      }
+    }
+  }
+}
+
+.loading-circle {
+  animation: rotate 1.5s linear infinite;
+  border-radius: 50%;
+
+  &-round {
+    border-radius: 50%;
+    position: relative;
+  }
+
+  &-grey {
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 2px solid #e9e9e9;
+  }
+
+  &-blue {
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 2px solid var(--main-color);
+    clip-path: circle(40% at 100% 0%);
+    -webkit-clip-path: circle(40% at 90% 0%);
+  }
+
+  &-line {
+    position: absolute;
+    height: 35%;
+    width: 1.6px;
+    top: 15%;
+    left: 0;
+    right: 0;
+    background-color: var(--main-color);
+    border-radius: 1px;
+    margin: auto;
+  }
+
+  &.white {
+    .loading-circle-grey {
+      border-color: #9c9c9c !important;
+    }
+
+    .loading-circle-blue {
+      border-color: #fff !important;
+    }
+
+    .loading-circle-line {
+      background-color: #fff !important;
+    }
+  }
+
+  &.big-size {
+    .loading-circle-grey {
+      border-width: 4px;
+    }
+
+    .loading-circle-blue {
+      border-width: 4px;
+    }
+
+    .loading-circle-line {
+      width: 4px;
+    }
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0);
+  }
+
+  25% {
+    transform: rotate(90deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  75% {
+    transform: rotate(360deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}

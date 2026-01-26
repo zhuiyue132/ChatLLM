@@ -1,0 +1,7 @@
+node_modules
+dist
+public
+*.d.ts
+.eslintrc.cjs 
+eslint.config.js
+src/assets/icon/

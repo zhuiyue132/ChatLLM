@@ -1,0 +1,35 @@
+.el-select,
+.el-select__popper {
+  --el-border-color-hover: var(--main-color);
+  --el-text-color-regular: #000;
+}
+
+.el-select:hover:not(.el-select--disabled) .el-input__inner {
+  box-shadow: none;
+}
+.el-select .el-input.is-focus .el-input__inner {
+  box-shadow: none !important;
+}
+.el-select-dropdown.is-multiple .el-select-dropdown__item.is-selected::after {
+  right: 10px !important;
+}
+.el-select .el-select-dropdown__item.is-selected {
+  font-weight: normal;
+}
+.el-select-dropdown__wrap .el-select-dropdown__item.is-selected {
+  font-weight: normal;
+}
+
+.el-select .el-select__selection .el-tag {
+  background-color: var(--el-fill-color);
+  --el-tag-text-color: var(--text-light-color);
+}
+
+.el-select {
+  .el-select__wrapper {
+    outline: none;
+  }
+  .el-select__wrapper.is-disabled:hover {
+    box-shadow: 0 0 0 1px var(--el-select-disabled-border) inset;
+  }
+}

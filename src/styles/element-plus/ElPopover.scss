@@ -1,0 +1,54 @@
+.el-popper.is-customized {
+  /* Set padding to ensure the height is 32px */
+  padding: 0 10px;
+  background: #3c63eb;
+  color: #fff;
+  border-radius: 0;
+  font-size: 14px;
+  line-height: 24px;
+  .el-popper__arrow {
+    &::before {
+      right: 0;
+      width: 8px;
+      height: 8px;
+      background: #3c63eb;
+      border-bottom-right-radius: 0 !important;
+    }
+  }
+
+  &[data-popper-placement^="bottom"] .el-popper__arrow {
+    top: -3px;
+    &::before {
+      border-top-left-radius: 0 !important;
+    }
+  }
+}
+
+.xs-popover {
+  padding: 16px !important;
+  background-color: #fff !important;
+  border: 1px solid #e2e6ef !important;
+  border-radius: 1px !important;
+  box-shadow: 0 2px 4px rgb(60 99 235 / 15%) !important;
+  box-sizing: border-box !important;
+  width: 222px !important;
+  z-index: 5001 !important;
+}
+
+.user-popover {
+  padding: 0 !important;
+  background-color: #fff !important;
+  border: 1px solid #e2e6ef !important;
+  border-radius: 1px !important;
+  box-shadow: 0 2px 4px rgb(60 99 235 / 15%) !important;
+  box-sizing: border-box !important;
+  min-width: 322px !important;
+  z-index: 5001 !important;
+  .search {
+    padding: 0 !important;
+  }
+}
+
+.el-popover .el-popper__arrow {
+  display: none;
+}

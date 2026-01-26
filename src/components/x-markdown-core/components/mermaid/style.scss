@@ -1,0 +1,93 @@
+.markdown-mermaid {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  width: 100%;
+  min-width: 100px;
+  height: 100%;
+  min-height: 100px;
+  border-radius: 4px;
+  background-color: #f6f8fa;
+
+  // 工具栏容器样式
+  .toolbar-container {
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
+    background: white;
+
+    // 默认工具栏的基础样式
+    .mermaid-language-tag {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 8px 12px;
+      color: #0891b2;
+      border: 1px solid #e0f2fe;
+      border-radius: 4px;
+      background: #f0f9ff;
+      font-size: 12px;
+    }
+  }
+
+  .mermaid-content {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    overflow: hidden;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+    min-height: 200px;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    svg {
+      position: relative;
+      max-width: 100%;
+      max-height: 100%;
+      transform-origin: center center;
+    }
+
+    // 渲染状态时的加载效果
+    &.rendering {
+      svg {
+        pointer-events: none;
+        opacity: 0.8;
+      }
+    }
+
+    &:empty {
+      justify-content: flex-start;
+      &::after {
+        content: attr(mermaid-content);
+        padding: 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5;
+      }
+    }
+  }
+}
+
+// 内容切换过渡 - 减少闪烁，优化为淡入淡出
+.content-enter-active {
+  transition: opacity 0.2s ease-out;
+}
+
+.content-leave-active {
+  transition: opacity 0.15s ease-in;
+}
+
+.content-enter-from {
+  opacity: 0;
+}
+
+.content-leave-to {
+  opacity: 0;
+}

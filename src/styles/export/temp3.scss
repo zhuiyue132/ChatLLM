@@ -1,0 +1,279 @@
+.export-temp-3 {
+}
+
+.export-temp-zip-3 {
+  color: #333;
+
+  --base-color: #007e54;
+
+  .export-body {
+    padding: 160px 100px 100px;
+    word-break: break-all;
+    font-size: 36px;
+    line-height: 1.6;
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 60px;
+
+      img {
+        vertical-align: top;
+      }
+
+      .time {
+        white-space: nowrap;
+        color: var(--base-color);
+        font-size: 40px;
+        font-weight: 700;
+      }
+    }
+    .page-foot {
+      margin-top: 80px;
+      text-align: center;
+      img {
+        vertical-align: top;
+      }
+    }
+
+    .md-goods {
+      margin-top: 40px;
+    }
+    h1 {
+      margin-top: 80px;
+      font-size: 56px;
+      line-height: 84px;
+    }
+
+    h2 {
+      margin-top: 80px;
+      font-size: 40px;
+      line-height: 60px;
+
+      & + h3 {
+        margin-top: 16px;
+      }
+    }
+
+    h3 {
+      margin-top: 80px;
+      padding-bottom: 0;
+      color: var(--base-color);
+      font-size: 1em;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    h4 {
+      margin-top: 48px;
+    }
+
+    h2 + .title-tips,
+    h1 + .title-tips {
+      position: relative;
+      top: -16px;
+      color: var(--base-color);
+
+      & + h2 {
+        margin-top: 32px;
+      }
+    }
+
+    .echarts-wrap {
+      margin: 16px 0;
+    }
+
+    p {
+      margin-bottom: 0;
+    }
+
+    .address-show {
+      margin-top: 24px;
+      padding: 0 8px 8px;
+      color: #000;
+      font-family: "Microsoft YaHei UI", sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 56px;
+    }
+
+    .md-table .table-normal table {
+      tbody tr {
+        background-color: transparent;
+
+        td {
+          background-color: transparent;
+        }
+      }
+      tr {
+        td,
+        th {
+          border-right: none;
+          border-left: none;
+        }
+      }
+    }
+
+    .md-table .table-of-list table tbody tr {
+      background-color: transparent;
+    }
+
+    ul,
+    ol {
+      margin-top: 0;
+      margin-bottom: 0;
+      li + li {
+        margin-top: 0;
+      }
+      li {
+        list-style: none;
+      }
+    }
+
+    p + p {
+      margin-top: 20px;
+    }
+    & > p + ul,
+    & > p + ol {
+      margin-top: 40px;
+    }
+
+    .md-store-rating {
+      margin-top: 100px;
+    }
+
+    .md-tips {
+      .line {
+        display: none;
+      }
+
+      .export-tips {
+        display: inline-block;
+      }
+    }
+
+    .excellent-shop-distribution {
+      display: block;
+      margin-top: 28px;
+      color: var(--base-color);
+      font-family: "Microsoft YaHei UI";
+      font-size: 40px;
+      font-weight: 700;
+      & + pre {
+        margin-top: 16px;
+      }
+    }
+  }
+
+  &.all-page {
+    .export-body {
+      padding: 160px 100px 100px;
+
+      .page-header + * {
+        margin-top: 0;
+      }
+    }
+  }
+
+  // 视频号
+  &.export-temp-zip-sph {
+    .export-body {
+      height: 2341px;
+      padding: 252px 100px 440px;
+
+      .page-header-wrap {
+        position: absolute;
+        top: 160px;
+        right: 100px;
+        left: 100px;
+      }
+
+      &.heightAuto {
+        height: auto;
+      }
+
+      .md-goods {
+        margin-top: 148px;
+      }
+
+      .excellent-shop-distribution {
+        margin-top: 56px;
+      }
+
+      h1 + pre {
+        .md-goods {
+          margin-top: 100px;
+        }
+      }
+
+      h1 + * {
+        margin-top: 48px;
+      }
+
+      & > pre:first-child {
+        .md-goods {
+          margin-top: 184px;
+        }
+      }
+
+      .md-table .table-normal table {
+        tbody tr td,
+        thead tr th {
+          font-size: 30px;
+        }
+      }
+    }
+  }
+
+  // 抖音
+  &.export-temp-zip-dy {
+    .export-body {
+      height: 2532px;
+      padding: 397px 100px 440px;
+
+      .page-header-wrap {
+        position: absolute;
+        top: 305px;
+        right: 100px;
+        left: 100px;
+      }
+
+      &.heightAuto {
+        height: auto;
+      }
+
+      .md-goods {
+        margin-top: 148px;
+      }
+
+      .excellent-shop-distribution {
+        margin-top: 56px;
+      }
+
+      h1 + pre {
+        .md-goods {
+          margin-top: 100px;
+        }
+      }
+
+      h1 + * {
+        margin-top: 48px;
+      }
+
+      & > pre:first-child {
+        .md-goods {
+          margin-top: 184px;
+        }
+      }
+
+      .md-table .table-normal table {
+        tbody tr td,
+        thead tr th {
+          font-size: 30px;
+        }
+      }
+    }
+  }
+}

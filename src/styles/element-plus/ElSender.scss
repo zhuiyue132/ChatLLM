@@ -1,0 +1,165 @@
+.el-sender {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  transition: background var(--el-transition-duration);
+  transition: width var(--el-sender-header-animation-duration);
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--el-border-color);
+  border-radius: calc(var(--el-border-radius-base) * 2);
+  box-shadow: var(--el-box-shadow-tertiary);
+
+  &:after {
+    content: "";
+    position: absolute;
+    transition: border-color var(--el-transition-duration);
+    pointer-events: none;
+    border-width: var(--el-border-width);
+    border-style: inherit;
+    border-color: inherit;
+    border-radius: inherit;
+    inset: 0;
+  }
+  &:focus-within {
+    border-color: var(--el-color-primary);
+    box-shadow: var(--el-box-shadow);
+    &::after {
+      border-width: 2px;
+    }
+  }
+
+  .el-sender-header-wrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+
+    @include flex-gap(8px, column);
+  }
+
+  // 展开收起动画
+  // calc-size 新特性，解决无法对某些非固定尺寸（如 auto、min-content、max-content 等）进行动画过渡的新特性
+  .slide-enter-active,
+  .slide-leave-active {
+    overflow: hidden;
+    height: calc-size(max-content, size);
+    transition:
+      height var(--el-sender-header-animation-duration),
+      opacity var(--el-sender-header-animation-duration),
+      border var(--el-sender-header-animation-duration);
+    opacity: 1;
+  }
+
+  .slide-enter-from,
+  .slide-leave-to {
+    height: 0;
+    opacity: 0;
+  }
+
+  .el-sender-header {
+    border-bottom-width: var(--el-border-width);
+    border-bottom-style: solid;
+    border-bottom-color: var(--el-border-color);
+  }
+
+  .el-sender-content {
+    display: flex;
+    align-items: flex-end;
+    box-sizing: border-box;
+    width: 100%;
+    padding-block: var(--el-padding-sm, 12px);
+    padding-inline-start: var(--el-padding, 16px);
+    padding-inline-end: var(--el-padding-sm, 12px);
+
+    @include flex-gap(8px, row);
+
+    // 前缀
+    .el-sender-prefix {
+      flex: none;
+    }
+    // 输入框
+    .el-sender-input {
+      display: flex;
+      align-items: center;
+      align-self: center;
+      height: 100%;
+    }
+    // el-mention
+    .el-mention {
+      display: flex;
+      align-items: center;
+      align-self: center;
+      height: 100%;
+    }
+    :deep(.el-textarea__inner) {
+      position: relative;
+      display: inline-block;
+      align-self: center;
+      flex: auto;
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      height: auto;
+      min-height: auto !important;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      resize: none;
+      transition:
+        all var(--el-transition-duration),
+        height 0s;
+      vertical-align: bottom;
+      color: var(--el-text-color-primary);
+      border: none;
+      border-radius: 0;
+      background-color: transparent;
+      box-shadow: none !important;
+      font-size: var(--el-sender-input-input-font-size);
+      line-height: var(--el-font-line-height-primary);
+    }
+    // 操作列表
+    .el-sender-action-list-presets {
+      display: flex;
+      @include flex-gap(8px, row);
+      flex-direction: row-reverse;
+    }
+  }
+
+  // 变体样式 --variant
+  .content-variant-updown {
+    display: flex;
+    align-items: initial;
+    flex-direction: column;
+    .el-sender-updown-wrap {
+      display: flex;
+      justify-content: space-between;
+      @include flex-gap(8px, row);
+
+      // 前缀
+      .el-sender-prefix {
+        flex: initial;
+      }
+
+      .el-sender-action-list {
+        margin-left: auto;
+      }
+    }
+  }
+
+  // 底部容器
+  .el-sender-footer {
+    border-top-width: var(--el-border-width);
+    border-top-style: solid;
+    border-top-color: var(--el-border-color);
+  }
+}
+
+.el-sender-disabled {
+  pointer-events: none;
+  background-color: var(--el-fill-color);
+}

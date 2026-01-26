@@ -1,0 +1,75 @@
+.el-input {
+  --el-input-placeholder-color: var(--input-placeholder-color);
+  --el-input-icon-color: var(--input-placeholder-color);
+  --el-input-border-color: var(--border-color);
+
+  .el-input__wrapper {
+    border-radius: 2px;
+    height: 32px;
+    --el-input-hover-border-color: var(--main-color);
+
+    .el-input__inner::placeholder {
+      color: var(--el-input-placeholder-color);
+    }
+  }
+
+  &.el-input--small {
+    height: 22px;
+    .el-input__wrapper {
+      height: 22px;
+      line-height: 22px;
+    }
+  }
+
+  .el-input--prefix .el-input__wrapper {
+    padding-left: calc(12px + 14px + 4px);
+  }
+
+  .el-input__prefix-inner {
+    align-items: center;
+    img {
+      width: 14px;
+    }
+  }
+}
+
+/**
+* 分页组件跳转样式框
+*/
+.el-pagination__editor {
+  &.el-input.el-input--small {
+    height: var(--el-pagination-button-height);
+    .el-input__wrapper {
+      height: var(--el-pagination-button-height);
+      line-height: var(--el-pagination-button-height);
+    }
+  }
+}
+
+/*
+* el-input 高度40输入框默认样式
+*/
+.el-input.el-input--large {
+  &.font16 {
+    font-size: 16px;
+  }
+  height: var(--input-height-large);
+  .el-input__wrapper {
+    height: var(--input-height-large);
+    line-height: var(--input-height-large);
+  }
+
+  .el-input__prefix-inner {
+    align-items: center;
+    img {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+.el-textarea {
+  .el-textarea__inner {
+    --el-input-hover-border-color: var(--main-color);
+  }
+}

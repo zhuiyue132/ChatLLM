@@ -1,0 +1,53 @@
+@use "sass:meta";
+
+/**
+ * 兼容性更好的gap替代方案
+ * @param {Number} $gap - 间距大小(px)
+ * @param {String} $direction - 方向，可选值：row(默认), column, both
+ */
+@mixin flex-gap($gap, $direction: row) {
+  @if $direction == row {
+    & > *:not(:last-child) {
+      margin-right: $gap;
+    }
+  } @else if $direction == column {
+    & > *:not(:last-child) {
+      margin-bottom: $gap;
+    }
+  } @else if $direction == both {
+    $row-gap: $gap;
+    $column-gap: $gap;
+
+    @if meta.type-of($gap) == list {
+      $row-gap: nth($gap, 1);
+      $column-gap: nth($gap, 2);
+    }
+
+    & {
+      margin: calc(-1 * $row-gap / 2);
+    }
+
+    & > * {
+      margin: calc($row-gap / 2) calc($column-gap / 2);
+    }
+  }
+}
+
+.xs-custom-title,
+.xs-custom-overflow-title {
+  position: fixed;
+  left: -9999px;
+  z-index: 9999;
+  overflow-y: auto;
+  max-width: 360px;
+  max-height: 360px;
+  padding: 6px 12px;
+  white-space: break-spaces;
+  word-wrap: break-word;
+  word-break: break-all;
+  color: #fff;
+  border-radius: 4px;
+  background-color: #303133;
+  font-size: 14px;
+  line-height: 18px;
+}

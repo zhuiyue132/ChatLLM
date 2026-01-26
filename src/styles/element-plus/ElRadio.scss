@@ -1,0 +1,81 @@
+// 公共el-radio样式，非全局改动勿动！！！
+body {
+  .el-radio {
+    margin-right: 16px;
+    --el-radio-text-color: #000;
+
+    .el-radio__input .el-radio__inner {
+      border-color: #8c8c8c;
+      outline: none;
+      &:hover {
+        border-color: var(--main-color);
+      }
+    }
+    .el-radio__input.is-checked .el-radio__inner {
+      background-color: #fff;
+      border-color: var(--main-color);
+      &::after {
+        width: 9px;
+        height: 9px;
+        background-color: var(--main-color);
+      }
+
+      // 火狐浏览器下，radio选中后，圆点大小不一致
+      @supports (-moz-appearance: none) {
+        &::after {
+          width: 8px;
+          height: 8px;
+        }
+      }
+    }
+    .el-radio__input.is-disabled .el-radio__inner {
+      &:hover {
+        border-color: #8c8c8c;
+      }
+    }
+    .el-radio__label {
+      padding-left: 5px;
+      font-size: 14px;
+      line-height: 18px;
+      font-weight: 400;
+    }
+
+    &:last-child {
+      margin: 0;
+    }
+  }
+  .el-radio.el-radio--large {
+    .el-radio__input {
+      height: 100%;
+    }
+    .el-radio__input .el-radio__inner {
+      width: 16px;
+      height: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .el-radio__input.is-checked .el-radio__inner {
+      &::after {
+        width: 11px;
+        height: 11px;
+      }
+    }
+  }
+
+  .el-radio.el-radio--small {
+    .el-radio__input .el-radio__inner {
+      width: 12px;
+      height: 12px;
+    }
+    .el-radio__input.is-checked .el-radio__inner {
+      &::after {
+        width: 7px;
+        height: 7px;
+      }
+    }
+  }
+
+  .el-radio-button:focus:not(.is-focus):not(:active):not(.is-disabled) {
+    box-shadow: none;
+  }
+}

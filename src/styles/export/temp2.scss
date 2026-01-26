@@ -1,0 +1,150 @@
+.export-temp-2 {
+  .export-header,
+  .export-footer {
+    background: #e75100;
+  }
+
+  .export-body {
+    padding: 160px 100px 80px;
+    word-break: break-all;
+    font-size: 32px;
+    line-height: 1.6;
+
+    .page-img-header {
+      position: absolute;
+      top: 24px;
+      left: 88px;
+      z-index: 10;
+      width: 904px;
+    }
+
+    h1 {
+      margin-bottom: 0;
+      font-size: 40px;
+      line-height: 48px;
+
+      .h1-tips {
+        font-size: 32px;
+        font-weight: 400;
+      }
+    }
+
+    .echarts-wrap {
+      margin: 16px 0;
+    }
+
+    p {
+      margin-bottom: 0;
+    }
+
+    h1 + .md-goods {
+      margin-top: 80px;
+    }
+  }
+
+  .page-content {
+    padding-bottom: 100px;
+  }
+}
+
+.export-temp-zip-2 {
+  color: #333;
+
+  --base-color: #007e54;
+
+  .export-header,
+  .export-footer {
+    background: #e75100;
+  }
+
+  .export-body {
+    height: 1440px;
+    padding: 80px 100px 0;
+    font-size: 36px;
+    line-height: 1.6;
+
+    h1 {
+      margin-bottom: 0;
+      font-size: 40px;
+      line-height: 48px;
+
+      .h1-tips {
+        font-size: 32px;
+        font-weight: 400;
+      }
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 60px;
+
+      img {
+        vertical-align: top;
+      }
+
+      .time {
+        white-space: nowrap;
+        color: var(--base-color);
+        font-size: 40px;
+        font-weight: 700;
+      }
+    }
+
+    .page-header + .md-goods {
+      margin-top: 56px;
+    }
+
+    .echarts-wrap {
+      margin: 16px 0;
+    }
+
+    p {
+      margin-bottom: 0;
+    }
+  }
+
+  // 视频号
+  &.export-temp-zip-sph {
+    .export-body {
+      height: 2341px;
+      padding: 276px 100px 440px;
+
+      .page-header {
+        position: absolute;
+        top: 160px;
+        right: 100px;
+        left: 100px;
+        width: auto;
+      }
+
+      .page-header + .md-goods {
+        margin-top: 0;
+      }
+      .md-goods {
+        margin-top: 56px;
+      }
+    }
+  }
+
+  // 抖音
+  &.export-temp-zip-dy {
+    .export-body {
+      height: 2532px;
+      padding: 465px 100px 440px;
+
+      .page-header {
+        position: absolute;
+        top: 305px;
+        right: 100px;
+        left: 100px;
+        width: auto;
+      }
+      .page-header + .md-goods {
+        margin-top: 0;
+      }
+    }
+  }
+}

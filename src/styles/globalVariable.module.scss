@@ -1,0 +1,137 @@
+// 光明皮肤
+:root {
+  // 主题色
+  --main-color: #017f46;
+
+  --black: #000;
+  --white: #fff;
+  --border-color: #d4dbe9;
+  --disabled-color: #d4dbe9;
+  --border-table-color: #d0d4dc;
+
+  --main-text-color-65: rgba(0, 0, 0, 0.65);
+
+  --main-text-color-45: rgba(0, 0, 0, 0.45);
+
+  --main-text-color-25: rgba(0, 0, 0, 0.25);
+
+  --form-error-color: #bd4206;
+
+  // 导航栏背景颜色
+  --nav-bg-color: #060b26;
+  // 导航栏正常字体颜色
+  --nav-normal-text-color: #bfbfbf;
+  // 导航栏 激活/hover 状态字体颜色
+  --nav-active-text-color: #fff;
+  // 导航栏 激活/hover 状态背景颜色
+  --nav-active-bg-color: var(--black);
+
+  // 侧边栏背景颜色
+  --sidebar-bg-color: #292929;
+  // 侧边栏一级标题字体颜色
+  --sidebar-text-color: #bfbfbf;
+  // 侧边栏二级标题字体颜色
+  --sidebar-subtext-color: #8c8c8c;
+  // 侧边栏 hover 状态字体颜色
+  --sidebar-hover-text-color: var(--white);
+  // 侧边栏 hover 状态背景颜色
+  --sidebar-hover-bg-color: #2457cb;
+  // 侧边栏激活状态字体颜色
+  --sidebar-active-text-color: var(--white);
+  // 侧边栏激活状态背景颜色
+  --sidebar-active-bg-color: var(--main-color);
+  // 图片预览背景色
+  --img-viewer-bg-color: #ebebeb;
+
+  // 按钮 灰色
+  --icon-btn-y-color: #bfbfbf;
+  --icon-btn-color: #8c8c8c;
+
+  // 数据红
+  --data-red: #bd4206;
+  // 数据绿
+  --data-green: #38903c;
+
+  // 文本颜色（白）
+  --text-white-color: var(--white);
+  // 正常字体颜色
+  --text-normal-color: var(--black);
+  // 文本颜色（淡）
+  --text-light-color: #595959;
+  // 文本颜色（淡淡）
+  --text-dblight-color: #8c8c8c;
+  // black -25%
+  --text-tblight-color: #bfbfbf;
+  // 底部文本颜色
+  --footer-text-color: #1b2948;
+
+  // 表格链接字体颜色
+  --table-link-color: var(--main-color);
+  // 表格表头固定背景色
+  --table-header-fixed-bg-color: #e0e2e6;
+  // 表格行被选中的背景色
+  --table-row-selected-color: #ffe866;
+  // 表格行被选中hover的背景色
+  --table-row-selected-hover-color: #fffbcc;
+
+  // others
+  --main-text-color: #000;
+  //列表项hover bg color
+  --list-item-hover-bg-color: #e2eeff;
+
+  --scrollbar-track-color: transparent;
+
+  --scrollbar-thumb-color: rgba(144, 147, 153, 0.3);
+
+  --scrollbar-shadow-color: transparent;
+
+  --scrollbar-radius: 12px;
+
+  --agent-scrollbar-width: 6px;
+
+  --scrollbar-height: 6px;
+
+  --menu-width: 240px;
+
+  --placeholder-color: #8393a9 !important;
+
+  --nav-height: 48px;
+
+  --footer-height: 36px;
+
+  --theme-blue: #3d6dda;
+
+  --table-border-bottom-color: var(--border-color);
+
+  //default色线性按钮active border-color
+  --plain-btn-active-border-color: #2351b9;
+  //default色线性按钮active bg-color
+  --plain-btn-active-bg-color: #f3f6ff;
+  --primary-button-hover-bg-color: #2351b9;
+  --primary-button-active-bg-color: #1a3b87;
+
+  --salary-block-positive-color: #a10101;
+  --salary-block-negative-color: #008e00;
+  --salary-block-zero-color: #6b6e75;
+
+  --input-placeholder-color: #bfbfbf;
+  --input-height-large: 40px;
+  --input-height-small: 32px;
+  --el-border-radius-small: 4px !important;
+}
+
+// 暗影皮肤
+.dark {
+  --main-color: #0ff;
+  --nav-bg-color: #ff0;
+}
+
+// 导出变量供js使用
+:export {
+  mainColor: var(--main-color);
+  dataRed: var(--data-red);
+  dataGreen: var(--data-green);
+  salaryPositieveColor: var(--salary-block-positive-color);
+  salaryNegativeColor: var(--salary-block-negative-color);
+  salaryZeroColor: var(--salary-block-zero-color);
+}

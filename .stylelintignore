@@ -1,0 +1,11 @@
+node_modules
+dist
+public
+*.js
+*.jsx
+*.ts
+*.tsx
+*.md
+*.html 
+*.module.scss
+src/styles/element-plus/

@@ -1,0 +1,47 @@
+/* 使用思源黑体（中国大陆网络友好资源） */
+@font-face {
+  font-family: "Source Han Sans CN";
+  font-weight: 700;
+  font-style: normal;
+  src: url("https://img.ecbis.cn/Ai-agents/font/Source_Han_Sans_SC_Bold.ttf")
+    format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Han Sans CN";
+  font-weight: 500;
+  font-style: normal;
+  src: url("https://img.ecbis.cn/Ai-agents/font/Source_Han_Sans_SC_Medium.ttf")
+    format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Han Sans CN";
+  font-weight: 400;
+  font-style: normal;
+  src: url("https://img.ecbis.cn/Ai-agents/font/Source_Han_Sans_SC_Normal.ttf")
+    format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src:
+    url("../assets/font/Inter-Medium.woff2?v=3.19") format("woff2"),
+    url("../assets/font/Inter-Medium.woff?v=3.19") format("woff");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src:
+    url("../assets/font/Inter-Bold.woff2?v=3.19") format("woff2"),
+    url("../assets/font/Inter-Bold.woff?v=3.19") format("woff");
+}

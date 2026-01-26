@@ -1,0 +1,14 @@
+.el-button {
+  padding: 8px 16px;
+
+  --el-text-color-regular: var(--text-dblight-color);
+
+  i {
+    margin-right: 4px;
+    font-size: 16px;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}

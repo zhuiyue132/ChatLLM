@@ -1,0 +1,16 @@
+.el-link.el-link--primary:not(.is-disabled) {
+  color: var(--main-color);
+  line-height: 18px;
+  --el-link-hover-text-color: var(--main-color);
+
+  .el-link__inner {
+    border: 1px solid transparent;
+  }
+  &:not(.is-disabled):hover {
+    color: var(--main-color);
+    .el-link__inner {
+      // text-decoration: underline;
+      border-bottom-color: var(--main-color);
+    }
+  }
+}
