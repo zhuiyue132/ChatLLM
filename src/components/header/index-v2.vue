@@ -69,6 +69,9 @@
         </template>
       </xs-dropdown>
     </div>
+
+    <!-- API 配置弹窗 -->
+    <api-settings-dialog v-model="apiSettingsVisible" />
   </div>
 </template>
 
@@ -81,6 +84,7 @@ import { setPopperPosition } from '@/utils'
 import { useSidebar } from '@/hooks/use-sidebar'
 import { XsDropdown, XsDropdownMenu, XsDropdownItem } from '../xs-dropdown'
 import { useDebounceFn } from '@vueuse/core'
+import ApiSettingsDialog from '@/components/api-settings-dialog/index.vue'
 
 // const route = useRoute()
 // const router = useRouter()
@@ -99,10 +103,22 @@ defineProps({
 
 const { isCollapsed } = useSidebar()
 
-const menuList = ref([])
+// API 配置弹窗显示状态
+const apiSettingsVisible = ref(false)
+
+const menuList = ref([
+  {
+    command: 'api-settings',
+    icon: 'iconfont icon-setting',
+    label: 'API 配置'
+  }
+])
 
 const handleUserCommand = useDebounceFn(command => {
   console.log('handleUserCommand', command)
+  if (command === 'api-settings') {
+    apiSettingsVisible.value = true
+  }
 }, 200)
 
 const handleUserDropdownVisibleChange = visible => {}
