@@ -306,7 +306,3 @@ onBeforeRouteLeave(async (to, from, next) => {
   }
 }
 </style>
-
-<style lang="scss">
-@use '@/styles/export.scss';
-</style>

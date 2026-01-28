@@ -8,7 +8,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ApiSettingsDialog: typeof import('./src/components/api-settings-dialog/index.vue')['default']
-    Assistant: typeof import('./src/components/agent-message/assistant.vue')['default']
+    Assistant: typeof import('./src/components/completions-message/assistant.vue')['default']
     BlockImageInfo: typeof import('./src/components/markdown-renderer/components/base/block-image-info.vue')['default']
     Category: typeof import('./src/components/markdown-renderer/components/category.vue')['default']
     CategoryGroup: typeof import('./src/components/markdown-renderer/components/category-group.vue')['default']
@@ -78,7 +78,7 @@ declare module 'vue' {
     Images: typeof import('./src/components/markdown-renderer/components/hot-product/images.vue')['default']
     ImageUpload: typeof import('./src/components/sender/components/image-upload.vue')['default']
     IndexV2: typeof import('./src/components/header/index-v2.vue')['default']
-    Loading: typeof import('./src/components/agent-message/loading.vue')['default']
+    Loading: typeof import('./src/components/completions-message/loading.vue')['default']
     LoadingButton: typeof import('./src/components/mention-sender/components/loading-button/index.vue')['default']
     Loadmore: typeof import('./src/components/markdown-renderer/components/loadmore.vue')['default']
     LoadmoreWrap: typeof import('./src/components/markdown-renderer/components/base/loadmore-wrap.vue')['default']
@@ -133,7 +133,7 @@ declare module 'vue' {
     TextCopy: typeof import('./src/components/markdown-renderer/components/text-copy.vue')['default']
     TextListCopy: typeof import('./src/components/markdown-renderer/components/text-list-copy.vue')['default']
     Tips: typeof import('./src/components/markdown-renderer/components/tips.vue')['default']
-    User: typeof import('./src/components/agent-message/user.vue')['default']
+    User: typeof import('./src/components/completions-message/user.vue')['default']
     XMarkdown: typeof import('./src/components/x-markdown/index.vue')['default']
     XsDropdown: typeof import('./src/components/xs-dropdown/xs-dropdown.vue')['default']
     XsDropdownItem: typeof import('./src/components/xs-dropdown/xs-dropdown-item.vue')['default']

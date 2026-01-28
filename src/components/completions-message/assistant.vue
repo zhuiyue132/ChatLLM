@@ -125,7 +125,7 @@ import ModelIcon from '../model-icon/index.vue'
 import { onCopy } from '@/utils'
 import { ref, computed } from 'vue'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
-import ChatMessageItemLoading from '../agent-message/loading.vue'
+import ChatMessageItemLoading from './loading.vue'
 import ImageItem from './image-item.vue'
 import { showMessage } from '@/hooks'
 
