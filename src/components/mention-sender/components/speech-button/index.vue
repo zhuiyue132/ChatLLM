@@ -8,7 +8,7 @@
 -->
 <!-- SpeechButton 语音按钮 -->
 <script setup>
-import { Microphone } from "@element-plus/icons-vue";
+import { Microphone } from '@element-plus/icons-vue'
 </script>
 
 <template>

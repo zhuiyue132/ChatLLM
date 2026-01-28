@@ -16,9 +16,9 @@
   </div>
 </template>
 <script setup>
-import loading from "./loading.vue";
+import loading from './loading.vue'
 
-const emits = defineEmits(["cancel"]);
+const emits = defineEmits(['cancel'])
 </script>
 
 <style scoped lang="scss">

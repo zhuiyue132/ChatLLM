@@ -21,19 +21,19 @@
 </template>
 
 <script setup>
-import { useVModel } from "@vueuse/core";
+import { useVModel } from '@vueuse/core'
 
 defineOptions({
-  name: "SenderDeepThinkButton",
-});
+  name: 'SenderDeepThinkButton'
+})
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    default: false,
-  },
-});
+    default: false
+  }
+})
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(['update:modelValue'])
 
-const checkedValue = useVModel(props, "modelValue", emit);
+const checkedValue = useVModel(props, 'modelValue', emit)
 </script>

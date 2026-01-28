@@ -24,10 +24,7 @@
         <!-- 进度条容器 -->
         <div v-if="!isFinished" class="progress-wrapper">
           <div class="progress-track">
-            <div
-              class="progress-bar"
-              :style="{ width: `${taskProgress}%` }"
-            ></div>
+            <div class="progress-bar" :style="{ width: `${taskProgress}%` }"></div>
           </div>
         </div>
 
@@ -43,11 +40,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, defineExpose, defineEmits } from "vue";
-import { useProgress } from "@/hooks";
+import { computed, onMounted, defineExpose, defineEmits } from 'vue'
+import { useProgress } from '@/hooks'
 
 // ========== 事件定义 ==========
-const emit = defineEmits(["click"]);
+const emit = defineEmits(['click'])
 
 // ========== 进度控制 ==========
 const {
@@ -57,37 +54,37 @@ const {
   startProgress,
   startAutoProgress,
   completeProgress,
-  failProgress,
+  failProgress
 } = useProgress({
   showDelay: 0, // 立即显示
   minVisibleTime: 800, // 最少显示800ms
   autoStep: 2, // 每次递增2%
   autoMax: 90, // 最大自动递增到90%
   autoInterval: 500, // 每500ms递增一次
-  completeDelay: 600, // 完成后停留600ms
-});
+  completeDelay: 600 // 完成后停留600ms
+})
 
 // ========== 计算属性 ==========
 
 // 任务进度（用于显示）
-const taskProgress = computed(() => progressValue.value);
+const taskProgress = computed(() => progressValue.value)
 
 // 是否已完成
-const isFinished = computed(() => isCompleted.value);
+const isFinished = computed(() => isCompleted.value)
 
 // 是否失败
-const isError = computed(() => isFailed.value);
+const isError = computed(() => isFailed.value)
 
 // 标题文本
 const titleText = computed(() => {
   if (isError.value) {
-    return "生成失败，请重试";
+    return '生成失败，请重试'
   }
   if (isFinished.value) {
-    return "生成完成";
+    return '生成完成'
   }
-  return "AI生成中，请稍候...";
-});
+  return 'AI生成中，请稍候...'
+})
 
 // ========== 方法 ==========
 
@@ -97,33 +94,33 @@ const titleText = computed(() => {
  */
 const onClick = () => {
   if (isFinished.value && !isError.value) {
-    emit("click");
+    emit('click')
   }
-};
+}
 
 /**
  * 手动完成进度
  * 供父组件调用
  */
 const complete = async () => {
-  await completeProgress();
-};
+  await completeProgress()
+}
 
 /**
  * 手动标记失败
  * 供父组件调用
  */
-const fail = (error) => {
-  failProgress(error);
-};
+const fail = error => {
+  failProgress(error)
+}
 
 // ========== 生命周期 ==========
 
 // 组件挂载时自动启动进度
 onMounted(() => {
-  startProgress(10); // 从10%开始
-  startAutoProgress(); // 启动自动递增
-});
+  startProgress(10) // 从10%开始
+  startAutoProgress() // 启动自动递增
+})
 
 // ========== 暴露给父组件的方法 ==========
 defineExpose({
@@ -131,8 +128,8 @@ defineExpose({
   fail,
   isFinished,
   isError,
-  taskProgress,
-});
+  taskProgress
+})
 </script>
 
 <style scoped lang="scss">
@@ -174,13 +171,7 @@ defineExpose({
     .progress-card {
       border: 1px solid var(--bi-20, #ffe8e4);
       border-radius: 8px;
-      background: linear-gradient(
-        95deg,
-        #fff -0.29%,
-        #ffecea 32.98%,
-        #ffe8e8 67.7%,
-        #fff 100%
-      );
+      background: linear-gradient(95deg, #fff -0.29%, #ffecea 32.98%, #ffe8e8 67.7%, #fff 100%);
     }
   }
 }
@@ -200,7 +191,7 @@ defineExpose({
 .title {
   text-align: left;
   color: #000;
-  font-family: "Source Han Sans CN", sans-serif;
+  font-family: 'Source Han Sans CN', sans-serif;
   font-size: 18px;
   font-weight: 500;
   line-height: 1.6;
@@ -251,7 +242,7 @@ defineExpose({
 .tip-text {
   text-align: left;
   color: #8c8c8c;
-  font-family: "Source Han Sans CN", sans-serif;
+  font-family: 'Source Han Sans CN', sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.6;

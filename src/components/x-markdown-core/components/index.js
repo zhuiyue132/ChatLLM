@@ -7,7 +7,7 @@
  * @Description  :
  *
  */
-import CodeX from "./code-x/index.vue";
-import Mermaid from "./mermaid/index.vue";
+import CodeX from './code-x/index.vue'
+import Mermaid from './mermaid/index.vue'
 
-export { CodeX, Mermaid };
+export { CodeX, Mermaid }

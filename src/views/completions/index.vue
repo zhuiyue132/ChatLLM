@@ -1,18 +1,9 @@
-<!--
- * @Author       : zhuiyue132
- * @Date         : 2025-08-21
- * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-26
- * @FilePath     : /ChatLLM/src/views/completions/index.vue
- * @Description  : AI 补全的首页
- * 
--->
 <template>
   <div class="chat-container">
     <div class="chat-content">
       <!-- 欢迎标题 -->
       <div class="welcome-section">
-        <h1 class="welcome-title">欢迎使用Chat2LLM</h1>
+        <h1 class="welcome-title">欢迎使用ChatLLM</h1>
       </div>
 
       <!-- 输入区域 -->
@@ -20,6 +11,7 @@
       <div class="input-section">
         <AgentSender
           ref="senderRef"
+          v-model="inputMessage"
           v-model:model="currentModel"
           :model-list="modelList"
           :float-button-enable="false"
@@ -28,7 +20,6 @@
           :allow-empty-message="false"
           :placeholder="PLACEHOLDER_MAP.DEFAULT"
           show-model-select
-          validate-mode="both"
           agent-code="completions"
           @submit="handleMessageSubmit"
         />
@@ -39,19 +30,22 @@
 <script setup>
 import AgentSender from '@/components/sender/index.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
-import { useRoute, useRouter } from 'vue-router'
-import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
 import { useApiSettingsStore } from '@/stores/api-settings'
+import { useChatRoomsStore } from '@/stores/chat-rooms'
 
-const route = useRoute()
+const router = useRouter()
 const apiSettingsStore = useApiSettingsStore()
+const chatRoomsStore = useChatRoomsStore()
 
 const senderRef = ref(null)
 
-// 当前选中的模型（多选模式需要数组格式）
-const currentModel = ref(
-  apiSettingsStore.defaultModel ? [apiSettingsStore.defaultModel] : []
-)
+// 输入框内容
+const inputMessage = ref('')
+
+// 当前选中的模型
+const currentModel = ref(apiSettingsStore.defaultModel || '')
 
 // 模型列表，转换为 ModelSelector 所需格式
 const modelList = computed(() => {
@@ -61,9 +55,37 @@ const modelList = computed(() => {
   }))
 })
 
-const handleMessageSubmit = (payload = {}) => {}
+/**
+ * 处理消息提交
+ * @param {Object} payload - 提交的消息数据
+ * @param {string} payload.message - 用户输入的消息
+ */
+const handleMessageSubmit = (payload = {}) => {
+  const { message } = payload
+  const model = currentModel.value || apiSettingsStore.defaultModel
 
-onMounted(async () => {})
+  if (!message || !message.trim()) {
+    return
+  }
+
+  // 1. 创建新房间
+  const roomId = chatRoomsStore.createRoom(model, '新对话')
+
+  // 2. 存储待发送的消息到 sessionStorage
+  window.sessionStorage.setItem(
+    'COMPLETIONS_WILL_SEND_MESSAGE',
+    JSON.stringify({
+      message,
+      model
+    })
+  )
+
+  // 3. 跳转到对话页面
+  router.push({
+    name: 'CompletionsChat',
+    query: { roomId }
+  })
+}
 </script>
 
 <style lang="scss" scoped>

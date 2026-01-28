@@ -18,11 +18,7 @@
         >
           苏ICP备2021033235号-3
         </a>
-        <img
-          class="footer__ver-line"
-          src="@/assets/images/footer/vertical_divider.svg"
-          alt="｜"
-        />
+        <img class="footer__ver-line" src="@/assets/images/footer/vertical_divider.svg" alt="｜" />
         <span class="footer__item">使用条款</span>
         <span class="footer__item help">帮助</span>
       </div>

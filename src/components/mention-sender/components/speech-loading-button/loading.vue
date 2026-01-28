@@ -10,29 +10,29 @@
 defineProps({
   className: {
     type: String,
-    default: "",
-  },
-});
+    default: ''
+  }
+})
 
 // 定义常量
-const SIZE = 1000;
-const COUNT = 4;
-const RECT_WIDTH = 140;
-const RECT_RADIUS = RECT_WIDTH / 2;
-const RECT_HEIGHT_MIN = 250;
-const RECT_HEIGHT_MAX = 500;
-const DURATION = 0.8;
+const SIZE = 1000
+const COUNT = 4
+const RECT_WIDTH = 140
+const RECT_RADIUS = RECT_WIDTH / 2
+const RECT_HEIGHT_MIN = 250
+const RECT_HEIGHT_MAX = 500
+const DURATION = 0.8
 
 // 计算矩形的位置和高度范围
 const rects = computed(() => {
-  const dest = (SIZE - RECT_WIDTH * COUNT) / (COUNT - 1);
+  const dest = (SIZE - RECT_WIDTH * COUNT) / (COUNT - 1)
   return Array.from({ length: COUNT }).map((_, index) => {
-    const x = index * (dest + RECT_WIDTH);
-    const yMin = SIZE / 2 - RECT_HEIGHT_MIN / 2;
-    const yMax = SIZE / 2 - RECT_HEIGHT_MAX / 2;
-    return { x, yMin, yMax };
-  });
-});
+    const x = index * (dest + RECT_WIDTH)
+    const yMin = SIZE / 2 - RECT_HEIGHT_MIN / 2
+    const yMax = SIZE / 2 - RECT_HEIGHT_MAX / 2
+    return { x, yMin, yMax }
+  })
+})
 </script>
 
 <template>

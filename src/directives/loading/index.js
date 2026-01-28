@@ -26,27 +26,23 @@
  * 4. 属性配置：xs-loading-text="加载中..." xs-loading-size="large"
  */
 
-import { isRef, ref, watch, unref } from "vue";
-import { ElLoading } from "element-plus";
-import {
-  CIRCLE_SVG_TEMPLATE,
-  LOADING_SIZES,
-  LOADING_THEMES,
-} from "@/config/loading";
+import { isRef, ref, watch, unref } from 'vue'
+import { ElLoading } from 'element-plus'
+import { CIRCLE_SVG_TEMPLATE, LOADING_SIZES, LOADING_THEMES } from '@/config/loading'
 // eslint-disable-next-line vue/prefer-import-from-vue
-import { hyphenate, isObject, isString } from "@vue/shared";
+import { hyphenate, isObject, isString } from '@vue/shared'
 
 /**
  * 实例存储键名 - 用于在DOM元素上存储loading实例
  * @type {Symbol}
  */
-const INSTANCE_KEY = Symbol("XSLoading");
+const INSTANCE_KEY = Symbol('XSLoading')
 
 /**
  * 监听器存储键名 - 用于在DOM元素上存储响应式监听器
  * @type {Symbol}
  */
-const WATCHERS_KEY = Symbol("XSLoadingWatchers");
+const WATCHERS_KEY = Symbol('XSLoadingWatchers')
 
 /**
  * 解析表达式，支持字符串形式的Vue实例属性引用
@@ -55,11 +51,11 @@ const WATCHERS_KEY = Symbol("XSLoadingWatchers");
  * @returns {import('vue').Ref<any>|null} 响应式引用或null
  */
 const resolveExpression = (key, vm) => {
-  if (!key) return null;
+  if (!key) return null
   // 优先从Vue实例中获取属性，如果不存在则使用原始值
-  const data = (isString(key) && vm?.[key]) || key;
-  return data ? ref(data) : null;
-};
+  const data = (isString(key) && vm?.[key]) || key
+  return data ? ref(data) : null
+}
 
 /**
  * 从绑定对象中获取指定属性的值
@@ -70,10 +66,10 @@ const resolveExpression = (key, vm) => {
  */
 const getBindingValue = (binding, key, defaultValue = undefined) => {
   if (isObject(binding.value)) {
-    return binding.value[key] ?? defaultValue;
+    return binding.value[key] ?? defaultValue
   }
-  return defaultValue;
-};
+  return defaultValue
+}
 
 /**
  * 从元素属性中获取配置值
@@ -82,8 +78,8 @@ const getBindingValue = (binding, key, defaultValue = undefined) => {
  * @returns {string|null} 属性值或null
  */
 const getAttributeValue = (el, key) => {
-  return el.getAttribute(`xs-loading-${hyphenate(key)}`);
-};
+  return el.getAttribute(`xs-loading-${hyphenate(key)}`)
+}
 
 /**
  * 构建Loading配置选项
@@ -96,36 +92,35 @@ const getAttributeValue = (el, key) => {
 const buildOptions = (el, binding, vm) => {
   // 解析加载文本：支持响应式数据绑定
   const text = resolveExpression(
-    getBindingValue(binding, "text") || getAttributeValue(el, "text"),
-    vm,
-  );
+    getBindingValue(binding, 'text') || getAttributeValue(el, 'text'),
+    vm
+  )
 
   // 获取尺寸和主题配置
-  const size = getBindingValue(binding, "size", "medium");
-  const theme = getBindingValue(binding, "theme", "light");
-  const themeConfig = LOADING_THEMES[theme] || LOADING_THEMES.light;
+  const size = getBindingValue(binding, 'size', 'medium')
+  const theme = getBindingValue(binding, 'theme', 'light')
+  const themeConfig = LOADING_THEMES[theme] || LOADING_THEMES.light
 
   // 计算最终尺寸：优先使用自定义尺寸，否则使用预设尺寸
-  const customSize = getBindingValue(binding, "customSize");
-  const circleSize = customSize || LOADING_SIZES[size] || LOADING_SIZES.medium;
+  const customSize = getBindingValue(binding, 'customSize')
+  const circleSize = customSize || LOADING_SIZES[size] || LOADING_SIZES.medium
 
   // 处理特殊功能开关：支持配置对象和修饰符两种方式
-  const fullscreen =
-    getBindingValue(binding, "fullscreen") ?? binding.modifiers.fullscreen;
-  const body = getBindingValue(binding, "body") ?? binding.modifiers.body;
-  const lock = getBindingValue(binding, "lock") ?? binding.modifiers.lock;
+  const fullscreen = getBindingValue(binding, 'fullscreen') ?? binding.modifiers.fullscreen
+  const body = getBindingValue(binding, 'body') ?? binding.modifiers.body
+  const lock = getBindingValue(binding, 'lock') ?? binding.modifiers.lock
 
   // 解析背景色：支持响应式数据绑定和主题默认值
   const background = resolveExpression(
-    getBindingValue(binding, "background") || themeConfig.background,
-    vm,
-  );
+    getBindingValue(binding, 'background') || themeConfig.background,
+    vm
+  )
 
   // 解析自定义类名：支持响应式数据绑定和主题默认值
   const customClass = resolveExpression(
-    getBindingValue(binding, "customClass") || themeConfig.customClass,
-    vm,
-  );
+    getBindingValue(binding, 'customClass') || themeConfig.customClass,
+    vm
+  )
 
   return {
     text,
@@ -134,25 +129,25 @@ const buildOptions = (el, binding, vm) => {
     customClass,
     fullscreen,
     // 目标元素：全屏模式下不需要指定，否则使用当前元素
-    target: getBindingValue(binding, "target") ?? (fullscreen ? undefined : el),
+    target: getBindingValue(binding, 'target') ?? (fullscreen ? undefined : el),
     body,
-    lock,
-  };
-};
+    lock
+  }
+}
 
 /**
  * 清理所有监听器
  * 在组件更新或卸载时调用，防止内存泄漏
  * @param {HTMLElement} el - DOM元素
  */
-const cleanupWatchers = (el) => {
+const cleanupWatchers = el => {
   if (el[WATCHERS_KEY]) {
     // 执行所有监听器的清理函数
-    el[WATCHERS_KEY].forEach((cleanup) => cleanup());
+    el[WATCHERS_KEY].forEach(cleanup => cleanup())
     // 删除监听器存储
-    delete el[WATCHERS_KEY];
+    delete el[WATCHERS_KEY]
   }
-};
+}
 
 /**
  * 设置响应式监听器
@@ -163,9 +158,9 @@ const cleanupWatchers = (el) => {
  */
 const setupReactiveWatchers = (el, binding, vm) => {
   // 清理现有监听器，避免重复监听
-  cleanupWatchers(el);
+  cleanupWatchers(el)
 
-  const watchers = [];
+  const watchers = []
 
   // 监听对象类型绑定的深度变化
   if (isObject(binding.value)) {
@@ -174,79 +169,79 @@ const setupReactiveWatchers = (el, binding, vm) => {
       (newValue, oldValue) => {
         // 当整个配置对象发生变化时，更新loading实例
         if (newValue !== oldValue) {
-          updateReactiveInstance(el, binding);
+          updateReactiveInstance(el, binding)
         }
       },
-      { deep: true, immediate: false },
-    );
-    watchers.push(stopWatch);
+      { deep: true, immediate: false }
+    )
+    watchers.push(stopWatch)
   }
 
   // 监听 Vue 实例中的响应式数据
-  const watchedProps = new Set();
+  const watchedProps = new Set()
 
   // 递归收集需要监听的响应式属性
-  const collectWatchProps = (obj, prefix = "") => {
-    if (!isObject(obj)) return;
+  const collectWatchProps = (obj, prefix = '') => {
+    if (!isObject(obj)) return
 
-    Object.keys(obj).forEach((key) => {
-      const fullPath = prefix ? `${prefix}.${key}` : key;
+    Object.keys(obj).forEach(key => {
+      const fullPath = prefix ? `${prefix}.${key}` : key
 
       // 检查是否为响应式数据或Vue实例属性引用
       if (isRef(obj[key]) || (vm && isString(obj[key]) && vm[obj[key]])) {
-        watchedProps.add(fullPath);
+        watchedProps.add(fullPath)
       } else if (isObject(obj[key])) {
         // 递归处理嵌套对象
-        collectWatchProps(obj[key], fullPath);
+        collectWatchProps(obj[key], fullPath)
       }
-    });
-  };
+    })
+  }
 
   if (isObject(binding.value)) {
-    collectWatchProps(binding.value);
+    collectWatchProps(binding.value)
   }
 
   // 为每个响应式属性设置监听器
-  watchedProps.forEach((propPath) => {
+  watchedProps.forEach(propPath => {
     const stopWatch = watch(
       () => {
-        const obj = binding.value;
-        if (!isObject(obj)) return null;
+        const obj = binding.value
+        if (!isObject(obj)) return null
 
         // 解析属性路径，支持嵌套对象访问
-        const keys = propPath.split(".");
-        let value = obj;
+        const keys = propPath.split('.')
+        let value = obj
 
         for (const key of keys) {
           if (value && isRef(value[key])) {
             // 如果是响应式引用，返回解包后的值
-            return unref(value[key]);
+            return unref(value[key])
           } else if (value && vm && isString(value[key]) && vm[value[key]]) {
             // 如果是Vue实例属性引用，返回解包后的值
-            return unref(vm[value[key]]);
+            return unref(vm[value[key]])
           } else if (value && isObject(value[key])) {
             // 继续深入嵌套对象
-            value = value[key];
+            value = value[key]
           } else {
             // 返回最终值
-            return value?.[key];
+            return value?.[key]
           }
         }
 
-        return null;
+        return null
       },
       () => {
         // 当响应式数据变化时，更新loading实例
-        updateReactiveInstance(el, binding);
+        updateReactiveInstance(el, binding)
       },
-      { immediate: false },
-    );
-    watchers.push(stopWatch);
-  });
+      { immediate: false }
+    )
+    watchers.push(stopWatch)
+  })
 
   // 存储所有监听器，用于后续清理
-  el[WATCHERS_KEY] = watchers;
-};
+  el[WATCHERS_KEY] = watchers
+}
 
 /**
  * 响应式更新loading实例
@@ -255,18 +250,18 @@ const setupReactiveWatchers = (el, binding, vm) => {
  * @param {Object} binding - Vue指令绑定对象
  */
 const updateReactiveInstance = (el, binding) => {
-  const instance = el[INSTANCE_KEY];
-  if (!instance) return;
+  const instance = el[INSTANCE_KEY]
+  if (!instance) return
 
   try {
     // 重新构建配置选项
-    const newOptions = buildOptions(el, binding, binding.instance);
+    const newOptions = buildOptions(el, binding, binding.instance)
     // 更新现有实例的配置
-    updateOptions(newOptions, instance.options);
+    updateOptions(newOptions, instance.options)
   } catch (error) {
-    console.error("[XSLoading] 响应式更新失败:", error);
+    console.error('[XSLoading] 响应式更新失败:', error)
   }
-};
+}
 
 /**
  * 创建loading实例
@@ -276,22 +271,22 @@ const updateReactiveInstance = (el, binding) => {
  */
 const createInstance = (el, binding) => {
   try {
-    const vm = binding.instance;
+    const vm = binding.instance
     // 构建配置选项
-    const options = buildOptions(el, binding, vm);
+    const options = buildOptions(el, binding, vm)
 
     // 创建并存储loading实例
     el[INSTANCE_KEY] = {
       options,
-      instance: ElLoading.service(options),
-    };
+      instance: ElLoading.service(options)
+    }
 
     // 设置响应式监听，支持动态更新
-    setupReactiveWatchers(el, binding, vm);
+    setupReactiveWatchers(el, binding, vm)
   } catch (error) {
-    console.error("[XSLoading] 创建实例失败:", error);
+    console.error('[XSLoading] 创建实例失败:', error)
   }
-};
+}
 
 /**
  * 更新loading实例
@@ -300,29 +295,29 @@ const createInstance = (el, binding) => {
  * @param {Object} binding - Vue指令绑定对象
  */
 const updateInstance = (el, binding) => {
-  const instance = el[INSTANCE_KEY];
+  const instance = el[INSTANCE_KEY]
 
   try {
     if (binding.value && !binding.oldValue) {
       // 从无到有：创建新实例
-      createInstance(el, binding);
+      createInstance(el, binding)
     } else if (binding.value && binding.oldValue) {
       // 从有到有：更新现有实例
       if (isObject(binding.value)) {
-        updateReactiveInstance(el, binding);
+        updateReactiveInstance(el, binding)
         // 重新设置监听器，处理新的响应式数据
-        setupReactiveWatchers(el, binding, binding.instance);
+        setupReactiveWatchers(el, binding, binding.instance)
       }
     } else {
       // 从有到无：销毁实例
-      instance?.instance.close();
-      delete el[INSTANCE_KEY];
-      cleanupWatchers(el);
+      instance?.instance.close()
+      delete el[INSTANCE_KEY]
+      cleanupWatchers(el)
     }
   } catch (error) {
-    console.error("[XSLoading] 更新实例失败:", error);
+    console.error('[XSLoading] 更新实例失败:', error)
   }
-};
+}
 
 /**
  * 更新配置选项
@@ -334,17 +329,17 @@ const updateOptions = (newOptions, originalOptions) => {
   for (const key of Object.keys(originalOptions)) {
     // 只更新响应式引用的值，保持响应性
     if (isRef(originalOptions[key]) && newOptions[key] !== undefined) {
-      originalOptions[key].value = newOptions[key];
+      originalOptions[key].value = newOptions[key]
     }
   }
-};
+}
 
 /**
  * 注册xs-loading指令
  * @param {import('vue').App} app - Vue应用实例
  */
-export default (app) => {
-  app.directive("xs-loading", {
+export default app => {
+  app.directive('xs-loading', {
     /**
      * 指令挂载时触发
      * @param {HTMLElement} el - DOM元素
@@ -352,7 +347,7 @@ export default (app) => {
      */
     mounted(el, binding) {
       if (binding.value) {
-        createInstance(el, binding);
+        createInstance(el, binding)
       }
     },
     /**
@@ -362,7 +357,7 @@ export default (app) => {
      */
     updated(el, binding) {
       if (binding.oldValue !== binding.value) {
-        updateInstance(el, binding);
+        updateInstance(el, binding)
       }
     },
     /**
@@ -371,19 +366,19 @@ export default (app) => {
      * @param {HTMLElement} el - DOM元素
      */
     unmounted(el) {
-      const instance = el[INSTANCE_KEY];
+      const instance = el[INSTANCE_KEY]
       if (instance) {
         try {
           // 关闭loading实例
-          instance.instance.close();
+          instance.instance.close()
           // 清理存储的实例引用
-          delete el[INSTANCE_KEY];
+          delete el[INSTANCE_KEY]
           // 清理所有监听器
-          cleanupWatchers(el);
+          cleanupWatchers(el)
         } catch (error) {
-          console.error("[XSLoading] 销毁实例失败:", error);
+          console.error('[XSLoading] 销毁实例失败:', error)
         }
       }
-    },
-  });
-};
+    }
+  })
+}

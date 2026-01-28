@@ -6,16 +6,16 @@
 
 <script setup>
 defineOptions({
-  name: "XsDropdownItem",
-  inheritAttrs: false,
-});
+  name: 'XsDropdownItem',
+  inheritAttrs: false
+})
 
 defineProps({
   customClass: {
     type: String,
-    default: "",
-  },
-});
+    default: ''
+  }
+})
 </script>
 
 <style lang="scss">

@@ -60,8 +60,7 @@ export const useSingleChat = (options = {}) => {
   })
 
   const isGenerating = computed(
-    () =>
-      status.value === OpenAISSEStatus.CONNECTING || status.value === OpenAISSEStatus.STREAMING
+    () => status.value === OpenAISSEStatus.CONNECTING || status.value === OpenAISSEStatus.STREAMING
   )
 
   const sendMessage = async userMessage => {
@@ -133,10 +132,7 @@ export const useMultiChat = (options = {}) => {
     if (!chat) return
 
     // 检查该对话是否正在生成中
-    if (
-      chat.status === OpenAISSEStatus.CONNECTING ||
-      chat.status === OpenAISSEStatus.STREAMING
-    ) {
+    if (chat.status === OpenAISSEStatus.CONNECTING || chat.status === OpenAISSEStatus.STREAMING) {
       console.warn(`Chat ${chatId} is busy`)
       return
     }

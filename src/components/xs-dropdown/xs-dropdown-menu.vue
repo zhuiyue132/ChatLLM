@@ -1,29 +1,25 @@
 <template>
-  <el-dropdown-menu
-    v-bind="$attrs"
-    :class="['xs-dropdown-menu', customClass]"
-    :style="customStyle"
-  >
+  <el-dropdown-menu v-bind="$attrs" :class="['xs-dropdown-menu', customClass]" :style="customStyle">
     <slot></slot>
   </el-dropdown-menu>
 </template>
 
 <script setup>
 defineOptions({
-  name: "XsDropdownMenu",
-  inheritAttrs: false,
-});
+  name: 'XsDropdownMenu',
+  inheritAttrs: false
+})
 
 defineProps({
   customClass: {
     type: String,
-    default: "",
+    default: ''
   },
   customStyle: {
     type: Object,
-    default: () => ({}),
-  },
-});
+    default: () => ({})
+  }
+})
 </script>
 
 <style lang="scss">

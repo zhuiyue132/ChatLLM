@@ -2,8 +2,8 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-07-22
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2025-12-15
- * @FilePath     : /bi-agents/src/components/completions-message/user.vue
+ * @LastEditTime : 2026-01-28
+ * @FilePath     : /ChatLLM/src/components/completions-message/user.vue
  * @Description  : 用户消息组件
  * 
 -->
@@ -93,7 +93,6 @@ import { chunk } from 'lodash-es'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import FileItem from '../sender/components/file-item.vue'
 import { IGNORE_MESSAGE } from '@/config/app'
-import { chatFilePreviewApi } from '@/api/completions'
 import { onCopy } from '@/utils'
 import { convertImageToBase64 } from '@/utils/img/index.js'
 import { showMessage } from '@/hooks/use-message'
@@ -191,30 +190,6 @@ watch(
           }
         }
       })
-    }
-  },
-  { immediate: true }
-)
-
-watch(
-  () => props.fileList,
-  async current => {
-    if (current && current.length) {
-      for (let index = 0; index < current.length; index++) {
-        const fileObj = current[index]
-        if (fileObj.type === 'image') {
-          if (fileObj.url) {
-            continue
-          } else {
-            const res = await chatFilePreviewApi({ fileId: fileObj.fileId })
-            if (res.data.code === 0) {
-              fileObj.url = await convertImageToBase64(res.data.data.url)
-            }
-          }
-        } else {
-          continue
-        }
-      }
     }
   },
   { immediate: true }

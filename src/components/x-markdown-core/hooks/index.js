@@ -7,8 +7,8 @@
  * @Description  :
  *
  */
-export * from "./use-components";
-export * from "./use-plugins";
-export * from "./use-theme-mode";
-export * from "./use-mermaid";
-export { preprocessMathFormulas } from "./remark-math-extended";
+export * from './use-components'
+export * from './use-plugins'
+export * from './use-theme-mode'
+export * from './use-mermaid'
+export { preprocessMathFormulas } from './remark-math-extended'

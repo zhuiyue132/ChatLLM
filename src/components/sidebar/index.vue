@@ -14,7 +14,7 @@
       '--width-sidebar-block': isCollapsed ? `0` : `${widthSidebarExpanded}px`,
       '--width-sidebar-header': isCollapsed
         ? `${widthSidebarCollapsed}px`
-        : `${widthSidebarExpanded}px`,
+        : `${widthSidebarExpanded}px`
     }"
   >
     <div class="sidebar-block" />
@@ -32,11 +32,7 @@
           <div title="展开" class="collapse-btn" @click="toggleSidebar">
             <i class="iconfont icon-fenlan sidebar-header-icon"></i>
           </div>
-          <div
-            title="发起对话"
-            class="collapse-btn"
-            @click.stop="handleStartChat"
-          >
+          <div title="发起对话" class="collapse-btn" @click.stop="handleStartChat">
             <i class="iconfont icon-faqixinduihua sidebar-header-icon"></i>
           </div>
         </div>
@@ -70,15 +66,8 @@
 
         <!-- 历史记录 -->
         <el-scrollbar ref="scrollRef" always>
-          <div
-            v-if="filteredChatRoomGroupList.length > 0"
-            class="history-section"
-          >
-            <div
-              v-for="group in filteredChatRoomGroupList"
-              :key="group.key"
-              class="history-list"
-            >
+          <div v-if="filteredChatRoomGroupList.length > 0" class="history-section">
+            <div v-for="group in filteredChatRoomGroupList" :key="group.key" class="history-list">
               <div>
                 <span class="group-name-label">{{ group.groupName }}</span>
               </div>
@@ -87,12 +76,8 @@
                 :key="`chat-room-${chatRoomInfo.agentId}-${chatRoomInfo.taskId}`"
                 :chat-room-info="chatRoomInfo"
                 :is-active="activeRoomId === chatRoomInfo.taskId"
-                @chat-room-item-click="
-                  handleChatRoomItemClick($event, chatRoomInfo)
-                "
-                @chat-room-item-operation="
-                  handleChatRoomItemOperation($event, chatRoomInfo)
-                "
+                @chat-room-item-click="handleChatRoomItemClick($event, chatRoomInfo)"
+                @chat-room-item-operation="handleChatRoomItemOperation($event, chatRoomInfo)"
               />
             </div>
             <div class="section-footer">
@@ -100,15 +85,8 @@
             </div>
           </div>
 
-          <div
-            v-if="isCompleted && filteredChatRoomGroupList.length === 0"
-            class="history-section"
-          >
-            <AgentEmpty
-              type="search"
-              description="没有更多数据了"
-              class="no-data-empty"
-            />
+          <div v-if="isCompleted && filteredChatRoomGroupList.length === 0" class="history-section">
+            <AgentEmpty type="search" description="没有更多数据了" class="no-data-empty" />
           </div>
         </el-scrollbar>
       </template>
@@ -116,89 +94,85 @@
   </div>
 </template>
 <script setup>
-import { ref, computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import { setPopperPosition } from "@/utils";
-import { useEventBus, useVModel, tryOnMounted } from "@vueuse/core";
-import { APP_NAME } from "@/config/app";
-import AgentEmpty from "@/components/empty/index.vue";
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { setPopperPosition } from '@/utils'
+import { useEventBus, useVModel, tryOnMounted } from '@vueuse/core'
+import { APP_NAME } from '@/config/app'
+import AgentEmpty from '@/components/empty/index.vue'
 import {
   AGENT_UNREADCOUNT_COMMAND,
   RECEIVE_CHAT_TASK_COMMAND,
-  FETCH_CHAR_HISTORY,
-} from "@/config/symbol";
-import {
-  XsDropdown,
-  XsDropdownMenu,
-  XsDropdownItem,
-} from "@/components/xs-dropdown";
-import { useSidebar } from "@/hooks/use-sidebar";
+  FETCH_CHAR_HISTORY
+} from '@/config/symbol'
+import { XsDropdown, XsDropdownMenu, XsDropdownItem } from '@/components/xs-dropdown'
+import { useSidebar } from '@/hooks/use-sidebar'
 
-import ChatRoomItem from "./chat-room-item/index.vue";
-import { useChatRoom } from "./hooks/use-chat-room";
+import ChatRoomItem from './chat-room-item/index.vue'
+import { useChatRoom } from './hooks/use-chat-room'
 
 defineOptions({
-  name: "CommonSidebar",
-});
+  name: 'CommonSidebar'
+})
 
 const props = defineProps({
   platformList: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
   platform: {
     type: String,
-    default: "",
-  },
-});
+    default: ''
+  }
+})
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
-const eventBus = useEventBus(AGENT_UNREADCOUNT_COMMAND);
-const eventBusOfReceiveChatTask = useEventBus(RECEIVE_CHAT_TASK_COMMAND);
-const eventBusOfHistory = useEventBus(FETCH_CHAR_HISTORY);
-const eventBusOfPopover = useEventBus("popover-action");
+const eventBus = useEventBus(AGENT_UNREADCOUNT_COMMAND)
+const eventBusOfReceiveChatTask = useEventBus(RECEIVE_CHAT_TASK_COMMAND)
+const eventBusOfHistory = useEventBus(FETCH_CHAR_HISTORY)
+const eventBusOfPopover = useEventBus('popover-action')
 
 eventBusOfReceiveChatTask.on(() => {
   // console.log('接收到 RECEIVE_CHAT_TASK_COMMAND 事件', message?.data?.asyncTaskId)
 
-  setTimeout(() => {}, 2000);
-});
+  setTimeout(() => {}, 2000)
+})
 
 eventBus.on(({ type, params }) => {
-  console.log("接收到消息");
-  console.log(type, params);
+  console.log('接收到消息')
+  console.log(type, params)
 
-  startTaskProcess();
+  startTaskProcess()
 
-  const { agentId, taskId } = params;
+  const { agentId, taskId } = params
 
   const index = chatRoomList.value.findIndex(
-    (item) => item.taskId === taskId && +item.agentId === +agentId,
-  );
+    item => item.taskId === taskId && +item.agentId === +agentId
+  )
 
-  if (index === -1) return;
-  const agent = chatRoomList.value[index];
+  if (index === -1) return
+  const agent = chatRoomList.value[index]
 
-  if (type === "subtract") {
+  if (type === 'subtract') {
     chatRoomList.value.splice(index, 1, {
       ...agent,
-      unreadReportCount: agent.unreadReportCount - 1,
-    });
-  } else if (type === "add") {
+      unreadReportCount: agent.unreadReportCount - 1
+    })
+  } else if (type === 'add') {
     chatRoomList.value.splice(index, 1, {
       ...agent,
-      unreadReportCount: agent.unreadReportCount + 1,
-    });
+      unreadReportCount: agent.unreadReportCount + 1
+    })
   }
-});
+})
 
-const emit = defineEmits(["update:platform"]);
+const emit = defineEmits(['update:platform'])
 
-const currentPlatform = useVModel(props, "platform", emit);
+const currentPlatform = useVModel(props, 'platform', emit)
 
-const scrollRef = ref();
+const scrollRef = ref()
 
 const {
   isCompleted,
@@ -209,119 +183,114 @@ const {
   unpinChatRoom,
   renameChatRoom,
   deleteChatRoom,
-  createInfiniteScroll,
-} = useChatRoom(999999999, route);
+  createInfiniteScroll
+} = useChatRoom(999999999, route)
 
-const {
-  isCollapsed,
-  widthSidebarCollapsed,
-  widthSidebarExpanded,
-  toggleSidebar,
-} = useSidebar();
+const { isCollapsed, widthSidebarCollapsed, widthSidebarExpanded, toggleSidebar } = useSidebar()
 
 const activeRoomId = computed(() => {
-  return route.query.conversationId || null;
-});
+  return route.query.conversationId || null
+})
 
 const isActiveStartChat = computed(() => {
-  return route.path.includes("/completions");
-});
+  return route.path.includes('/completions')
+})
 
-tryOnMounted(() => {});
+tryOnMounted(() => {})
 
 const handleStartChat = () => {
   router.push({
-    path: "/completions",
-  });
-};
+    path: '/completions'
+  })
+}
 
-const handlePlatformChange = (platform) => {
-  currentPlatform.value = platform;
+const handlePlatformChange = platform => {
+  currentPlatform.value = platform
   router.push({
-    path: "/agents",
-    query: { platform },
-  });
-};
+    path: '/agents',
+    query: { platform }
+  })
+}
 
 const handleChatRoomItemClick = (_event, room) => {
-  if (room.taskId === activeRoomId.value && !room.chatDetailId) return;
+  if (room.taskId === activeRoomId.value && !room.chatDetailId) return
 
   // 发送关闭popover事件
-  eventBusOfPopover.emit("close");
+  eventBusOfPopover.emit('close')
 
   // 区分AI对话和智能体对话，二者页面不同
   const path =
     room.agentId === 0
-      ? "/completions/chat"
+      ? '/completions/chat'
       : room.agentId === 1
-        ? "/completions/multi-model-chat"
-        : "/agents/chat";
+        ? '/completions/multi-model-chat'
+        : '/agents/chat'
 
   const query = {
     conversationId: room.taskId,
-    agentId: room.agentId,
-  };
+    agentId: room.agentId
+  }
   if (room.chatDetailId) {
-    query.chatDetailId = room.chatDetailId;
+    query.chatDetailId = room.chatDetailId
   }
 
   router.replace({
     path,
-    query,
-  });
+    query
+  })
 
   setTimeout(() => {
     eventBusOfHistory.emit({
       taskId: room.taskId,
       aiModel: room.aiModel,
-      agentId: room.agentId,
-    });
-  }, 100);
-};
+      agentId: room.agentId
+    })
+  }, 100)
+}
 
 const handleChatRoomItemOperation = async (command, room) => {
-  console.log("command", command);
-  console.log("room", room);
+  console.log('command', command)
+  console.log('room', room)
   switch (command) {
-    case "pin": {
-      const res = await pinChatRoom(room);
+    case 'pin': {
+      const res = await pinChatRoom(room)
       if (res) {
         document
           .querySelector(`#chat-room-item-${room?.taskId}`)
-          ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
-      break;
+      break
     }
-    case "unpin": {
-      const res = await unpinChatRoom(room);
+    case 'unpin': {
+      const res = await unpinChatRoom(room)
       if (res) {
         document
           .querySelector(`#chat-room-item-${room?.taskId}`)
-          ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
-      break;
+      break
     }
-    case "rename": {
-      await renameChatRoom(room);
-      break;
+    case 'rename': {
+      await renameChatRoom(room)
+      break
     }
-    case "delete": {
+    case 'delete': {
       // eslint-disable-next-line no-case-declarations
-      const res = await deleteChatRoom(room);
+      const res = await deleteChatRoom(room)
       if (res) {
         if (activeRoomId.value === room.taskId) {
           router.replace({
-            path: "/agents",
-          });
+            path: '/agents'
+          })
         }
       }
-      break;
+      break
     }
     default: {
-      break;
+      break
     }
   }
-};
+}
 </script>
 <style lang="scss" scoped>
 .no-data-empty {
@@ -380,7 +349,7 @@ const handleChatRoomItemOperation = async (command, room) => {
   flex-direction: column;
   border-right: 1px solid #d4dbe9;
   background: #f1f2f4;
-  font-family: "Source Han Sans CN", sans-serif;
+  font-family: 'Source Han Sans CN', sans-serif;
 
   .sidebar-header-block {
     width: auto;

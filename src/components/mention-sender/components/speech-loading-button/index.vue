@@ -8,7 +8,7 @@
 -->
 <!-- SpeechLoadingButton 语音loading 按钮 -->
 <script setup>
-import loading from "./loading.vue";
+import loading from './loading.vue'
 </script>
 
 <template>

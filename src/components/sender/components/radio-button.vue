@@ -8,12 +8,7 @@
  * 
 -->
 <template>
-  <el-radio-group
-    v-model="radio"
-    class="radio-button"
-    text-color="#000"
-    fill="#BBF5B3"
-  >
+  <el-radio-group v-model="radio" class="radio-button" text-color="#000" fill="#BBF5B3">
     <el-radio-button
       v-for="item in list"
       :key="item?.value || item?.label || item"
@@ -23,22 +18,22 @@
   </el-radio-group>
 </template>
 <script setup>
-import { useVModel } from "@vueuse/core";
+import { useVModel } from '@vueuse/core'
 
 const props = defineProps({
   modelValue: {
     type: [String, Number],
-    default: "",
+    default: ''
   },
   list: {
     type: Array,
-    default: () => [],
-  },
-});
+    default: () => []
+  }
+})
 
-const emits = defineEmits(["update:modelValue"]);
+const emits = defineEmits(['update:modelValue'])
 
-const radio = useVModel(props, "modelValue", emits);
+const radio = useVModel(props, 'modelValue', emits)
 </script>
 
 <style lang="scss" scoped>

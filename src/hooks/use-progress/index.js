@@ -7,7 +7,7 @@
  * @Description  : 进度条控制 Hook - 提供进度条显示、自动递增、完成/失败状态等完整生命周期控制
  */
 
-import { ref, onBeforeUnmount } from "vue";
+import { ref, onBeforeUnmount } from 'vue'
 
 /**
  * 进度条状态枚举
@@ -20,14 +20,14 @@ import { ref, onBeforeUnmount } from "vue";
  * @property {string} CANCELLED - 已取消
  */
 export const PROGRESS_STATE = {
-  IDLE: "idle",
-  STARTING: "starting",
-  RUNNING: "running",
-  COMPLETING: "completing",
-  COMPLETED: "completed",
-  FAILED: "failed",
-  CANCELLED: "cancelled",
-};
+  IDLE: 'idle',
+  STARTING: 'starting',
+  RUNNING: 'running',
+  COMPLETING: 'completing',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+  CANCELLED: 'cancelled'
+}
 
 /**
  * 进度条控制 Hook
@@ -64,47 +64,47 @@ export const useProgress = (options = {}) => {
     onUpdate,
     onComplete,
     onFail,
-    onCancel,
-  } = options;
+    onCancel
+  } = options
 
   // ========== 响应式状态 ==========
 
   // 进度值(0-100)
-  const progressValue = ref(0);
+  const progressValue = ref(0)
 
   // 是否显示进度条
-  const progressVisible = ref(false);
+  const progressVisible = ref(false)
 
   // 进度条状态
-  const progressState = ref(PROGRESS_STATE.IDLE);
+  const progressState = ref(PROGRESS_STATE.IDLE)
 
   // 是否正在运行
-  const isRunning = ref(false);
+  const isRunning = ref(false)
 
   // 是否已完成
-  const isCompleted = ref(false);
+  const isCompleted = ref(false)
 
   // 是否失败
-  const isFailed = ref(false);
+  const isFailed = ref(false)
 
   // ========== 定时器引用 ==========
 
   // 自动递增定时器
-  const autoTimer = ref(null);
+  const autoTimer = ref(null)
 
   // 延迟显示定时器
-  const delayTimer = ref(null);
+  const delayTimer = ref(null)
 
   // 完成延迟定时器
-  const completeTimer = ref(null);
+  const completeTimer = ref(null)
 
   // ========== 时间记录 ==========
 
   // 进度条开始时间(用于计算最小展示时长)
-  const startTime = ref(0);
+  const startTime = ref(0)
 
   // 自动递增是否运行中
-  const isAutoRunning = ref(false);
+  const isAutoRunning = ref(false)
 
   // ========== 内部工具函数 ==========
 
@@ -113,14 +113,14 @@ export const useProgress = (options = {}) => {
    * @param {number} ms - 延迟毫秒数
    * @returns {Promise<void>}
    */
-  const sleep = (ms) =>
-    new Promise((resolve) => {
-      const timer = setTimeout(resolve, ms);
+  const sleep = ms =>
+    new Promise(resolve => {
+      const timer = setTimeout(resolve, ms)
       // 避免内存泄漏
       if (progressState.value === PROGRESS_STATE.CANCELLED) {
-        clearTimeout(timer);
+        clearTimeout(timer)
       }
-    });
+    })
 
   /**
    * 清理所有定时器
@@ -130,53 +130,53 @@ export const useProgress = (options = {}) => {
    */
   const clearTimers = () => {
     if (autoTimer.value) {
-      clearInterval(autoTimer.value);
-      autoTimer.value = null;
+      clearInterval(autoTimer.value)
+      autoTimer.value = null
     }
     if (delayTimer.value) {
-      clearTimeout(delayTimer.value);
-      delayTimer.value = null;
+      clearTimeout(delayTimer.value)
+      delayTimer.value = null
     }
     if (completeTimer.value) {
-      clearTimeout(completeTimer.value);
-      completeTimer.value = null;
+      clearTimeout(completeTimer.value)
+      completeTimer.value = null
     }
-    isAutoRunning.value = false;
-  };
+    isAutoRunning.value = false
+  }
 
   /**
    * 更新进度值（带校验）
    * @param {number} value - 进度值
    */
-  const setProgressValue = (value) => {
-    const safeValue = Math.max(0, Math.min(100, Math.round(value)));
+  const setProgressValue = value => {
+    const safeValue = Math.max(0, Math.min(100, Math.round(value)))
     if (progressValue.value !== safeValue) {
-      progressValue.value = safeValue;
+      progressValue.value = safeValue
       if (onUpdate) {
-        onUpdate(safeValue);
+        onUpdate(safeValue)
       }
     }
-  };
+  }
 
   /**
    * 更新状态
    * @param {string} newState - 新状态
    */
-  const setState = (newState) => {
+  const setState = newState => {
     if (progressState.value !== newState) {
-      progressState.value = newState;
+      progressState.value = newState
 
       // 更新衍生的布尔状态
       isRunning.value = [
         PROGRESS_STATE.STARTING,
         PROGRESS_STATE.RUNNING,
-        PROGRESS_STATE.COMPLETING,
-      ].includes(newState);
+        PROGRESS_STATE.COMPLETING
+      ].includes(newState)
 
-      isCompleted.value = newState === PROGRESS_STATE.COMPLETED;
-      isFailed.value = newState === PROGRESS_STATE.FAILED;
+      isCompleted.value = newState === PROGRESS_STATE.COMPLETED
+      isFailed.value = newState === PROGRESS_STATE.FAILED
     }
-  };
+  }
 
   // ========== 公开的方法 ==========
 
@@ -191,44 +191,44 @@ export const useProgress = (options = {}) => {
   const startProgress = (initialValue = 10) => {
     // 防止重复启动
     if (isRunning.value) {
-      console.warn("[useProgress] 进度条已在运行中");
-      return;
+      console.warn('[useProgress] 进度条已在运行中')
+      return
     }
 
-    resetProgress();
-    setState(PROGRESS_STATE.STARTING);
-    setProgressValue(initialValue);
+    resetProgress()
+    setState(PROGRESS_STATE.STARTING)
+    setProgressValue(initialValue)
 
     if (onStart) {
-      onStart();
+      onStart()
     }
 
     if (showDelay > 0) {
       delayTimer.value = setTimeout(() => {
         if (progressState.value === PROGRESS_STATE.STARTING) {
-          progressVisible.value = true;
-          startTime.value = Date.now();
-          setState(PROGRESS_STATE.RUNNING);
+          progressVisible.value = true
+          startTime.value = Date.now()
+          setState(PROGRESS_STATE.RUNNING)
         }
-      }, showDelay);
+      }, showDelay)
     } else {
-      progressVisible.value = true;
-      startTime.value = Date.now();
-      setState(PROGRESS_STATE.RUNNING);
+      progressVisible.value = true
+      startTime.value = Date.now()
+      setState(PROGRESS_STATE.RUNNING)
     }
-  };
+  }
 
   /**
    * 手动更新进度
    * @param {number} value - 进度值(0-100)
    */
-  const updateProgress = (value) => {
+  const updateProgress = value => {
     if (!isRunning.value && progressState.value !== PROGRESS_STATE.COMPLETED) {
-      console.warn("[useProgress] 无法更新进度：进度条未运行");
-      return;
+      console.warn('[useProgress] 无法更新进度：进度条未运行')
+      return
     }
-    setProgressValue(value);
-  };
+    setProgressValue(value)
+  }
 
   /**
    * 启动自动递增模拟
@@ -238,27 +238,24 @@ export const useProgress = (options = {}) => {
    */
   const startAutoProgress = () => {
     if (isAutoRunning.value) {
-      return;
+      return
     }
 
     if (!isRunning.value) {
-      console.warn("[useProgress] 无法启动自动递增：进度条未启动");
-      return;
+      console.warn('[useProgress] 无法启动自动递增：进度条未启动')
+      return
     }
 
-    isAutoRunning.value = true;
+    isAutoRunning.value = true
 
     autoTimer.value = setInterval(() => {
-      if (
-        progressState.value === PROGRESS_STATE.RUNNING &&
-        progressValue.value < autoMax
-      ) {
-        setProgressValue(progressValue.value + autoStep);
+      if (progressState.value === PROGRESS_STATE.RUNNING && progressValue.value < autoMax) {
+        setProgressValue(progressValue.value + autoStep)
       } else {
-        stopAutoProgress();
+        stopAutoProgress()
       }
-    }, autoInterval);
-  };
+    }, autoInterval)
+  }
 
   /**
    * 停止自动递增
@@ -266,11 +263,11 @@ export const useProgress = (options = {}) => {
    */
   const stopAutoProgress = () => {
     if (autoTimer.value) {
-      clearInterval(autoTimer.value);
-      autoTimer.value = null;
+      clearInterval(autoTimer.value)
+      autoTimer.value = null
     }
-    isAutoRunning.value = false;
-  };
+    isAutoRunning.value = false
+  }
 
   /**
    * 完成进度条
@@ -283,46 +280,46 @@ export const useProgress = (options = {}) => {
    */
   const completeProgress = async () => {
     if (!isRunning.value && progressState.value !== PROGRESS_STATE.RUNNING) {
-      console.warn("[useProgress] 无法完成进度：进度条未运行");
-      return;
+      console.warn('[useProgress] 无法完成进度：进度条未运行')
+      return
     }
 
-    setState(PROGRESS_STATE.COMPLETING);
-    stopAutoProgress();
-    setProgressValue(100);
+    setState(PROGRESS_STATE.COMPLETING)
+    stopAutoProgress()
+    setProgressValue(100)
 
-    const elapsed = Date.now() - startTime.value;
-    const delayToSatisfyMinVisible = Math.max(0, minVisibleTime - elapsed);
+    const elapsed = Date.now() - startTime.value
+    const delayToSatisfyMinVisible = Math.max(0, minVisibleTime - elapsed)
 
     try {
       // 等待最小展示时长
       if (delayToSatisfyMinVisible > 0) {
-        await sleep(delayToSatisfyMinVisible);
+        await sleep(delayToSatisfyMinVisible)
       }
 
       // 完成后停留时间
       if (completeDelay > 0) {
-        await sleep(completeDelay);
+        await sleep(completeDelay)
       }
 
       if (progressState.value === PROGRESS_STATE.COMPLETING) {
-        setState(PROGRESS_STATE.COMPLETED);
+        setState(PROGRESS_STATE.COMPLETED)
         if (onComplete) {
-          onComplete();
+          onComplete()
         }
 
         // 延迟隐藏，给用户视觉反馈
         setTimeout(() => {
           if (progressState.value === PROGRESS_STATE.COMPLETED) {
-            resetProgress();
+            resetProgress()
           }
-        }, 100);
+        }, 100)
       }
     } catch (error) {
       // 被取消或其他异常
-      console.debug("[useProgress] 进度完成被中断:", error);
+      console.debug('[useProgress] 进度完成被中断:', error)
     }
-  };
+  }
 
   /**
    * 进度失败/中断处理
@@ -331,21 +328,21 @@ export const useProgress = (options = {}) => {
    *
    * @param {Error} error - 错误对象（可选）
    */
-  const failProgress = (error) => {
-    setState(PROGRESS_STATE.FAILED);
-    stopAutoProgress();
+  const failProgress = error => {
+    setState(PROGRESS_STATE.FAILED)
+    stopAutoProgress()
 
     if (onFail) {
-      onFail(error);
+      onFail(error)
     }
 
     // 延迟重置，给用户看到失败状态
     setTimeout(() => {
       if (progressState.value === PROGRESS_STATE.FAILED) {
-        resetProgress();
+        resetProgress()
       }
-    }, 1000);
-  };
+    }, 1000)
+  }
 
   /**
    * 取消进度
@@ -354,15 +351,15 @@ export const useProgress = (options = {}) => {
    * - 重置状态
    */
   const cancelProgress = () => {
-    setState(PROGRESS_STATE.CANCELLED);
-    clearTimers();
+    setState(PROGRESS_STATE.CANCELLED)
+    clearTimers()
 
     if (onCancel) {
-      onCancel();
+      onCancel()
     }
 
-    resetProgress();
-  };
+    resetProgress()
+  }
 
   /**
    * 重置进度条状态
@@ -371,16 +368,16 @@ export const useProgress = (options = {}) => {
    * - 清理所有定时器
    */
   const resetProgress = () => {
-    setProgressValue(0);
-    progressVisible.value = false;
-    setState(PROGRESS_STATE.IDLE);
-    clearTimers();
-  };
+    setProgressValue(0)
+    progressVisible.value = false
+    setState(PROGRESS_STATE.IDLE)
+    clearTimers()
+  }
 
   // 组件卸载时清理
   onBeforeUnmount(() => {
-    clearTimers();
-  });
+    clearTimers()
+  })
 
   /**
    * 返回的进度条管理接口
@@ -413,6 +410,6 @@ export const useProgress = (options = {}) => {
     completeProgress,
     failProgress,
     cancelProgress,
-    resetProgress,
-  };
-};
+    resetProgress
+  }
+}

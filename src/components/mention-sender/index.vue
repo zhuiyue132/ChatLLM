@@ -11,10 +11,10 @@
         '--el-box-shadow-tertiary':
           '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
         '--el-sender-input-input-font-size': '14px',
-        '--el-sender-header-animation-duration': `${headerAnimationTimer}ms`,
+        '--el-sender-header-animation-duration': `${headerAnimationTimer}ms`
       }"
       :class="{
-        'el-sender-disabled': disabled,
+        'el-sender-disabled': disabled
       }"
     >
       <!-- 头部容器 -->
@@ -28,10 +28,7 @@
         @mousedown="onContentMouseDown"
       >
         <!-- Prefix 前缀 -->
-        <div
-          v-if="$slots.prefix && props.variant === 'default'"
-          class="el-sender-prefix"
-        >
+        <div v-if="$slots.prefix && props.variant === 'default'" class="el-sender-prefix">
           <slot name="prefix" />
         </div>
         <!-- 输入框 -->
@@ -43,7 +40,7 @@
             props.inputStyle || {
               resize: 'none',
               'max-height': '176px',
-              'max-width': inputWidth,
+              'max-width': inputWidth
             }
           "
           :rows="1"
@@ -89,11 +86,7 @@
         <div v-if="props.variant === 'default'" class="el-sender-action-list">
           <slot name="action-list">
             <div class="el-sender-action-list-presets">
-              <SendButton
-                v-if="!loading"
-                :disabled="isSubmitDisabled"
-                @submit="submit"
-              />
+              <SendButton v-if="!loading" :disabled="isSubmitDisabled" @submit="submit" />
 
               <LoadingButton v-if="loading" @cancel="cancel" />
 
@@ -103,10 +96,7 @@
         </div>
 
         <!-- 变体样式 -->
-        <div
-          v-if="props.variant === 'updown' && props.showUpdown"
-          class="el-sender-updown-wrap"
-        >
+        <div v-if="props.variant === 'updown' && props.showUpdown" class="el-sender-updown-wrap">
           <!-- 变体 updown： Prefix 前缀 -->
           <div v-if="$slots.prefix" class="el-sender-prefix">
             <slot name="prefix" />
@@ -116,11 +106,7 @@
           <div class="el-sender-action-list">
             <slot name="action-list">
               <div class="el-sender-action-list-presets">
-                <SendButton
-                  v-if="!loading"
-                  :disabled="isSubmitDisabled"
-                  @submit="submit"
-                />
+                <SendButton v-if="!loading" :disabled="isSubmitDisabled" @submit="submit" />
 
                 <LoadingButton v-if="loading" @cancel="cancel" />
 
@@ -142,274 +128,269 @@
 </template>
 
 <script setup>
-import { ClearButton, LoadingButton, SendButton } from "./components";
-import { ref, computed, getCurrentInstance } from "vue";
+import { ClearButton, LoadingButton, SendButton } from './components'
+import { ref, computed, getCurrentInstance } from 'vue'
 
 const props = defineProps({
   placeholder: {
     type: String,
-    default: "请输入内容",
+    default: '请输入内容'
   },
   autoSize: {
     type: Object,
     default: () => ({
       minRows: 1,
-      maxRows: 6,
-    }),
+      maxRows: 6
+    })
   },
   submitType: {
     type: String,
-    default: "enter",
+    default: 'enter'
   },
   headerAnimationTimer: {
     type: Number,
-    default: 300,
+    default: 300
   },
   inputWidth: {
     type: String,
-    default: "100%",
+    default: '100%'
   },
   modelValue: {
     type: String,
-    default: "",
+    default: ''
   },
   variant: {
     type: String,
-    default: "default",
+    default: 'default'
   },
   showUpdown: {
     type: Boolean,
-    default: true,
+    default: true
   },
   submitBtnDisabled: {
     type: Boolean,
-    default: undefined,
+    default: undefined
   },
 
   // el-input 属性透传
   inputStyle: {
     type: Object,
-    default: () => ({}),
+    default: () => ({})
   },
   disabled: {
     type: Boolean,
-    default: false,
+    default: false
   },
   readOnly: {
     type: Boolean,
-    default: false,
+    default: false
   },
   loading: {
     type: Boolean,
-    default: false,
+    default: false
   },
   clearable: {
     type: Boolean,
-    default: false,
+    default: false
   },
 
   // el-mention 属性透传
   options: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
   filterOption: {
     type: Function,
-    default: () => true,
+    default: () => true
   },
   whole: {
     type: Boolean,
-    default: false,
+    default: false
   },
   checkIsWhole: {
     type: Function,
-    default: () => false,
+    default: () => false
   },
   triggerLoading: {
     type: Boolean,
-    default: false,
+    default: false
   },
   triggerSplit: {
     type: String,
-    default: " ",
+    default: ' '
   },
   triggerPopoverPlacement: {
     type: String,
-    default: "top",
+    default: 'top'
   },
   triggerPopoverOffset: {
     type: Number,
-    default: 20,
-  },
-});
+    default: 20
+  }
+})
 
 const emits = defineEmits([
-  "update:modelValue",
-  "submit",
-  "cancel",
-  "recordingChange",
-  "search",
-  "select",
-]);
+  'update:modelValue',
+  'submit',
+  'cancel',
+  'recordingChange',
+  'search',
+  'select'
+])
 
 // const slots = defineSlots()
 
 const internalValue = computed({
   get() {
-    return props.modelValue;
+    return props.modelValue
   },
   set(val) {
-    if (props.readOnly || props.disabled) return;
-    emits("update:modelValue", val);
-  },
-});
+    if (props.readOnly || props.disabled) return
+    emits('update:modelValue', val)
+  }
+})
 
 // 获取当前组件实例
-const instance = getCurrentInstance();
+const instance = getCurrentInstance()
 // 判断是否存在 submit 监听器
 const hasOnRecordingChangeListener = computed(() => {
-  return !!instance?.vnode.props?.onRecordingChange;
-});
-const senderRef = ref();
-const inputRef = ref();
+  return !!instance?.vnode.props?.onRecordingChange
+})
+const senderRef = ref()
+const inputRef = ref()
 
 // 计算提交按钮禁用状态
 const isSubmitDisabled = computed(() => {
   // 用户显式设置了 submitBtnDisabled 时优先使用
-  if (typeof props.submitBtnDisabled === "boolean") {
-    return props.submitBtnDisabled;
+  if (typeof props.submitBtnDisabled === 'boolean') {
+    return props.submitBtnDisabled
   }
   // 否则保持默认逻辑：无内容时禁用
-  return !internalValue.value;
-});
+  return !internalValue.value
+})
 
-const popoverVisible = computed(() => inputRef.value?.dropdownVisible);
-const inputInstance = computed(() => inputRef.value?.input.ref);
+const popoverVisible = computed(() => inputRef.value?.dropdownVisible)
+const inputInstance = computed(() => inputRef.value?.input.ref)
 
 /* 内容容器聚焦 开始 */
 function onContentMouseDown(e) {
   // 点击容器后设置输入框的聚焦，会触发 &:focus-within 样式
   if (e.target !== senderRef.value.querySelector(`.el-textarea__inner`)) {
-    e.preventDefault();
+    e.preventDefault()
   }
-  inputRef.value.input.focus();
+  inputRef.value.input.focus()
 }
 /* 内容容器聚焦 结束 */
 
 /* 使用浏览器自带的语音转文字功能 开始 */
-const recognition = ref(null);
-const speechLoading = ref(false);
+const recognition = ref(null)
+const speechLoading = ref(false)
 
 function startRecognition() {
-  if (props.readOnly) return; // 直接返回，不执行后续逻辑
+  if (props.readOnly) return // 直接返回，不执行后续逻辑
   if (hasOnRecordingChangeListener.value) {
-    speechLoading.value = true;
-    emits("recordingChange", true);
-    return;
+    speechLoading.value = true
+    emits('recordingChange', true)
+    return
   }
-  if ("webkitSpeechRecognition" in window) {
-    recognition.value = new window.webkitSpeechRecognition();
-    recognition.value.continuous = true;
-    recognition.value.interimResults = true;
-    recognition.value.lang = "zh-CN";
-    recognition.value.onresult = (event) => {
-      let results = "";
+  if ('webkitSpeechRecognition' in window) {
+    recognition.value = new window.webkitSpeechRecognition()
+    recognition.value.continuous = true
+    recognition.value.interimResults = true
+    recognition.value.lang = 'zh-CN'
+    recognition.value.onresult = event => {
+      let results = ''
       for (let i = 0; i <= event.resultIndex; i++) {
-        results += event.results[i][0].transcript;
+        results += event.results[i][0].transcript
       }
       if (!props.readOnly) {
-        internalValue.value = results;
+        internalValue.value = results
       }
-    };
+    }
     recognition.value.onstart = () => {
-      speechLoading.value = true;
-    };
+      speechLoading.value = true
+    }
     recognition.value.onend = () => {
-      speechLoading.value = false;
-    };
-    recognition.value.onerror = (event) => {
-      console.error("语音识别出错:", event.error);
-      speechLoading.value = false;
-    };
-    recognition.value.start();
+      speechLoading.value = false
+    }
+    recognition.value.onerror = event => {
+      console.error('语音识别出错:', event.error)
+      speechLoading.value = false
+    }
+    recognition.value.start()
   } else {
-    console.error("浏览器不支持 Web Speech API");
+    console.error('浏览器不支持 Web Speech API')
   }
 }
 
 function stopRecognition() {
   // 如果有自定义处理函数
   if (hasOnRecordingChangeListener.value) {
-    speechLoading.value = false;
-    emits("recordingChange", false);
-    return;
+    speechLoading.value = false
+    emits('recordingChange', false)
+    return
   }
   if (recognition.value) {
-    recognition.value.stop();
-    speechLoading.value = false;
+    recognition.value.stop()
+    speechLoading.value = false
   }
 }
 /* 使用浏览器自带的语音转文字功能 结束 */
 
 /* 输入框事件 开始 */
 function submit() {
-  if (
-    props.readOnly ||
-    props.loading ||
-    props.disabled ||
-    isSubmitDisabled.value
-  ) {
-    return;
+  if (props.readOnly || props.loading || props.disabled || isSubmitDisabled.value) {
+    return
   }
-  emits("submit", internalValue.value);
+  emits('submit', internalValue.value)
 }
 // 取消按钮
 function cancel() {
-  if (props.readOnly) return;
-  emits("cancel", internalValue.value);
+  if (props.readOnly) return
+  emits('cancel', internalValue.value)
 }
 
 function clear() {
-  if (props.readOnly) return; // 直接返回，不执行后续逻辑
-  inputRef.value.input.clear();
-  internalValue.value = "";
+  if (props.readOnly) return // 直接返回，不执行后续逻辑
+  inputRef.value.input.clear()
+  internalValue.value = ''
 }
 
 // 在这判断组合键的回车键 (目前支持四种模式)
 function handleKeyDown(e) {
-  if (props.readOnly) return; // 直接返回，不执行后续逻辑
+  if (props.readOnly) return // 直接返回，不执行后续逻辑
   const _resetSelectionRange = () => {
-    const cursorPosition = e.target.selectionStart; // 获取光标位置
-    const textBeforeCursor = internalValue.value.slice(0, cursorPosition); // 光标前的文本
-    const textAfterCursor = internalValue.value.slice(cursorPosition); // 光标后的文本
-    internalValue.value = `${textBeforeCursor}\n${textAfterCursor}`; // 插入换行符
-    e.target.setSelectionRange(cursorPosition + 1, cursorPosition + 1); // 更新光标位置
-  };
+    const cursorPosition = e.target.selectionStart // 获取光标位置
+    const textBeforeCursor = internalValue.value.slice(0, cursorPosition) // 光标前的文本
+    const textAfterCursor = internalValue.value.slice(cursorPosition) // 光标后的文本
+    internalValue.value = `${textBeforeCursor}\n${textAfterCursor}` // 插入换行符
+    e.target.setSelectionRange(cursorPosition + 1, cursorPosition + 1) // 更新光标位置
+  }
   // 是否按下组合键
-  let _isComKeyDown = false;
+  let _isComKeyDown = false
   switch (props.submitType) {
-    case "cmdOrCtrlEnter":
-      _isComKeyDown = e.metaKey || e.ctrlKey; // Mac 下使用 Command 键，Windows 下使用 Ctrl 键
-      break;
-    case "shiftEnter":
-      _isComKeyDown = e.shiftKey; // Shift + Enter
-      break;
-    case "altEnter":
-      _isComKeyDown = e.altKey; // Alt + Enter
-      break;
-    case "enter":
-      _isComKeyDown = e.shiftKey || e.metaKey || e.ctrlKey || e.altKey; // 只处理 Enter 键
-      break;
+    case 'cmdOrCtrlEnter':
+      _isComKeyDown = e.metaKey || e.ctrlKey // Mac 下使用 Command 键，Windows 下使用 Ctrl 键
+      break
+    case 'shiftEnter':
+      _isComKeyDown = e.shiftKey // Shift + Enter
+      break
+    case 'altEnter':
+      _isComKeyDown = e.altKey // Alt + Enter
+      break
+    case 'enter':
+      _isComKeyDown = e.shiftKey || e.metaKey || e.ctrlKey || e.altKey // 只处理 Enter 键
+      break
     default:
-      _isComKeyDown = false; // 默认不处理组合键
-      break;
+      _isComKeyDown = false // 默认不处理组合键
+      break
   }
   if (e.keyCode === 13) {
-    e.preventDefault();
-    if (props.submitType === "enter") {
-      _isComKeyDown ? _resetSelectionRange() : submit();
+    e.preventDefault()
+    if (props.submitType === 'enter') {
+      _isComKeyDown ? _resetSelectionRange() : submit()
     } else {
-      _isComKeyDown ? submit() : _resetSelectionRange();
+      _isComKeyDown ? submit() : _resetSelectionRange()
     }
   }
 }
@@ -418,21 +399,21 @@ function handleKeyDown(e) {
 /* 焦点 事件 开始 */
 function blur() {
   if (props.readOnly) {
-    return false;
+    return false
   }
-  inputRef.value.input.blur();
+  inputRef.value.input.blur()
 }
 
-function focus(type = "all") {
+function focus(type = 'all') {
   if (props.readOnly) {
-    return false;
+    return false
   }
-  if (type === "all") {
-    inputRef.value.input.select();
-  } else if (type === "start") {
-    focusToStart();
-  } else if (type === "end") {
-    focusToEnd();
+  if (type === 'all') {
+    inputRef.value.input.select()
+  } else if (type === 'start') {
+    focusToStart()
+  } else if (type === 'end') {
+    focusToEnd()
   }
 }
 
@@ -440,10 +421,10 @@ function focus(type = "all") {
 function focusToStart() {
   if (inputRef.value) {
     // 获取底层的 textarea DOM 元素
-    const textarea = inputRef.value.input.ref;
+    const textarea = inputRef.value.input.ref
     if (textarea) {
-      textarea.focus(); // 聚焦到输入框
-      textarea.setSelectionRange(0, 0); // 设置光标到最前方
+      textarea.focus() // 聚焦到输入框
+      textarea.setSelectionRange(0, 0) // 设置光标到最前方
     }
   }
 }
@@ -452,13 +433,10 @@ function focusToStart() {
 function focusToEnd() {
   if (inputRef.value) {
     // 获取底层的 textarea DOM 元素
-    const textarea = inputRef.value.input.ref;
+    const textarea = inputRef.value.input.ref
     if (textarea) {
-      textarea.focus(); // 聚焦到输入框
-      textarea.setSelectionRange(
-        internalValue.value.length,
-        internalValue.value.length,
-      ); // 设置光标到最后方
+      textarea.focus() // 聚焦到输入框
+      textarea.setSelectionRange(internalValue.value.length, internalValue.value.length) // 设置光标到最后方
     }
   }
 }
@@ -466,11 +444,11 @@ function focusToEnd() {
 
 /* 指令相关 开始 */
 function handleSearch(pattern, prefix) {
-  emits("search", pattern, prefix);
+  emits('search', pattern, prefix)
 }
 
 function handleSelect(option, prefix) {
-  emits("select", option, prefix);
+  emits('select', option, prefix)
 }
 /* 指令相关 开始 */
 
@@ -484,8 +462,8 @@ defineExpose({
   startRecognition,
   stopRecognition,
   popoverVisible,
-  inputInstance,
-});
+  inputInstance
+})
 </script>
 
 <style scoped lang="scss" src="@/styles/element-plus/ElSender.scss"></style>

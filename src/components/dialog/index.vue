@@ -79,175 +79,175 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed } from 'vue'
 
 // 定义组件名称
 defineOptions({
-  name: "BiDialog",
-});
+  name: 'BiDialog'
+})
 
 // 定义props
 const props = defineProps({
   // 控制弹窗显示隐藏
   modelValue: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 弹窗标题
   title: {
     type: String,
-    default: "",
+    default: ''
   },
   // 弹窗宽度
   width: {
     type: [String, Number],
-    default: "1200px",
+    default: '1200px'
   },
   // 是否全屏
   fullscreen: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 是否居中对齐
   center: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 是否显示遮罩层
   modal: {
     type: Boolean,
-    default: true,
+    default: true
   },
   // 是否锁定body滚动
   lockScroll: {
     type: Boolean,
-    default: true,
+    default: true
   },
   // 是否可以通过点击modal关闭
   closeOnClickModal: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 是否可以通过ESC关闭
   closeOnPressEscape: {
     type: Boolean,
-    default: true,
+    default: true
   },
   // 是否显示关闭按钮
   showClose: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 关闭前的回调
   beforeClose: {
     type: Function,
-    default: null,
+    default: null
   },
   // 是否插入到body
   appendToBody: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 关闭时销毁元素
   destroyOnClose: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 自定义类名
   customClass: {
     type: String,
-    default: "",
+    default: ''
   },
   // 是否显示底部
   showFooter: {
     type: Boolean,
-    default: true,
+    default: true
   },
   // 是否显示取消按钮
   showCancelButton: {
     type: Boolean,
-    default: true,
+    default: true
   },
   // 是否显示确认按钮
   showConfirmButton: {
     type: Boolean,
-    default: true,
+    default: true
   },
   // 取消按钮文字
   cancelButtonText: {
     type: String,
-    default: "取消",
+    default: '取消'
   },
   // 确认按钮文字
   confirmButtonText: {
     type: String,
-    default: "保存",
+    default: '保存'
   },
   // 取消按钮loading状态
   cancelLoading: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 确认按钮loading状态
   confirmLoading: {
     type: Boolean,
-    default: false,
-  },
-});
+    default: false
+  }
+})
 
 // 定义emits
 const emit = defineEmits([
-  "update:modelValue",
-  "open",
-  "opened",
-  "close",
-  "closed",
-  "cancel",
-  "confirm",
-]);
+  'update:modelValue',
+  'open',
+  'opened',
+  'close',
+  'closed',
+  'cancel',
+  'confirm'
+])
 
 // 计算弹窗显示状态
 const dialogVisible = computed({
   get: () => props.modelValue,
-  set: (value) => {
-    emit("update:modelValue", value);
-  },
-});
+  set: value => {
+    emit('update:modelValue', value)
+  }
+})
 
 // 事件处理函数
 const handleOpen = () => {
-  emit("open");
-};
+  emit('open')
+}
 
 const handleOpened = () => {
-  emit("opened");
-};
+  emit('opened')
+}
 
 const handleClose = () => {
-  emit("close");
-};
+  emit('close')
+}
 
 const handleClosed = () => {
-  emit("closed");
-};
+  emit('closed')
+}
 
 const handleCancel = () => {
-  emit("cancel");
+  emit('cancel')
   if (!props.cancelLoading) {
-    dialogVisible.value = false;
+    dialogVisible.value = false
   }
-};
+}
 
 const handleConfirm = () => {
-  emit("confirm");
+  emit('confirm')
 
   setTimeout(() => {
-    console.log("handleConfirm", props.confirmLoading);
+    console.log('handleConfirm', props.confirmLoading)
     if (!props.confirmLoading) {
-      dialogVisible.value = false;
+      dialogVisible.value = false
     }
-  }, 200);
-};
+  }, 200)
+}
 </script>
 
 <style lang="scss" scoped>
@@ -285,7 +285,7 @@ const handleConfirm = () => {
 
   .bi-dialog__title {
     color: #000;
-    font-family: "Microsoft YaHei", sans-serif;
+    font-family: 'Microsoft YaHei', sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 1.32;

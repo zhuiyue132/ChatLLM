@@ -9,21 +9,11 @@
 -->
 <script setup>
 import '@/assets/icon/iconfont.css'
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import MainLayout from './layouts/main.vue'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { useEventListener } from '@vueuse/core'
-import { getModelList } from '@/api/completions'
-
-onMounted(async () => {
-  const response = await getModelList()
-  console.log(response)
-  if (response.success && response.data.length > 0) {
-    const model = response.data[0]
-    console.log(model)
-  }
-})
 
 const currentLayout = computed(() => {
   return MainLayout

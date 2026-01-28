@@ -8,16 +8,16 @@
 -->
 <!-- SendButton 发送按钮 -->
 <script setup>
-import { Top } from "@element-plus/icons-vue";
+import { Top } from '@element-plus/icons-vue'
 
 const props = defineProps({
   disabled: {
     type: Boolean,
-    default: false,
-  },
-});
+    default: false
+  }
+})
 
-const emits = defineEmits(["submit"]);
+const emits = defineEmits(['submit'])
 </script>
 
 <template>

@@ -12,4 +12,4 @@
  * 不合法的编码区域，这些编码区域的字符不会正常显示，需要过滤掉；
  */
 export const ILLEGAL_UNICODE_REG =
-  /[\uE000-\uF8FF]|[\uDB80-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g;
+  /[\uE000-\uF8FF]|[\uDB80-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g

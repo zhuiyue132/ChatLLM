@@ -8,7 +8,7 @@
  *
  */
 
-import { visit } from "unist-util-visit";
+import { visit } from 'unist-util-visit'
 
 /**
  * 预处理函数：在 markdown 解析之前转换公式格式
@@ -27,34 +27,28 @@ import { visit } from "unist-util-visit";
  * @returns {string} - 转换后的 markdown 字符串
  */
 export function preprocessMathFormulas(markdown) {
-  if (!markdown || typeof markdown !== "string") {
-    return markdown;
+  if (!markdown || typeof markdown !== 'string') {
+    return markdown
   }
 
-  let result = markdown;
+  let result = markdown
 
   // 1. 转换 \[...\] 为 $$...$$ (块级公式)
   // 重要：
   // - $$ 必须独占一行，否则 remark-math 会错误解析多行公式
   // - 开头和结尾的 $$ 缩进必须一致，否则 remark-math 无法正确匹配
   // - 保留原始缩进，以支持列表项内的公式
-  result = result.replace(
-    /([ \t]*)\\\[([\s\S]*?)\\\]/g,
-    (_, indent, formula) => {
-      const trimmed = formula.trim();
-      // 保持开头和结尾 $$ 的缩进一致
-      return `\n${indent}$$\n${indent}${trimmed}\n${indent}$$\n`;
-    },
-  );
+  result = result.replace(/([ \t]*)\\\[([\s\S]*?)\\\]/g, (_, indent, formula) => {
+    const trimmed = formula.trim()
+    // 保持开头和结尾 $$ 的缩进一致
+    return `\n${indent}$$\n${indent}${trimmed}\n${indent}$$\n`
+  })
 
   // 2. 转换 \(...\) 为 $...$ (行内公式)
   // 行内公式通常不跨行，使用 .*? 即可
-  result = result.replace(
-    /\\\((.*?)\\\)/g,
-    (_, formula) => `$${formula.trim()}$`,
-  );
+  result = result.replace(/\\\((.*?)\\\)/g, (_, formula) => `$${formula.trim()}$`)
 
-  return result;
+  return result
 }
 
 /**
@@ -67,48 +61,47 @@ export function preprocessMathFormulas(markdown) {
  * - [formula] -> $$formula$$ (独立行的方括号块级公式)
  */
 export default function remarkMathExtended() {
-  return (tree) => {
+  return tree => {
     // 处理独立行的 [...] 格式
-    visit(tree, "text", (node) => {
-      if (!node.value) return;
+    visit(tree, 'text', node => {
+      if (!node.value) return
 
-      const beforeBracket = node.value;
+      const beforeBracket = node.value
       const newValue = node.value.replace(
         /(?:^|\n)\s*\[\s*([\s\S]*?)\s*\](?:\s*$|\n)/g,
         (match, formula, offset) => {
-          const beforeText = beforeBracket.slice(0, offset);
-          const isStartOfLine =
-            beforeText.length === 0 || beforeText.endsWith("\n");
+          const beforeText = beforeBracket.slice(0, offset)
+          const isStartOfLine = beforeText.length === 0 || beforeText.endsWith('\n')
 
           if (isStartOfLine) {
-            return `\n$$${formula.trim()}$$\n`;
+            return `\n$$${formula.trim()}$$\n`
           }
-          return match;
-        },
-      );
+          return match
+        }
+      )
 
       if (newValue !== beforeBracket) {
-        node.value = newValue;
+        node.value = newValue
       }
-    });
+    })
 
     // 处理段落节点中的数学公式
-    visit(tree, "paragraph", (node) => {
-      if (!node.children || node.children.length === 0) return;
+    visit(tree, 'paragraph', node => {
+      if (!node.children || node.children.length === 0) return
 
       // 检查段落是否只包含一个文本节点，且该文本以 [ 开头
-      if (node.children.length === 1 && node.children[0].type === "text") {
-        const text = node.children[0].value;
-        const trimmed = text.trim();
+      if (node.children.length === 1 && node.children[0].type === 'text') {
+        const text = node.children[0].value
+        const trimmed = text.trim()
 
         // 如果整个段落是 [...] 格式，转换为块级公式
-        const fullBracketRegex = /^\[\s*([\s\S]*?)\s*\]$/;
-        const match = trimmed.match(fullBracketRegex);
+        const fullBracketRegex = /^\[\s*([\s\S]*?)\s*\]$/
+        const match = trimmed.match(fullBracketRegex)
 
         if (match) {
-          node.children[0].value = `$$${match[1].trim()}$$`;
+          node.children[0].value = `$$${match[1].trim()}$$`
         }
       }
-    });
-  };
+    })
+  }
 }

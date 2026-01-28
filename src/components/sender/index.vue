@@ -58,8 +58,6 @@
               v-if="showModelSelect"
               v-model="model"
               :model-list="modelList"
-              :validate-mode="validateMode"
-              :enable-multiple="enableMultiple"
             />
 
             <!-- 深度思考 -->
@@ -241,18 +239,6 @@ const props = defineProps({
   showDeepThinkBtn: {
     type: Boolean,
     default: false
-  },
-
-  // 模型选择校验模式
-  validateMode: {
-    type: String,
-    values: ['single', 'multiple', 'both'],
-    default: 'both'
-  },
-  // 是否启用多选
-  enableMultiple: {
-    type: Boolean,
-    default: true
   },
 
   // 是否展示创建图片按钮

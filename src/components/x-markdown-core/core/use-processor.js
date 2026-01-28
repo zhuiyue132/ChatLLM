@@ -8,23 +8,23 @@
  *
  */
 
-import deepmerge from "deepmerge";
-import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
-import remarkParse from "remark-parse";
-import remarkRehype from "remark-rehype";
-import { unified } from "unified";
-import { computed, toValue } from "vue";
-import { visit } from "unist-util-visit";
+import deepmerge from 'deepmerge'
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
+import remarkParse from 'remark-parse'
+import remarkRehype from 'remark-rehype'
+import { unified } from 'unified'
+import { computed, toValue } from 'vue'
+import { visit } from 'unist-util-visit'
 
 function rehypeExternalLinks() {
-  return (tree) => {
-    visit(tree, "element", (node) => {
-      if (node.tagName === "a" && node.properties && node.properties.href) {
-        node.properties.target = "_blank";
-        node.properties.rel = "noopener noreferrer";
+  return tree => {
+    visit(tree, 'element', node => {
+      if (node.tagName === 'a' && node.properties && node.properties.href) {
+        node.properties.target = '_blank'
+        node.properties.rel = 'noopener noreferrer'
       }
-    });
-  };
+    })
+  }
 }
 
 export function useMarkdownProcessor(options) {
@@ -34,10 +34,10 @@ export function useMarkdownProcessor(options) {
       rehypePlugins: toValue(options?.rehypePlugins),
       rehypeOptions: toValue(options?.rehypeOptions),
       sanitize: toValue(options?.sanitize),
-      sanitizeOptions: toValue(options?.sanitizeOptions),
-    });
-  });
-  return { processor };
+      sanitizeOptions: toValue(options?.sanitizeOptions)
+    })
+  })
+  return { processor }
 }
 
 export function createProcessor(options) {
@@ -45,7 +45,7 @@ export function createProcessor(options) {
     .use(options?.prePlugins ?? [])
     .use(remarkRehype, {
       allowDangerousHtml: true,
-      ...(options?.rehypeOptions || {}),
+      ...(options?.rehypeOptions || {})
     })
     .use(options?.rehypePlugins ?? [])
     .use(rehypeExternalLinks)
@@ -59,14 +59,14 @@ export function createProcessor(options) {
                   ...defaultSchema,
                   attributes: {
                     ...defaultSchema.attributes,
-                    a: [...(defaultSchema.attributes.a || []), "target", "rel"],
-                  },
+                    a: [...(defaultSchema.attributes.a || []), 'target', 'rel']
+                  }
                 },
                 options?.sanitizeOptions?.sanitizeOptions || {},
-                options?.sanitizeOptions?.mergeOptions || {},
-              ),
-            ],
+                options?.sanitizeOptions?.mergeOptions || {}
+              )
+            ]
           ]
-        : [],
-    );
+        : []
+    )
 }

@@ -26,24 +26,24 @@
 defineProps({
   floatButtonOffset: {
     type: String,
-    default: "-42px",
-  },
-});
+    default: '-42px'
+  }
+})
 // 滚动到顶部
 const scrollToTop = () => {
   window.scrollTo({
     top: 0,
-    behavior: "smooth",
-  });
-};
+    behavior: 'smooth'
+  })
+}
 
 // 滚动到底部
 const scrollToBottom = () => {
   window.scrollTo({
     top: document.documentElement.scrollHeight,
-    behavior: "smooth",
-  });
-};
+    behavior: 'smooth'
+  })
+}
 </script>
 
 <style lang="scss" scoped>

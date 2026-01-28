@@ -30,11 +30,7 @@
           </div>
           <div v-else class="tip-text short">点击查看完成报告</div>
         </template>
-        <div
-          v-else
-          class="tip-text"
-          :class="{ short: finalFailReason.length <= 18 }"
-        >
+        <div v-else class="tip-text" :class="{ short: finalFailReason.length <= 18 }">
           {{ finalFailReason }}
         </div>
       </div>
@@ -42,16 +38,8 @@
       <!-- 右侧图标 -->
       <div class="icon-section">
         <div class="icon-placeholder">
-          <img
-            v-if="isError"
-            src="@/assets/images/common/analysis-fail.svg"
-            alt=""
-          />
-          <img
-            v-else-if="isFinished"
-            src="@/assets/images/common/analysis-success.svg"
-            alt=""
-          />
+          <img v-if="isError" src="@/assets/images/common/analysis-fail.svg" alt="" />
+          <img v-else-if="isFinished" src="@/assets/images/common/analysis-success.svg" alt="" />
           <ChatLoading v-else />
         </div>
       </div>
@@ -60,113 +48,112 @@
 </template>
 
 <script setup>
-import { watch, computed, onBeforeUnmount } from "vue";
-import { useAsyncTask, TASK_STATUS } from "@/hooks";
-import ChatLoading from "./loading.vue";
+import { watch, computed, onBeforeUnmount } from 'vue'
+import { useAsyncTask, TASK_STATUS } from '@/hooks'
+import ChatLoading from './loading.vue'
 import {
   AGENT_ASYNC_CARD_TITLE,
-  AGENT_ASYNC_CARD_TITLE_DEFAULT_CONFIG,
-} from "@/config/agent-async-card-title";
+  AGENT_ASYNC_CARD_TITLE_DEFAULT_CONFIG
+} from '@/config/agent-async-card-title'
 
 defineOptions({
-  name: "AgentProgressMessage",
-});
+  name: 'AgentProgressMessage'
+})
 
 const props = defineProps({
   finished: {
     type: Boolean,
-    default: false,
+    default: false
   },
   error: {
     type: Boolean,
-    default: false,
+    default: false
   },
   errorText: {
     type: [Number, String],
-    default: null,
+    default: null
   },
   chatTaskId: {
     type: [Number, String],
-    default: null,
+    default: null
   },
   agentId: {
     type: [Number, String],
-    default: null,
+    default: null
   },
   agentCode: {
     type: String,
-    default: "",
+    default: ''
   },
   conversationId: {
     type: [Number, String],
-    default: null,
-  },
-});
+    default: null
+  }
+})
 
 const successText = computed(() => {
   return (
     AGENT_ASYNC_CARD_TITLE[props.agentCode]?.COMPLETED ||
     AGENT_ASYNC_CARD_TITLE_DEFAULT_CONFIG.COMPLETED
-  );
-});
+  )
+})
 const failedText = computed(() => {
   return (
-    AGENT_ASYNC_CARD_TITLE[props.agentCode]?.FAILED ||
-    AGENT_ASYNC_CARD_TITLE_DEFAULT_CONFIG.FAILED
-  );
-});
+    AGENT_ASYNC_CARD_TITLE[props.agentCode]?.FAILED || AGENT_ASYNC_CARD_TITLE_DEFAULT_CONFIG.FAILED
+  )
+})
 const runningText = computed(() => {
   return (
     AGENT_ASYNC_CARD_TITLE[props.agentCode]?.RUNNING ||
     AGENT_ASYNC_CARD_TITLE_DEFAULT_CONFIG.RUNNING
-  );
-});
+  )
+})
 
-const emits = defineEmits(["click"]);
+const emits = defineEmits(['click'])
 
 const agentId = computed(() => {
-  return props.agentId;
-});
+  return props.agentId
+})
 const conversationId = computed(() => {
-  return props.conversationId;
-});
+  return props.conversationId
+})
 
-const { startPolling, taskProgress, taskStatus, stopPolling, failReason } =
-  useAsyncTask(agentId, conversationId);
+const { startPolling, taskProgress, taskStatus, stopPolling, failReason } = useAsyncTask(
+  agentId,
+  conversationId
+)
 
 const isFinished = computed(() => {
   return (
     (taskProgress.value >= 100 &&
-      ![TASK_STATUS.CANCELLED, TASK_STATUS.FAILED].includes(
-        taskStatus.value,
-      )) ||
+      ![TASK_STATUS.CANCELLED, TASK_STATUS.FAILED].includes(taskStatus.value)) ||
     props.finished
-  );
-});
+  )
+})
 
 const isError = computed(() => {
-  return props.error || taskStatus.value === TASK_STATUS.FAILED;
-});
+  return props.error || taskStatus.value === TASK_STATUS.FAILED
+})
 
 const finalFailReason = computed(() => {
-  return props.errorText || failReason.value;
-});
+  return props.errorText || failReason.value
+})
 
 watch(
   () => props.chatTaskId,
-  (val) => {
+  val => {
     if (val) {
       if (!props.finished) {
-        startPolling(val);
+        startPolling(val)
       }
     }
   },
-  { immediate: true },
-);
+  { immediate: true }
+)
 
-const onClick = async () => {};
+const onClick = async () => {}
 
-onBeforeUnmount(stopPolling);
+onBeforeUnmount(stopPolling)
 </script>
 
 <style scoped lang="scss">
@@ -192,13 +179,7 @@ onBeforeUnmount(stopPolling);
   // padding: 20px 100px 20px 24px;
   border: 1px solid #f0f0f0;
   border-radius: 8px;
-  background: linear-gradient(
-    95deg,
-    #fff -0.29%,
-    #f0fffa 44.93%,
-    #eff9f5 67.7%,
-    #f1f7f5 100%
-  );
+  background: linear-gradient(95deg, #fff -0.29%, #f0fffa 44.93%, #eff9f5 67.7%, #f1f7f5 100%);
 }
 
 /* stylelint-disable-next-line no-duplicate-selectors */
@@ -207,13 +188,7 @@ onBeforeUnmount(stopPolling);
     .progress-card {
       border: 1px solid #ffe8e4;
       border-radius: 8px;
-      background: linear-gradient(
-        95deg,
-        #fff -0.29%,
-        #ffecea 32.98%,
-        #ffe8e8 67.7%,
-        #fff 100%
-      );
+      background: linear-gradient(95deg, #fff -0.29%, #ffecea 32.98%, #ffe8e8 67.7%, #fff 100%);
     }
   }
 }
@@ -234,7 +209,7 @@ onBeforeUnmount(stopPolling);
   height: 29px;
   text-align: left;
   color: #000;
-  font-family: "Source Han Sans CN", sans-serif;
+  font-family: 'Source Han Sans CN', sans-serif;
   font-size: 18px;
   font-weight: 500;
   line-height: 29px;
@@ -260,7 +235,7 @@ onBeforeUnmount(stopPolling);
 .tip-text {
   text-align: left;
   color: #8c8c8c;
-  font-family: "Source Han Sans CN", sans-serif;
+  font-family: 'Source Han Sans CN', sans-serif;
   font-size: 12px;
   font-weight: 400;
   line-height: 1.5;

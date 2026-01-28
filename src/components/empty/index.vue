@@ -34,12 +34,7 @@
       <!-- 操作按钮插槽 -->
       <template v-if="$slots.default || showAction" #default>
         <slot>
-          <el-button
-            v-if="showAction"
-            :type="actionType"
-            :size="actionSize"
-            @click="handleAction"
-          >
+          <el-button v-if="showAction" :type="actionType" :size="actionSize" @click="handleAction">
             {{ actionText }}
           </el-button>
         </slot>
@@ -49,97 +44,97 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import emptyImg from "@/assets/images/agents/empty.png";
-import noSearchImg from "@/assets/images/common/no-search-result.png";
-import page404Img from "@/assets/images/common/page-404.png";
+import { computed } from 'vue'
+import emptyImg from '@/assets/images/agents/empty.png'
+import noSearchImg from '@/assets/images/common/no-search-result.png'
+import page404Img from '@/assets/images/common/page-404.png'
 
 const props = defineProps({
   // 空状态类型：data（无数据）、search（无搜索结果）、404（页面不存在）、custom（自定义）
   type: {
     type: String,
-    default: "data",
-    validator: (value) => ["data", "search", "404", "custom"].includes(value),
+    default: 'data',
+    validator: value => ['data', 'search', '404', 'custom'].includes(value)
   },
   // 自定义图片地址
   image: {
     type: String,
-    default: "",
+    default: ''
   },
   // 图片尺寸
   imageSize: {
     type: Number,
-    default: null,
+    default: null
   },
   // 描述文本
   description: {
     type: String,
-    default: "",
+    default: ''
   },
   // 是否显示操作按钮
   showAction: {
     type: Boolean,
-    default: false,
+    default: false
   },
   // 操作按钮文本
   actionText: {
     type: String,
-    default: "重新加载",
+    default: '重新加载'
   },
   // 操作按钮类型
   actionType: {
     type: String,
-    default: "primary",
+    default: 'primary'
   },
   // 操作按钮尺寸
   actionSize: {
     type: String,
-    default: "default",
-  },
-});
+    default: 'default'
+  }
+})
 
-const emit = defineEmits(["action"]);
+const emit = defineEmits(['action'])
 
 // 预设配置
 const presetConfig = {
   data: {
     image: emptyImg,
-    description: "暂无数据",
+    description: '暂无数据'
   },
   search: {
     image: noSearchImg,
-    description: "未找到相关内容",
+    description: '未找到相关内容'
   },
   404: {
     image: page404Img,
-    description: "页面不存在",
+    description: '页面不存在'
   },
   custom: {
-    image: "",
-    description: "",
-  },
-};
+    image: '',
+    description: ''
+  }
+}
 
 // 计算图片地址
 const imageUrl = computed(() => {
   if (props.image) {
-    return props.image;
+    return props.image
   }
-  return presetConfig[props.type]?.image || presetConfig.data.image;
-});
+  return presetConfig[props.type]?.image || presetConfig.data.image
+})
 
 // 计算描述文本
 const computedDescription = computed(() => {
   if (props.description) {
-    return props.description;
+    return props.description
   }
-  return presetConfig[props.type]?.description || presetConfig.data.description;
-});
+  return presetConfig[props.type]?.description || presetConfig.data.description
+})
 
 // 处理操作按钮点击
 const handleAction = () => {
-  emit("action");
-};
+  emit('action')
+}
 </script>
 
 <style lang="scss" scoped>

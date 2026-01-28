@@ -7,8 +7,8 @@
  * @Description  : useSSE 钩子简单使用示例
  */
 
-import { ref } from "vue";
-import { useSSE } from "./index";
+import { ref } from 'vue'
+import { useSSE } from './index'
 
 /**
  * 智能代理聊天 SSE 钩子
@@ -19,11 +19,11 @@ import { useSSE } from "./index";
  */
 export const useAgentChat = (agentId, conversationId) => {
   // 会话消息
-  const messages = ref([]);
+  const messages = ref([])
   // 是否正在接收消息
-  const isReceiving = ref(false);
+  const isReceiving = ref(false)
   // 错误信息
-  const errorMsg = ref("");
+  const errorMsg = ref('')
 
   // 使用 useSSE
   const { status, error, connect, disconnect } = useSSE({
@@ -31,80 +31,80 @@ export const useAgentChat = (agentId, conversationId) => {
     url: `${import.meta.env.VITE_APP_WEB_URL}/api/agents/chat/sse?agentId=${agentId}&conversationId=${conversationId}`,
 
     // 接收消息处理
-    onMessage: (event) => {
+    onMessage: event => {
       try {
         // 解析消息数据
-        const data = JSON.parse(event.data);
+        const data = JSON.parse(event.data)
 
         // 根据消息类型处理
         switch (data.type) {
-          case "start":
+          case 'start':
             // 开始接收消息
-            isReceiving.value = true;
-            break;
+            isReceiving.value = true
+            break
 
-          case "message":
+          case 'message':
             // 处理聊天消息
             messages.value.push({
               id: data.id,
               content: data.content,
               role: data.role,
-              timestamp: Date.now(),
-            });
-            break;
+              timestamp: Date.now()
+            })
+            break
 
-          case "error":
+          case 'error':
             // 处理错误
-            errorMsg.value = data.error || "接收消息出错";
-            break;
+            errorMsg.value = data.error || '接收消息出错'
+            break
 
-          case "end":
+          case 'end':
             // 结束接收
-            isReceiving.value = false;
-            break;
+            isReceiving.value = false
+            break
 
           default:
-            console.warn("未知的消息类型:", data.type);
+            console.warn('未知的消息类型:', data.type)
         }
       } catch (err) {
-        console.error("解析消息出错:", err);
-        errorMsg.value = "解析消息出错";
+        console.error('解析消息出错:', err)
+        errorMsg.value = '解析消息出错'
       }
     },
 
     // 连接打开
     onOpen: () => {
-      console.log("代理聊天 SSE 连接已打开");
-      errorMsg.value = "";
+      console.log('代理聊天 SSE 连接已打开')
+      errorMsg.value = ''
     },
 
     // 连接关闭
     onClose: () => {
-      isReceiving.value = false;
-      console.log("代理聊天 SSE 连接已关闭");
+      isReceiving.value = false
+      console.log('代理聊天 SSE 连接已关闭')
     },
 
     // 连接错误
-    onError: (err) => {
-      isReceiving.value = false;
-      errorMsg.value = err.message || "连接出错";
-      console.error("代理聊天 SSE 连接错误:", err);
+    onError: err => {
+      isReceiving.value = false
+      errorMsg.value = err.message || '连接出错'
+      console.error('代理聊天 SSE 连接错误:', err)
     },
 
     // 自动连接
-    autoConnect: true,
-  });
+    autoConnect: true
+  })
 
   // 重新连接
   const reconnect = () => {
-    disconnect();
-    messages.value = []; // 清空消息
-    errorMsg.value = "";
-    connect();
-  };
+    disconnect()
+    messages.value = [] // 清空消息
+    errorMsg.value = ''
+    connect()
+  }
 
   // 发送消息到代理（这通常是一个独立的 API 调用）
-  const sendMessage = async (content) => {
+  const sendMessage = async content => {
     try {
       // 这里可以添加发送消息的 API 调用
       // 例如:
@@ -118,17 +118,17 @@ export const useAgentChat = (agentId, conversationId) => {
       messages.value.push({
         id: Date.now().toString(),
         content,
-        role: "user",
-        timestamp: Date.now(),
-      });
+        role: 'user',
+        timestamp: Date.now()
+      })
 
-      return true;
+      return true
     } catch (err) {
-      console.error("发送消息失败:", err);
-      errorMsg.value = "发送消息失败";
-      return false;
+      console.error('发送消息失败:', err)
+      errorMsg.value = '发送消息失败'
+      return false
     }
-  };
+  }
 
   // 组件卸载时自动断开连接（useSSE 内部已处理）
 
@@ -145,9 +145,9 @@ export const useAgentChat = (agentId, conversationId) => {
     disconnect,
     reconnect,
     // 业务方法
-    sendMessage,
-  };
-};
+    sendMessage
+  }
+}
 
 /**
  * 使用示例：

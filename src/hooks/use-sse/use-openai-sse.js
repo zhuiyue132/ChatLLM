@@ -40,6 +40,16 @@ export const createOpenAISSERequest = (options = {}) => {
     onAbort = () => {}
   } = options
 
+  console.log('baseURL', baseURL)
+  console.log('apiKey', apiKey)
+  console.log('defaultHeaders', defaultHeaders)
+  console.log('onStart', onStart)
+  console.log('onToken', onToken)
+  console.log('onDone', onDone)
+  console.log('onError', onError)
+  console.log('onAbort', onAbort)
+  console.log('options', options)
+
   // 请求 ID
   const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
   // 当前连接状态
@@ -127,7 +137,7 @@ export const createOpenAISSERequest = (options = {}) => {
       frequency_penalty,
       presence_penalty,
       headers = {},
-      endpoint = '/chat/completions',
+      endpoint = '/v1/chat/completions',
       extraBody = {}
     } = params
 
@@ -168,6 +178,11 @@ export const createOpenAISSERequest = (options = {}) => {
 
     try {
       onStart({ requestId })
+
+      console.log(`${baseURL}${endpoint}`)
+      console.log('requestHeaders', requestHeaders)
+      console.log('body', JSON.stringify(body))
+      console.log('abortController.signal', abortController.signal)
 
       const response = await fetch(`${baseURL}${endpoint}`, {
         method: 'POST',

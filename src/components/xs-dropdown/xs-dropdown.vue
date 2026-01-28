@@ -1,9 +1,5 @@
 <template>
-  <el-dropdown
-    v-bind="$attrs"
-    :popper-class="['xs-dropdown', customClass]"
-    :style="customStyle"
-  >
+  <el-dropdown v-bind="$attrs" :popper-class="['xs-dropdown', customClass]" :style="customStyle">
     <slot></slot>
 
     <template v-if="$slots.dropdown" #dropdown>
@@ -14,20 +10,20 @@
 
 <script setup>
 defineOptions({
-  name: "XsDropdown",
-  inheritAttrs: false,
-});
+  name: 'XsDropdown',
+  inheritAttrs: false
+})
 
 defineProps({
   customClass: {
     type: [String, Array, Object],
-    default: "",
+    default: ''
   },
   customStyle: {
     type: Object,
-    default: () => ({}),
-  },
-});
+    default: () => ({})
+  }
+})
 </script>
 
 <style lang="scss">

@@ -12,7 +12,7 @@
     class="animated-image"
     :class="{
       'is-loading': loading,
-      'is-error': error,
+      'is-error': error
     }"
   >
     <!-- 加载状态 -->
@@ -30,9 +30,7 @@
       <div class="error-icon-wrapper">
         <i class="iconfont icon-xian"></i>
         <div class="error-text">图片生成失败</div>
-        <el-button v-if="retryable" size="small" @click="handleRetry"
-          >重试</el-button
-        >
+        <el-button v-if="retryable" size="small" @click="handleRetry">重试</el-button>
       </div>
     </div>
 
@@ -72,86 +70,84 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   src: {
     type: String,
-    required: true,
+    required: true
   },
   alt: {
     type: String,
-    default: "生成的图片",
+    default: '生成的图片'
   },
   loading: {
     type: Boolean,
-    default: false,
+    default: false
   },
   error: {
     type: Boolean,
-    default: false,
+    default: false
   },
   imageList: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
   retryable: {
     type: Boolean,
-    default: false,
-  },
-});
+    default: false
+  }
+})
 
-const emit = defineEmits(["load", "error", "retry"]);
+const emit = defineEmits(['load', 'error', 'retry'])
 
 // 计算预览图片列表
 const previewList = computed(() => {
   if (!props.imageList || props.imageList.length === 0) {
-    return [props.src];
+    return [props.src]
   }
-  return props.imageList.map((item) =>
-    typeof item === "string" ? item : item.src,
-  );
-});
+  return props.imageList.map(item => (typeof item === 'string' ? item : item.src))
+})
 
 // 计算当前图片索引
 const currentIndex = computed(() => {
-  return previewList.value.findIndex((url) => url === props.src);
-});
+  return previewList.value.findIndex(url => url === props.src)
+})
 
-const imageRef = ref(null);
-const showMask = ref(true);
+const imageRef = ref(null)
+const showMask = ref(true)
 
 // 监听loading变化,重置蒙层状态
 watch(
   () => props.loading,
-  (newVal) => {
+  newVal => {
     if (newVal) {
-      showMask.value = true;
+      showMask.value = true
     }
-  },
-);
+  }
+)
 
 // 图片加载完成
 const onImageLoad = () => {
   // 使用requestAnimationFrame确保动画流畅
   requestAnimationFrame(() => {
     setTimeout(() => {
-      showMask.value = false;
-    }, 800); // 优化动画时间
-  });
-  emit("load");
-};
+      showMask.value = false
+    }, 800) // 优化动画时间
+  })
+  emit('load')
+}
 
 // 图片加载失败
-const onImageError = (e) => {
-  console.error("Image load error:", e);
-  emit("error", e);
-};
+const onImageError = e => {
+  console.error('Image load error:', e)
+  emit('error', e)
+}
 
 // 重试加载
 const handleRetry = () => {
-  emit("retry");
-};
+  emit('retry')
+}
 </script>
 
 <style lang="scss" scoped>
@@ -165,7 +161,7 @@ const handleRetry = () => {
   justify-content: center;
   width: 244px;
   height: 244px;
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwLDAsMjAlLDEwMCUiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRjJGM0Y1IiBvZmZzZXQ9IjI1JSIgLz4KICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0U1RTZFQiIgb2Zmc2V0PSIzNyUiIC8+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNGMkYzRjUiIG9mZnNldD0iNjMlIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3QgaWQ9InIiIHdpZHRoPSI0MDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiIC8+CiAgPGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii0zMDAlIiB0bz0iMCUiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiICAvPgo8L3N2Zz4=");
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwLDAsMjAlLDEwMCUiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRjJGM0Y1IiBvZmZzZXQ9IjI1JSIgLz4KICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0U1RTZFQiIgb2Zmc2V0PSIzNyUiIC8+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNGMkYzRjUiIG9mZnNldD0iNjMlIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3QgaWQ9InIiIHdpZHRoPSI0MDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiIC8+CiAgPGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii0zMDAlIiB0bz0iMCUiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiICAvPgo8L3N2Zz4=');
   background-position: 0% 0%;
   background-size: cover;
 
@@ -289,7 +285,7 @@ const handleRetry = () => {
       text-align: center;
       letter-spacing: 0.72px;
       color: var(--bi-2025, #bfbfbf);
-      background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwLDAsMjAlLDEwMCUiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRjJGM0Y1IiBvZmZzZXQ9IjI1JSIgLz4KICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0U1RTZFQiIgb2Zmc2V0PSIzNyUiIC8+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNGMkYzRjUiIG9mZnNldD0iNjMlIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3QgaWQ9InIiIHdpZHRoPSI0MDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiIC8+CiAgPGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii0zMDAlIiB0bz0iMCUiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiICAvPgo8L3N2Zz4=");
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwLDAsMjAlLDEwMCUiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRjJGM0Y1IiBvZmZzZXQ9IjI1JSIgLz4KICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0U1RTZFQiIgb2Zmc2V0PSIzNyUiIC8+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNGMkYzRjUiIG9mZnNldD0iNjMlIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3QgaWQ9InIiIHdpZHRoPSI0MDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiIC8+CiAgPGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii0zMDAlIiB0bz0iMCUiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiICAvPgo8L3N2Zz4=');
       background-position: 0% 0%;
       background-size: cover;
       font-size: 14px;

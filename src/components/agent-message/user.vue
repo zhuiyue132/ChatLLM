@@ -2,8 +2,8 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-07-22
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2025-12-15
- * @FilePath     : /bi-agents/src/components/agent-message/user.vue
+ * @LastEditTime : 2026-01-28
+ * @FilePath     : /ChatLLM/src/components/agent-message/user.vue
  * @Description  : 用户消息组件
  * 
 -->
@@ -36,8 +36,6 @@ import { computed, watch } from 'vue'
 import { chunk } from 'lodash-es'
 import FileItem from '../sender/components/file-item.vue'
 import { IGNORE_MESSAGE } from '@/config/app'
-import { chatFilePreviewApi } from '@/api/completions'
-import { convertImageToBase64 } from '@/utils/img/index.js'
 
 defineOptions({
   name: 'AgentUserMessage'
@@ -65,30 +63,6 @@ const fileListChunks = computed(() => {
 const message = computed(() => {
   return (props.message || '').replaceAll(IGNORE_MESSAGE, '').replaceAll('\n', '<br>')
 })
-
-watch(
-  () => props.fileList,
-  async current => {
-    if (current && current.length) {
-      for (let index = 0; index < current.length; index++) {
-        const fileObj = current[index]
-        if (fileObj.type === 'image') {
-          if (fileObj.url) {
-            continue
-          } else {
-            const res = await chatFilePreviewApi({ fileId: fileObj.fileId })
-            if (res.data.code === 0) {
-              fileObj.url = await convertImageToBase64(res.data.data.url)
-            }
-          }
-        } else {
-          continue
-        }
-      }
-    }
-  },
-  { immediate: true }
-)
 </script>
 
 <style lang="scss" scoped>

@@ -7,29 +7,29 @@
  * @Description  :
  *
  */
-import { onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from 'vue'
 
 export function useDarkModeWatcher() {
-  const isDark = ref(document.body.classList.contains("dark"));
+  const isDark = ref(document.body.classList.contains('dark'))
 
-  let observer;
+  let observer
 
   onMounted(() => {
     observer = new MutationObserver(() => {
-      isDark.value = document.body.classList.contains("dark");
-    });
+      isDark.value = document.body.classList.contains('dark')
+    })
 
     observer.observe(document.body, {
       attributes: true,
-      attributeFilter: ["class"], // 只监听 class 变化
-    });
-  });
+      attributeFilter: ['class'] // 只监听 class 变化
+    })
+  })
 
   onUnmounted(() => {
-    observer && observer.disconnect();
-  });
+    observer && observer.disconnect()
+  })
 
   return {
-    isDark,
-  };
+    isDark
+  }
 }

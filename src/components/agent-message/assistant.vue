@@ -16,11 +16,7 @@
         class="message-text markdown-body"
         :class="{ 'is-douyin-agent': agentCode.startsWith('dy_') }"
       >
-        <MarkdownRenderer
-          :content="message"
-          :agent-id="agentId"
-          :agent-code="agentCode"
-        />
+        <MarkdownRenderer :content="message" :agent-id="agentId" :agent-code="agentCode" />
       </div>
     </div>
 
@@ -30,10 +26,7 @@
         <i v-title="'复制内容'" class="icon-copy" @click.stop="copyMessage"></i>
       </div>
 
-      <div
-        v-if="exportTypes?.length && exportInfo?.enable"
-        class="action-button"
-      >
+      <div v-if="exportTypes?.length && exportInfo?.enable" class="action-button">
         <!-- 导出下拉菜单 -->
         <el-dropdown
           v-if="exportTypes?.length > 1"
@@ -45,12 +38,7 @@
         >
           <template #default>
             <span class="export-icon">
-              <el-icon
-                v-if="isDownloading"
-                class="is-loading"
-                color="#000"
-                size="16"
-              >
+              <el-icon v-if="isDownloading" class="is-loading" color="#000" size="16">
                 <Loading />
               </el-icon>
               <i v-else class="icon-export"></i>
@@ -59,11 +47,7 @@
 
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item
-                v-for="item in exportTypeList"
-                :key="item.key"
-                :command="item.key"
-              >
+              <el-dropdown-item v-for="item in exportTypeList" :key="item.key" :command="item.key">
                 {{ item.name }}
               </el-dropdown-item>
             </el-dropdown-menu>
@@ -90,7 +74,7 @@
             AGENT_CODE.SOARING_SHOP_ANALYST,
             AGENT_CODE.XHS_PROMOTE_ANALYST,
             AGENT_CODE.SOARING_GOOD_ANALYST,
-            AGENT_CODE.DY_SOARING_GOOD_ANALYST,
+            AGENT_CODE.DY_SOARING_GOOD_ANALYST
           ].includes(agentCode)
         "
         class="action-button"
@@ -150,61 +134,61 @@
 </template>
 
 <script setup>
-import MarkdownRenderer from "../markdown-renderer/index.vue";
-import { onCopy } from "@/utils";
-import { useExport } from "@/hooks/use-export";
-import { ref, watch, computed } from "vue";
-import { showMessage } from "@/hooks";
-import dayjs from "dayjs";
-import { Loading } from "@element-plus/icons-vue";
-import ChatMessageItemLoading from "./loading.vue";
+import MarkdownRenderer from '../markdown-renderer/index.vue'
+import { onCopy } from '@/utils'
+import { useExport } from '@/hooks/use-export'
+import { ref, watch, computed } from 'vue'
+import { showMessage } from '@/hooks'
+import dayjs from 'dayjs'
+import { Loading } from '@element-plus/icons-vue'
+import ChatMessageItemLoading from './loading.vue'
 // import FakeProgress from './fake-progress.vue'
-import { setPopperPosition } from "@/utils";
-import { useEventListener } from "@vueuse/core";
-import { AGENT_CODE } from "@/config/agent-code";
+import { setPopperPosition } from '@/utils'
+import { useEventListener } from '@vueuse/core'
+import { AGENT_CODE } from '@/config/agent-code'
 
 defineOptions({
-  name: "AgentAssistantMessage",
-});
+  name: 'AgentAssistantMessage'
+})
 
 const props = defineProps({
   message: {
     type: String,
-    default: "",
+    default: ''
   },
   // 是否正在加载, 即对话输出前的loading
   loading: {
     type: Boolean,
-    default: true,
+    default: true
   },
   finished: {
     type: Boolean,
-    default: true,
+    default: true
   },
 
   agentId: {
     type: [String, Number],
-    default: "",
+    default: ''
   },
   reportId: {
     type: [String, Number],
-    default: "",
+    default: ''
   },
   conversationId: {
     type: [String, Number],
-    default: "",
+    default: ''
   },
   exportTypes: {
     type: Array,
-    default: () => ["png"],
+    default: () => ['png']
   },
   agentCode: {
     type: String,
-    default: "",
+    default: ''
   },
   messageId: {
     type: [Number, String],
-    default: "",
+    default: ''
   },
   exportInfo: {
     type: Object,
@@ -216,154 +200,151 @@ const props = defineProps({
       // secTitle: '', // 二级标题    店铺：淘宝天猫数据分析报告   类目：市场消费需求分析
       // wxUrl: '', // 联系人微信二维码
       // phone: '' // 联系人电话
-    }),
-  },
-});
+    })
+  }
+})
 
-const emits = defineEmits(["regenerate"]);
+const emits = defineEmits(['regenerate'])
 
 const loadingComponent = computed(() => {
-  return ChatMessageItemLoading;
-});
+  return ChatMessageItemLoading
+})
 
-const mdContainer = ref(null);
-const triggerRef = ref(null);
-const datePickerRef = ref(null);
+const mdContainer = ref(null)
+const triggerRef = ref(null)
+const datePickerRef = ref(null)
 
-const onVisibleChange = (visible) => {
+const onVisibleChange = visible => {
   if (!visible) {
-    datePickerRef.value?.handleClose?.();
+    datePickerRef.value?.handleClose?.()
   }
-};
+}
 const onMouseIn = () => {
-  datePickerRef.value?.handleOpen?.();
-};
+  datePickerRef.value?.handleOpen?.()
+}
 
-useEventListener(triggerRef, "mouseenter", onMouseIn);
+useEventListener(triggerRef, 'mouseenter', onMouseIn)
 // useEventListener(triggerRef, 'mouseleave', () => onVisibleChange(false))
 
 // 复制消息
 const copyMessage = async () => {
-  await onCopy(mdContainer.value?.innerText);
-};
+  await onCopy(mdContainer.value?.innerText)
+}
 
 // 重新生成消息
 const regenerateMessage = () => {
-  console.log("重新生成消息");
+  console.log('重新生成消息')
   // 这里可以实现重新生成功能
-};
+}
 
 // 是否正在下载
-const isDownloading = ref(false);
+const isDownloading = ref(false)
 
 const pngShowName = {
-  [AGENT_CODE.XHS_PROMOTE_ANALYST]: "导出长图",
-};
+  [AGENT_CODE.XHS_PROMOTE_ANALYST]: '导出长图'
+}
 
 // 导出的可选列表
 const exportTypeList = computed(() => {
-  return props.exportTypes.map((type) => {
+  return props.exportTypes.map(type => {
     return {
       key: type,
       name: {
-        png: pngShowName[props.agentCode] || "导出图片",
-        pdf: "导出PDF",
-        zip: "导出压缩包",
-      }[type],
-    };
-  });
-});
+        png: pngShowName[props.agentCode] || '导出图片',
+        pdf: '导出PDF',
+        zip: '导出压缩包'
+      }[type]
+    }
+  })
+})
 
 // 是否是safari浏览器
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
 
 // 获取指定时间当前月的最后一周的周日 当没有dateRange时使用，应该不会有这个场景
-const getLastWeekSundayOfMonth = (date) => {
-  const lastDayOfMonth = dayjs(date).endOf("month");
-  const lastDayWeekDay = lastDayOfMonth.day();
+const getLastWeekSundayOfMonth = date => {
+  const lastDayOfMonth = dayjs(date).endOf('month')
+  const lastDayWeekDay = lastDayOfMonth.day()
   // 如果最后一天是周日，直接返回；否则向前找到最近的周日
-  const daysToSubtract = lastDayWeekDay === 0 ? 0 : lastDayWeekDay;
-  return lastDayOfMonth.subtract(daysToSubtract, "day").format("YYYY-MM-DD");
-};
+  const daysToSubtract = lastDayWeekDay === 0 ? 0 : lastDayWeekDay
+  return lastDayOfMonth.subtract(daysToSubtract, 'day').format('YYYY-MM-DD')
+}
 
 const datePickerValue = computed(() => {
   if (
     [
       AGENT_CODE.SOARING_GOOD_ANALYST, // 飙升商品分析
-      AGENT_CODE.DY_SOARING_GOOD_ANALYST, // // 抖音飙升商品分析师
+      AGENT_CODE.DY_SOARING_GOOD_ANALYST // // 抖音飙升商品分析师
     ].includes(props.agentCode)
   ) {
     const value =
-      props.exportInfo?.dateRange?.split("~")?.[1] ||
+      props.exportInfo?.dateRange?.split('~')?.[1] ||
       getLastWeekSundayOfMonth(props.exportInfo.date) ||
-      "";
-    const result = dayjs(value).format("YYYY-MM-DD");
+      ''
+    const result = dayjs(value).format('YYYY-MM-DD')
 
     // console.log('datePickerValue result', value, result)
-    return result;
+    return result
   }
 
-  return props.exportInfo.date;
-});
+  return props.exportInfo.date
+})
 
 const datePickerType = computed(() => {
   if (
     [
       AGENT_CODE.SOARING_GOOD_ANALYST, // 飙升商品分析
-      AGENT_CODE.DY_SOARING_GOOD_ANALYST, // // 抖音飙升商品分析师
+      AGENT_CODE.DY_SOARING_GOOD_ANALYST // // 抖音飙升商品分析师
     ].includes(props.agentCode)
   ) {
-    return "week";
+    return 'week'
   }
 
-  return "month";
-});
+  return 'month'
+})
 
 const datePickerValueFormat = computed(() => {
   if (
     [
       AGENT_CODE.SOARING_GOOD_ANALYST, // 飙升商品分析
-      AGENT_CODE.DY_SOARING_GOOD_ANALYST, // // 抖音飙升商品分析师
+      AGENT_CODE.DY_SOARING_GOOD_ANALYST // // 抖音飙升商品分析师
     ].includes(props.agentCode)
   ) {
-    return "YYYY-MM-DD";
+    return 'YYYY-MM-DD'
   }
-  return "YYYY-MM";
-});
+  return 'YYYY-MM'
+})
 
 const disabledDateEnd = computed(() => {
   if (
     [
       AGENT_CODE.SOARING_GOOD_ANALYST, // 飙升商品分析
-      AGENT_CODE.DY_SOARING_GOOD_ANALYST, // // 抖音飙升商品分析师
+      AGENT_CODE.DY_SOARING_GOOD_ANALYST // // 抖音飙升商品分析师
     ].includes(props.agentCode)
   ) {
-    return dayjs().startOf("week").valueOf();
+    return dayjs().startOf('week').valueOf()
   }
-  return dayjs().startOf("month").valueOf();
-});
+  return dayjs().startOf('month').valueOf()
+})
 
 // 导出消息
-const exportMessage = async (type) => {
+const exportMessage = async type => {
   if (isSafari) {
-    showMessage("当前浏览器不支持导出，推荐使用Chrome浏览器");
-    return;
+    showMessage('当前浏览器不支持导出，推荐使用Chrome浏览器')
+    return
   }
   // 店铺报告 先临时走历史的   后面走下面统一的导出方式
-  const { date, name, fileName, secTitle, wxUrl, phone } =
-    props.exportInfo ?? {};
+  const { date, name, fileName, secTitle, wxUrl, phone } = props.exportInfo ?? {}
 
   // 1. 判断是否有权限
   if (!isDownloading.value) {
-    const { loading, onExport } = useExport();
-    isDownloading.value = loading.value;
-    watch(loading, (value) => {
-      isDownloading.value = value;
-    });
+    const { loading, onExport } = useExport()
+    isDownloading.value = loading.value
+    watch(loading, value => {
+      isDownloading.value = value
+    })
 
-    const time = dayjs(date).isValid()
-      ? dayjs(date).format("YYYY年MM月")
-      : date;
+    const time = dayjs(date).isValid() ? dayjs(date).format('YYYY年MM月') : date
     try {
       await onExport(
         mdContainer.value,
@@ -373,63 +354,58 @@ const exportMessage = async (type) => {
           tips: secTitle,
           ewm: wxUrl,
           phone,
-          filename: (
-            fileName || `${name || secTitle || "智能体报告"}-${time}`
-          ).trim(),
+          filename: (fileName || `${name || secTitle || '智能体报告'}-${time}`).trim(),
           message: props.message,
-          reportTypeText:
-            props.agentCode === AGENT_CODE.SOARING_GOOD_ANALYST
-              ? "飙升商品"
-              : "",
+          reportTypeText: props.agentCode === AGENT_CODE.SOARING_GOOD_ANALYST ? '飙升商品' : ''
         },
         {
           agentCode: props.agentCode,
           downType: type,
-          filename: (fileName || `${name}-${time}`).trim(),
-        },
-      );
+          filename: (fileName || `${name}-${time}`).trim()
+        }
+      )
     } catch (e) {
-      showMessage("导出报告失败，请稍后重试");
+      showMessage('导出报告失败，请稍后重试')
     }
   } else {
     // 没有报告ID，此时导出按钮是隐藏的，暂不处理任何事宜。
   }
-};
+}
 
 // 重新生成消息 date 可能是YYYY-MM-DD格式，也可能是YYYY-MM格式
-const onReGenerate = (date) => {
+const onReGenerate = date => {
   const payload = {
-    messageId: props.messageId,
-  };
+    messageId: props.messageId
+  }
 
   if (date) {
     if (
       [
         AGENT_CODE.SOARING_GOOD_ANALYST, // 飙升商品分析
-        AGENT_CODE.DY_SOARING_GOOD_ANALYST, // // 抖音飙升商品分析师
+        AGENT_CODE.DY_SOARING_GOOD_ANALYST // // 抖音飙升商品分析师
       ].includes(props.agentCode)
     ) {
       // 选中周的周日
-      payload.day = dayjs(date).endOf("week").format("YYYY-MM-DD");
+      payload.day = dayjs(date).endOf('week').format('YYYY-MM-DD')
     }
-    payload.month = dayjs(date).format("YYYY-MM");
+    payload.month = dayjs(date).format('YYYY-MM')
   }
 
   // console.log('onReGenerate payload', payload, omitBy(payload, isUndefined))
 
-  emits("regenerate", payload);
-};
+  emits('regenerate', payload)
+}
 
-const onDateChange = (date) => {
-  onReGenerate(date);
-};
+const onDateChange = date => {
+  onReGenerate(date)
+}
 
-const disabledDate = (time) => {
+const disabledDate = time => {
   return (
     time.getTime() >= disabledDateEnd.value || //
-    time.getTime() < dayjs("2020-01-01").valueOf() // 20年之前的数据，不可以查看，会报错
-  );
-};
+    time.getTime() < dayjs('2020-01-01').valueOf() // 20年之前的数据，不可以查看，会报错
+  )
+}
 </script>
 <style lang="scss">
 .with-input-popper {
@@ -513,7 +489,7 @@ const disabledDate = (time) => {
       flex: 1;
       width: 100%;
       color: #000;
-      font-family: "Source Han Sans CN", sans-serif;
+      font-family: 'Source Han Sans CN', sans-serif;
       font-size: 16px;
       font-weight: 400;
       line-height: 1.6em;

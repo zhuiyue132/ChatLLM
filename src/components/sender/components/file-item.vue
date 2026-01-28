@@ -9,10 +9,7 @@
 -->
 <template>
   <div class="upload-file-item-wrapper" :class="{ readonly }">
-    <div
-      v-if="file.type === 'image'"
-      :class="{ 'upload-file-item-image': true, readonly }"
-    >
+    <div v-if="file.type === 'image'" :class="{ 'upload-file-item-image': true, readonly }">
       <el-image
         v-if="file.url"
         :src="file.url"
@@ -22,11 +19,7 @@
         :initial-index="imageIndex"
       ></el-image>
 
-      <el-image
-        v-else
-        :src="getFileIcon(fileName)"
-        class="file-preview"
-      ></el-image>
+      <el-image v-else :src="getFileIcon(fileName)" class="file-preview"></el-image>
     </div>
 
     <!-- 文件项 -->
@@ -37,9 +30,7 @@
       <div class="file-info">
         <span v-title="fileName" class="file-name">{{ fileName }}</span>
         <span class="file-size">
-          {{
-            `${formatFileExt(fileName)}&nbsp;&nbsp;${formatFileSize(fileSize)}`
-          }}
+          {{ `${formatFileExt(fileName)}&nbsp;&nbsp;${formatFileSize(fileSize)}` }}
         </span>
       </div>
     </div>
@@ -54,16 +45,16 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { formatFileSize, formatFileExt, isImageUrl } from "@/utils";
+import { computed } from 'vue'
+import { formatFileSize, formatFileExt, isImageUrl } from '@/utils'
 
-import docxIcon from "@/assets/images/file-icon/docx.svg";
-import imageIcon from "@/assets/images/file-icon/image.png";
-import pdfIcon from "@/assets/images/file-icon/pdf.svg";
-import pptxIcon from "@/assets/images/file-icon/pptx.svg";
-import xlsxIcon from "@/assets/images/file-icon/xlsx.svg";
-import videoIcon from "@/assets/images/file-icon/video.svg";
-import unknowIcon from "@/assets/images/file-icon/unknown-1.svg";
+import docxIcon from '@/assets/images/file-icon/docx.svg'
+import imageIcon from '@/assets/images/file-icon/image.png'
+import pdfIcon from '@/assets/images/file-icon/pdf.svg'
+import pptxIcon from '@/assets/images/file-icon/pptx.svg'
+import xlsxIcon from '@/assets/images/file-icon/xlsx.svg'
+import videoIcon from '@/assets/images/file-icon/video.svg'
+import unknowIcon from '@/assets/images/file-icon/unknown-1.svg'
 
 const fileIconMap = {
   pptx: pptxIcon,
@@ -72,75 +63,73 @@ const fileIconMap = {
   docx: docxIcon,
   image: imageIcon,
   unknow: unknowIcon,
-  video: videoIcon,
-};
+  video: videoIcon
+}
 
-const getFileIcon = (filename) => {
+const getFileIcon = filename => {
   if (isImageUrl(filename)) {
-    return fileIconMap.image;
+    return fileIconMap.image
   }
 
-  const ext = filename.split(".").pop().toUpperCase();
+  const ext = filename.split('.').pop().toUpperCase()
 
   switch (ext) {
-    case "PPTX":
-    case "PPT":
-      return fileIconMap.pptx;
+    case 'PPTX':
+    case 'PPT':
+      return fileIconMap.pptx
 
-    case "XLSX":
-    case "XLS":
-    case "CSV":
-      return fileIconMap.xlsx;
+    case 'XLSX':
+    case 'XLS':
+    case 'CSV':
+      return fileIconMap.xlsx
 
-    case "PDF":
-      return fileIconMap.pdf;
-    case "DOC":
-    case "DOCX":
-    case "WORD":
-      return fileIconMap.docx;
-    case "MP4":
-      return fileIconMap.video;
+    case 'PDF':
+      return fileIconMap.pdf
+    case 'DOC':
+    case 'DOCX':
+    case 'WORD':
+      return fileIconMap.docx
+    case 'MP4':
+      return fileIconMap.video
     default:
-      return fileIconMap.unknow;
+      return fileIconMap.unknow
   }
-};
+}
 
 const props = defineProps({
   file: {
     type: Object,
-    required: true,
+    required: true
   },
   index: {
     type: Number,
-    required: true,
+    required: true
   },
 
   readonly: {
     type: Boolean,
-    default: false,
+    default: false
   },
 
   fileList: {
     type: Array,
-    default: () => [],
-  },
-});
+    default: () => []
+  }
+})
 
 // 兼容不同的文件名字段
-const fileName = computed(() => props.file.name || props.file.fileName);
+const fileName = computed(() => props.file.name || props.file.fileName)
 // 兼容不同的文件大小字段
-const fileSize = computed(() => props.file.size || props.file.fileSize);
+const fileSize = computed(() => props.file.size || props.file.fileSize)
 
 const imageList = computed(() =>
-  props.fileList
-    .filter((item) => item.type === "image")
-    .map((item) => item.url),
-);
+  props.fileList.filter(item => item.type === 'image').map(item => item.url)
+)
 const imageIndex = computed(() => {
-  return imageList.value.findIndex((item) => item === props.file.url);
-});
+  return imageList.value.findIndex(item => item === props.file.url)
+})
 
-defineEmits(["remove"]);
+defineEmits(['remove'])
 </script>
 
 <style lang="scss" scoped>
@@ -222,14 +211,14 @@ defineEmits(["remove"]);
         white-space: nowrap;
         text-overflow: ellipsis;
         color: #000;
-        font-family: "Source Han Sans CN", sans-serif;
+        font-family: 'Source Han Sans CN', sans-serif;
         font-size: 14px;
         font-weight: 500;
       }
 
       .file-size {
         color: #8c8c8c;
-        font-family: "Source Han Sans CN", sans-serif;
+        font-family: 'Source Han Sans CN', sans-serif;
         font-size: 12px;
         font-weight: 400;
       }
