@@ -12,7 +12,7 @@
     <div class="chat-content">
       <!-- 欢迎标题 -->
       <div class="welcome-section">
-        <h1 class="welcome-title">欢迎使用边界AI助手</h1>
+        <h1 class="welcome-title">欢迎使用Chat2LLM</h1>
       </div>
 
       <!-- 输入区域 -->
@@ -39,6 +39,7 @@ import AgentSender from '@/components/sender/index.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { useRoute, useRouter } from 'vue-router'
 import { ref, computed, watch, onMounted } from 'vue'
+import ModelIcon from '@/components/model-icon/index.vue'
 
 const route = useRoute()
 

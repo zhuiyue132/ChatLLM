@@ -7,3 +7,9 @@
  * @Description  :
  *
  */
+
+import { get } from '../request/http'
+
+export const getModelList = async () => {
+  return get('/v1/models')
+}

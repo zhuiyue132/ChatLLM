@@ -86,6 +86,7 @@ declare module 'vue' {
     MarkdownRenderer: typeof import('./src/components/markdown-renderer/index.vue')['default']
     MentionSender: typeof import('./src/components/mention-sender/index.vue')['default']
     Mermaid: typeof import('./src/components/x-markdown-core/components/mermaid/index.vue')['default']
+    ModelIcon: typeof import('./src/components/model-icon/index.vue')['default']
     ModelSelect: typeof import('./src/components/sender/components/model-select.vue')['default']
     NotCovertDemandPage: typeof import('./src/components/markdown-renderer/components/not-covert-demand-page.vue')['default']
     OperateTable: typeof import('./src/components/markdown-renderer/components/operate-table.vue')['default']
