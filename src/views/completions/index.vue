@@ -20,6 +20,8 @@
       <div class="input-section">
         <AgentSender
           ref="senderRef"
+          v-model:model="currentModel"
+          :model-list="modelList"
           :float-button-enable="false"
           :min-rows="2"
           :hidden-input-when-files="false"
@@ -39,11 +41,25 @@ import AgentSender from '@/components/sender/index.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { useRoute, useRouter } from 'vue-router'
 import { ref, computed, watch, onMounted } from 'vue'
-import ModelIcon from '@/components/model-icon/index.vue'
+import { useApiSettingsStore } from '@/stores/api-settings'
 
 const route = useRoute()
+const apiSettingsStore = useApiSettingsStore()
 
 const senderRef = ref(null)
+
+// 当前选中的模型（多选模式需要数组格式）
+const currentModel = ref(
+  apiSettingsStore.defaultModel ? [apiSettingsStore.defaultModel] : []
+)
+
+// 模型列表，转换为 ModelSelector 所需格式
+const modelList = computed(() => {
+  return apiSettingsStore.selectedModels.map(model => ({
+    code: model,
+    name: model
+  }))
+})
 
 const handleMessageSubmit = (payload = {}) => {}
 

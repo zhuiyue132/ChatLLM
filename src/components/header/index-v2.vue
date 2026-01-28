@@ -31,11 +31,7 @@
         @command="handleUserCommand"
         @visible-change="handleUserDropdownVisibleChange"
       >
-        <!-- <el-avatar
-          :src="headUrl"
-          :size="40"
-          style="cursor: pointer; border: 1px solid rgb(34 39 34 / 8%)"
-        /> -->
+        <el-avatar :size="40" style="cursor: pointer; border: 1px solid rgb(34 39 34 / 8%)" />
         <template #dropdown>
           <xs-dropdown-menu class="user-dropdown-menu">
             <!-- 用户信息区域 -->

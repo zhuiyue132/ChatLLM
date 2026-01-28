@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-08-21
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-26
+ * @LastEditTime : 2026-01-28
  * @FilePath     : /ChatLLM/src/components/sender/components/model-select.vue
  * @Description  : 模型下拉框
  * 
@@ -39,7 +39,7 @@
             class="model-item"
             :class="{
               active: selectedModels.includes(model.code),
-              disabled: isDisabled(model?.code),
+              disabled: isDisabled(model?.code)
             }"
           >
             <div v-if="isMultipleMode" class="model-check">
@@ -47,6 +47,7 @@
             </div>
 
             <div class="model-name">
+              <ModelIcon :name="model.code" :size="18" />
               <span>{{ model.name }} </span>
               <i
                 v-if="model.enableGenerateImage || model.enableVision"
@@ -61,42 +62,39 @@
   </xs-dropdown>
 </template>
 <script setup>
-import { useVModel } from "@vueuse/core";
-import {
-  XsDropdown,
-  XsDropdownMenu,
-  XsDropdownItem,
-} from "@/components/xs-dropdown";
-import { setPopperPosition } from "@/utils";
-import { computed, ref } from "vue";
+import { useVModel } from '@vueuse/core'
+import { XsDropdown, XsDropdownMenu, XsDropdownItem } from '@/components/xs-dropdown'
+import { setPopperPosition } from '@/utils'
+import { computed, ref } from 'vue'
+import ModelIcon from '@/components/model-icon/index.vue'
 
 defineOptions({
-  name: "ModelSelector",
-});
+  name: 'ModelSelector'
+})
 
 const props = defineProps({
   modelList: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
   modelValue: {
     type: [String, Array],
-    default: "",
+    default: ''
   },
   // 是否启用多选
   enableMultiple: {
     type: Boolean,
-    default: true,
+    default: true
   },
   // 最大选择数量
   maxSelectCount: {
     type: Number,
-    default: 2,
+    default: 2
   },
   // TODO: 需要在真实联调后再加上hover提示
   popperTitle: {
     type: String,
-    default: "",
+    default: ''
   },
   // 校验模式配置
   // both = 启用多选后，组件需要支持既可以单选，也可以多选；
@@ -104,148 +102,137 @@ const props = defineProps({
   // multiple = 启用多选后，组件只支持多选, 且取消选中其中一个模型时，如未选择其他模型，则关闭下拉框后恢复原本选中模型；
   validateMode: {
     type: String,
-    values: ["single", "multiple", "both"],
-    default: "both",
-  },
-});
+    values: ['single', 'multiple', 'both'],
+    default: 'both'
+  }
+})
 
-const emits = defineEmits(["update:modelValue"]);
+const emits = defineEmits(['update:modelValue'])
 
-const currentModel = useVModel(props, "modelValue", emits);
+const currentModel = useVModel(props, 'modelValue', emits)
 
 // 保存下拉框打开时的原始选中状态（用于 multiple 模式恢复）
-const originalValue = ref(null);
+const originalValue = ref(null)
 
 // 是否为多选模式
 const isMultipleMode = computed(() => {
-  if (props.validateMode === "single") return false;
-  if (props.validateMode === "multiple") return true;
+  if (props.validateMode === 'single') return false
+  if (props.validateMode === 'multiple') return true
   // both 模式下，根据 enableMultiple 决定
-  return props.enableMultiple;
-});
+  return props.enableMultiple
+})
 
 // 点击是否关闭下拉框（单选时关闭，多选时不关闭）
-const hideOnClick = computed(() => !isMultipleMode.value);
+const hideOnClick = computed(() => !isMultipleMode.value)
 
 // 统一处理选中的模型列表（数组或单个值）
 const selectedModels = computed(() => {
   if (isMultipleMode.value) {
-    return Array.isArray(currentModel.value)
-      ? currentModel.value
-      : [currentModel.value];
+    return Array.isArray(currentModel.value) ? currentModel.value : [currentModel.value]
   }
-  return currentModel.value;
-});
+  return currentModel.value
+})
 
 // 显示的模型名称
 const currentModelName = computed(() => {
   if (isMultipleMode.value) {
     // 多选模式：显示逗号分隔的所有模型名称
     const names = selectedModels.value
-      .map((code) => props.modelList.find((item) => item.code === code)?.name)
-      .filter(Boolean);
-    return names.join(" & ") || "";
+      .map(code => props.modelList.find(item => item.code === code)?.name)
+      .filter(Boolean)
+    return names.join(' & ') || ''
   } else {
     // 单选模式：显示单个模型名称
-    const model = Array.isArray(currentModel.value)
-      ? currentModel.value[0]
-      : currentModel.value;
-    return props.modelList.find((item) => item.code === model)?.name || "";
+    const model = Array.isArray(currentModel.value) ? currentModel.value[0] : currentModel.value
+    return props.modelList.find(item => item.code === model)?.name || ''
   }
-});
+})
 
-const poperVisible = ref(false);
-const onVisiableChange = (visible) => {
-  poperVisible.value = visible;
+const poperVisible = ref(false)
+const onVisiableChange = visible => {
+  poperVisible.value = visible
 
   if (visible) {
     // 下拉框打开时，保存当前选中状态（用于 multiple 模式恢复）
-    if (props.validateMode === "multiple") {
+    if (props.validateMode === 'multiple') {
       originalValue.value = Array.isArray(currentModel.value)
         ? [...currentModel.value]
-        : currentModel.value;
+        : currentModel.value
     }
   } else {
     // 下拉框关闭时，检查是否需要恢复
-    if (props.validateMode === "multiple" && originalValue.value) {
-      const currentSelected = Array.isArray(currentModel.value)
-        ? currentModel.value
-        : [];
-      const original = Array.isArray(originalValue.value)
-        ? originalValue.value
-        : [];
+    if (props.validateMode === 'multiple' && originalValue.value) {
+      const currentSelected = Array.isArray(currentModel.value) ? currentModel.value : []
+      const original = Array.isArray(originalValue.value) ? originalValue.value : []
 
       // 检查是否有新增的模型（不在原始列表中的模型）
-      const hasNewModel = currentSelected.some(
-        (item) => !original.includes(item),
-      );
+      const hasNewModel = currentSelected.some(item => !original.includes(item))
 
       // 如果没有新增模型，且选中数量变少了（说明只做了取消操作），则恢复原始状态
       if (!hasNewModel || currentSelected.length < original.length) {
-        currentModel.value = originalValue.value;
+        currentModel.value = originalValue.value
       }
 
       // 清空保存的原始值
-      originalValue.value = null;
+      originalValue.value = null
     }
   }
-};
+}
 
 // 判断模型是否应该被禁用
-const isDisabled = (modelCode) => {
-  if (!isMultipleMode.value) return false;
+const isDisabled = modelCode => {
+  if (!isMultipleMode.value) return false
   // 如果模型已选中，不禁用（允许取消选中）
-  if (selectedModels.value.includes(modelCode)) return false;
+  if (selectedModels.value.includes(modelCode)) return false
   // 如果达到最大选择数量，禁用未选中的项
-  return selectedModels.value.length >= props.maxSelectCount;
-};
+  return selectedModels.value.length >= props.maxSelectCount
+}
 
-const onCommand = (model) => {
-  console.log("model", model);
+const onCommand = model => {
+  console.log('model', model)
   if (isMultipleMode.value) {
     // 多选模式
     const currentSelected = Array.isArray(currentModel.value)
       ? [...currentModel.value]
       : currentModel.value
         ? [currentModel.value]
-        : [];
-    const index = currentSelected.indexOf(model);
-    console.log("index", index);
+        : []
+    const index = currentSelected.indexOf(model)
+    console.log('index', index)
 
     if (index > -1) {
       // 已选中，则移除
-      if (props.validateMode === "multiple") {
+      if (props.validateMode === 'multiple') {
         // multiple 模式：允许取消选中，关闭下拉框时如果为空则恢复
         if (currentSelected.length > 1) {
-          currentSelected.splice(index, 1);
+          currentSelected.splice(index, 1)
         }
       } else {
         // both 模式：至少保留一个
         if (currentSelected.length > 1) {
-          currentSelected.splice(index, 1);
+          currentSelected.splice(index, 1)
         }
       }
     } else {
       // 未选中，检查是否达到最大数量
       if (currentSelected.length < props.maxSelectCount) {
-        currentSelected.push(model);
+        currentSelected.push(model)
       }
     }
 
-    currentModel.value = currentSelected;
+    currentModel.value = currentSelected
   } else {
     // 单选模式
-    currentModel.value = [model];
+    currentModel.value = [model]
   }
-};
+}
 
-const getImageTitle = (model) => {
-  if (model.enableGenerateImage && model.enableVision)
-    return "支持识别图片和生成图片";
-  if (model.enableGenerateImage) return "支持生成图片";
-  if (model.enableVision) return "支持识别图片";
-  return "";
-};
+const getImageTitle = model => {
+  if (model.enableGenerateImage && model.enableVision) return '支持识别图片和生成图片'
+  if (model.enableGenerateImage) return '支持生成图片'
+  if (model.enableVision) return '支持识别图片'
+  return ''
+}
 </script>
 
 <style lang="scss" scoped>
@@ -254,8 +241,7 @@ const getImageTitle = (model) => {
 
   .sender-button {
     font-family:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-      "Microsoft YaHei", sans-serif;
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 
     .arrow-icon {
       display: flex;
@@ -308,6 +294,7 @@ const getImageTitle = (model) => {
   .model-name {
     display: flex;
     align-items: center;
+    margin-left: 4px;
 
     @include flex-gap(4px, row);
 
