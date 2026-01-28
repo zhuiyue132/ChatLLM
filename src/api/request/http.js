@@ -110,7 +110,7 @@ const request = (url, params, config) => {
 
   const contentType = headers?.['Content-Type'] || headers?.contentType || CONTENT_TYPE_DEFAULT
 
-  let baseUrl = import.meta.env.VITE_APP_WEB_URL || 'http://127.0.0.1:3009'
+  let baseUrl = import.meta.env.VITE_APP_WEB_URL
 
   // 自定义baseUrl
   if (typeof customBaseUrl !== 'undefined') {
@@ -118,9 +118,9 @@ const request = (url, params, config) => {
   }
 
   const newHeaders = {
-    ...headers,
     'Content-Type': contentType,
-    Authorization: `Bearer ${import.meta.env.VITE_APP_API_KEY || 'sk-91dofeMNLvaydNz6Yx7fZU5vyllSNMBXi5qUoWojhxXHZ0fr'}`
+    Authorization: `Bearer ${import.meta.env.VITE_APP_API_KEY}`,
+    ...headers
   }
 
   const option = {

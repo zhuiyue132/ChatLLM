@@ -7,6 +7,7 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    ApiSettingsDialog: typeof import('./src/components/api-settings-dialog/index.vue')['default']
     Assistant: typeof import('./src/components/agent-message/assistant.vue')['default']
     BlockImageInfo: typeof import('./src/components/markdown-renderer/components/base/block-image-info.vue')['default']
     Category: typeof import('./src/components/markdown-renderer/components/category.vue')['default']
