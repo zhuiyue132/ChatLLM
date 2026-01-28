@@ -123,7 +123,7 @@
 import MarkdownRenderer from '../markdown-renderer/index.vue'
 import ModelIcon from '../model-icon/index.vue'
 import { onCopy } from '@/utils'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import ChatMessageItemLoading from './loading.vue'
 import ImageItem from './image-item.vue'
@@ -215,7 +215,30 @@ const LoadingComponent = computed(() => {
 })
 
 const mdContainer = ref(null)
-const showThinking = ref(true)
+// 默认收起思考过程
+const showThinking = ref(false)
+
+// 监听思考内容变化：有新内容时展开
+watch(
+  () => props.thinkingContent,
+  (newVal, oldVal) => {
+    // 思考内容从无到有，或者内容在增加（流式输出中），自动展开
+    if (newVal && newVal.length > (oldVal?.length || 0)) {
+      showThinking.value = true
+    }
+  }
+)
+
+// 监听推理耗时：推理结束时收起思考
+watch(
+  () => props.thinkingDuration,
+  (newVal, oldVal) => {
+    // 推理耗时从 0 变为大于 0，说明推理结束，收起思考过程
+    if (newVal > 0 && (!oldVal || oldVal === 0)) {
+      showThinking.value = false
+    }
+  }
+)
 
 // 获取模型显示名称
 const modelDisplayName = computed(() => {

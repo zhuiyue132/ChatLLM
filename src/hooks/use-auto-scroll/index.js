@@ -8,33 +8,37 @@
  *
  */
 import { ref, onMounted } from 'vue'
-import { useEventListener } from '@vueuse/core'
+import { useEventListener, useThrottleFn } from '@vueuse/core'
 
 export const useAutoScroll = scrollable => {
   const isAutoScrollEnabled = ref(true)
-  // 是否正在位置设置中;
-  const isPositionSetting = ref(false)
 
-  // 设置页面滚动位置, 滚动到最底部；
-  const scrollToBottom = (force, delay = 200) => {
-    console.log('scrollToBottom', force)
-    if (!isAutoScrollEnabled.value || isPositionSetting.value) return
-    isPositionSetting.value = true
+  // 实际执行滚动的函数
+  const doScroll = force => {
+    if (!isAutoScrollEnabled.value) return
 
-    window.setTimeout(() => {
-      if (isAutoScrollEnabled.value) {
-        // 使用页面级滚动，滚动到页面底部
-        const scrollHeight = document.documentElement.scrollHeight
-        const clientHeight = window.innerHeight
-        if (scrollHeight > clientHeight) {
-          window.scrollTo({
-            top: scrollHeight,
-            behavior: force ? 'auto' : 'smooth'
-          })
-        }
-      }
-      isPositionSetting.value = false
-    }, delay)
+    const scrollHeight = document.documentElement.scrollHeight
+    const clientHeight = window.innerHeight
+    if (scrollHeight > clientHeight) {
+      window.scrollTo({
+        top: scrollHeight,
+        behavior: force ? 'auto' : 'smooth'
+      })
+    }
+  }
+
+  // 节流处理的滚动函数，100ms 内最多执行一次
+  const throttledScroll = useThrottleFn(doScroll, 100)
+
+  // 设置页面滚动位置, 滚动到最底部
+  const scrollToBottom = force => {
+    if (force) {
+      // 强制滚动时直接执行，不节流
+      doScroll(true)
+    } else {
+      // 普通滚动使用节流
+      throttledScroll(false)
+    }
   }
 
   const enableAutoScroll = () => {
