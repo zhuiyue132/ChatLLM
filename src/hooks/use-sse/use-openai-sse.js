@@ -40,16 +40,6 @@ export const createOpenAISSERequest = (options = {}) => {
     onAbort = () => {}
   } = options
 
-  console.log('baseURL', baseURL)
-  console.log('apiKey', apiKey)
-  console.log('defaultHeaders', defaultHeaders)
-  console.log('onStart', onStart)
-  console.log('onToken', onToken)
-  console.log('onDone', onDone)
-  console.log('onError', onError)
-  console.log('onAbort', onAbort)
-  console.log('options', options)
-
   // 请求 ID
   const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
   // 当前连接状态
@@ -62,6 +52,9 @@ export const createOpenAISSERequest = (options = {}) => {
   const content = ref('')
   // 累积的推理内容（用于 o1 等模型）
   const reasoningContent = ref('')
+  // 推理计时相关
+  let reasoningStartTime = null
+  const reasoningDuration = ref(0)
   // token 使用情况
   const usage = shallowRef(null)
 
@@ -99,21 +92,31 @@ export const createOpenAISSERequest = (options = {}) => {
     const delta = choice.delta || {}
 
     if (delta.content) {
+      // 收到正文内容时，结束推理计时
+      if (reasoningStartTime && reasoningDuration.value === 0) {
+        reasoningDuration.value = Date.now() - reasoningStartTime
+      }
       content.value += delta.content
       onToken({
         token: delta.content,
         content: content.value,
         reasoning_content: reasoningContent.value,
+        reasoning_duration: reasoningDuration.value,
         requestId
       })
     }
 
     if (delta.reasoning_content) {
+      // 开始推理计时（首次收到推理内容时）
+      if (!reasoningStartTime) {
+        reasoningStartTime = Date.now()
+      }
       reasoningContent.value += delta.reasoning_content
       onToken({
         token: delta.reasoning_content,
         content: content.value,
         reasoning_content: reasoningContent.value,
+        reasoning_duration: reasoningDuration.value,
         isReasoning: true,
         requestId
       })
@@ -172,6 +175,8 @@ export const createOpenAISSERequest = (options = {}) => {
     error.value = null
     content.value = ''
     reasoningContent.value = ''
+    reasoningStartTime = null
+    reasoningDuration.value = 0
     usage.value = null
 
     abortController = new AbortController()
@@ -202,11 +207,6 @@ export const createOpenAISSERequest = (options = {}) => {
     try {
       onStart({ requestId })
 
-      console.log(`${baseURL}${endpoint}`)
-      console.log('requestHeaders', requestHeaders)
-      console.log('body', JSON.stringify(body))
-      console.log('abortController.signal', abortController.signal)
-
       const response = await fetch(`${baseURL}${endpoint}`, {
         method: 'POST',
         headers: requestHeaders,
@@ -231,6 +231,7 @@ export const createOpenAISSERequest = (options = {}) => {
         onDone({
           content: content.value,
           reasoning_content: reasoningContent.value,
+          reasoning_duration: 0, // 非流式响应无法计时
           usage: usage.value,
           requestId
         })
@@ -268,18 +269,28 @@ export const createOpenAISSERequest = (options = {}) => {
       }
 
       status.value = OpenAISSEStatus.DONE
+      // 如果推理还在进行中（没有收到正文内容就结束了），在此时结束计时
+      if (reasoningStartTime && reasoningDuration.value === 0) {
+        reasoningDuration.value = Date.now() - reasoningStartTime
+      }
       onDone({
         content: content.value,
         reasoning_content: reasoningContent.value,
+        reasoning_duration: reasoningDuration.value,
         usage: usage.value,
         requestId
       })
     } catch (err) {
       if (err.name === 'AbortError') {
         status.value = OpenAISSEStatus.ABORTED
+        // 手动停止时，结束推理计时
+        if (reasoningStartTime && reasoningDuration.value === 0) {
+          reasoningDuration.value = Date.now() - reasoningStartTime
+        }
         onAbort({
           content: content.value,
           reasoning_content: reasoningContent.value,
+          reasoning_duration: reasoningDuration.value,
           requestId
         })
         return
@@ -310,6 +321,8 @@ export const createOpenAISSERequest = (options = {}) => {
     error.value = null
     content.value = ''
     reasoningContent.value = ''
+    reasoningStartTime = null
+    reasoningDuration.value = 0
     usage.value = null
   }
 
@@ -319,6 +332,7 @@ export const createOpenAISSERequest = (options = {}) => {
     error,
     content,
     reasoningContent,
+    reasoningDuration,
     usage,
     send,
     stop,
@@ -471,6 +485,7 @@ export const useOpenAISSESingle = (options = {}) => {
   const error = shallowRef(null)
   const content = ref('')
   const reasoningContent = ref('')
+  const reasoningDuration = ref(0)
   const usage = shallowRef(null)
   const requestId = ref(null)
 
@@ -496,11 +511,13 @@ export const useOpenAISSESingle = (options = {}) => {
         // 同步状态
         content.value = data.content
         reasoningContent.value = data.reasoning_content
+        reasoningDuration.value = data.reasoning_duration || 0
         onToken(data)
       },
       onDone: data => {
         status.value = OpenAISSEStatus.DONE
         usage.value = data.usage
+        reasoningDuration.value = data.reasoning_duration || 0
         onDone(data)
       },
       onError: data => {
@@ -510,6 +527,7 @@ export const useOpenAISSESingle = (options = {}) => {
       },
       onAbort: data => {
         status.value = OpenAISSEStatus.ABORTED
+        reasoningDuration.value = data.reasoning_duration || 0
         onAbort(data)
       }
     })
@@ -519,6 +537,7 @@ export const useOpenAISSESingle = (options = {}) => {
     error.value = null
     content.value = ''
     reasoningContent.value = ''
+    reasoningDuration.value = 0
     usage.value = null
 
     // 监听状态变化（简单的同步方式）
@@ -552,6 +571,7 @@ export const useOpenAISSESingle = (options = {}) => {
     error.value = null
     content.value = ''
     reasoningContent.value = ''
+    reasoningDuration.value = 0
     usage.value = null
     requestId.value = null
   }
@@ -566,6 +586,7 @@ export const useOpenAISSESingle = (options = {}) => {
     error,
     content,
     reasoningContent,
+    reasoningDuration,
     usage,
     requestId,
     send,

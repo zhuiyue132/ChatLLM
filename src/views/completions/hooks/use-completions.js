@@ -115,7 +115,7 @@ export function useCompletions({ roomId }) {
     onStart: () => {
       console.log('[OpenAI SSE] 请求开始')
     },
-    onToken: ({ content, reasoning_content }) => {
+    onToken: ({ content, reasoning_content, reasoning_duration }) => {
       const id = getRoomId()
       if (!id || !receivingMessageId.value) return
 
@@ -126,6 +126,9 @@ export function useCompletions({ roomId }) {
       }
       if (reasoning_content) {
         updates.reasoningContent = reasoning_content
+      }
+      if (reasoning_duration !== undefined) {
+        updates.reasoningTime = reasoning_duration
       }
 
       chatRoomsStore.updateMessage(id, receivingMessageId.value, updates)
@@ -162,14 +165,20 @@ export function useCompletions({ roomId }) {
         scrollToBottom()
       }
     },
-    onDone: ({ content, reasoning_content, usage }) => {
-      console.log('[OpenAI SSE] 请求完成', { content, reasoning_content, usage })
+    onDone: ({ content, reasoning_content, reasoning_duration, usage }) => {
+      console.log('[OpenAI SSE] 请求完成', {
+        content,
+        reasoning_content,
+        reasoning_duration,
+        usage
+      })
 
       const id = getRoomId()
       if (id && receivingMessageId.value) {
         chatRoomsStore.updateMessage(id, receivingMessageId.value, {
           finished: true,
-          error: false
+          error: false,
+          reasoningTime: reasoning_duration || 0
         })
       }
 
@@ -195,14 +204,15 @@ export function useCompletions({ roomId }) {
 
       showMessage(error?.message || '请求失败', { type: 'error' })
     },
-    onAbort: () => {
+    onAbort: ({ reasoning_duration }) => {
       console.log('[OpenAI SSE] 请求被中止')
 
       const id = getRoomId()
       if (id && receivingMessageId.value) {
         chatRoomsStore.updateMessage(id, receivingMessageId.value, {
           finished: true,
-          error: false
+          error: false,
+          reasoningTime: reasoning_duration || 0
         })
       }
 

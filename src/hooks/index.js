@@ -9,5 +9,4 @@
  */
 
 export * from './use-message'
-export * from './use-sse'
 export * from './use-auto-scroll'
