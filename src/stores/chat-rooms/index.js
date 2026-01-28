@@ -84,7 +84,9 @@ export const useChatRoomsStore = defineStore(
         title,
         model,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        topFlag: false,
+        pinTime: null
       })
 
       // 初始化消息树
@@ -147,6 +149,32 @@ export const useChatRoomsStore = defineStore(
       const room = rooms.value.find(r => r.id === roomId)
       if (room) {
         room.model = model
+        room.updatedAt = new Date().toISOString()
+      }
+    }
+
+    /**
+     * 置顶房间
+     * @param {string} roomId - 房间 ID
+     */
+    const pinRoom = roomId => {
+      const room = rooms.value.find(r => r.id === roomId)
+      if (room) {
+        room.topFlag = true
+        room.pinTime = new Date().toISOString()
+        room.updatedAt = new Date().toISOString()
+      }
+    }
+
+    /**
+     * 取消置顶房间
+     * @param {string} roomId - 房间 ID
+     */
+    const unpinRoom = roomId => {
+      const room = rooms.value.find(r => r.id === roomId)
+      if (room) {
+        room.topFlag = false
+        room.pinTime = null
         room.updatedAt = new Date().toISOString()
       }
     }
@@ -424,6 +452,8 @@ export const useChatRoomsStore = defineStore(
       setCurrentRoom,
       updateRoomTitle,
       updateRoomModel,
+      pinRoom,
+      unpinRoom,
       // 消息操作
       addMessage,
       updateMessage,

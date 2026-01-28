@@ -9,14 +9,32 @@
  */
 
 import { ref, computed, watch } from 'vue'
-import { useEventBus } from '@vueuse/core'
+import { useEventBus, tryOnMounted } from '@vueuse/core'
 import { ElMessageBox } from 'element-plus'
 import { CHAT_ROOM_COMMAND } from '@/config/symbol'
 import { useInfiniteScroll } from '@vueuse/core'
+import { useChatRoomsStore } from '@/stores/chat-rooms'
 import dayjs from 'dayjs'
 import { wait } from '@/utils'
 
+/**
+ * 将 store 中的房间格式转换为 sidebar 列表所需的格式
+ * @param {Object} room - store 中的房间对象
+ * @returns {Object} sidebar 列表所需的房间对象
+ */
+const mapStoreRoomToListItem = room => ({
+  taskId: room.id,
+  agentId: 0, // AI 对话默认为 0
+  content: room.title,
+  createTime: room.createdAt,
+  updateTime: room.updatedAt,
+  aiModel: room.model,
+  topFlag: room.topFlag || false,
+  pinTime: room.pinTime || null
+})
+
 export const useChatRoom = (pageSize = 999999999, route = null) => {
+  const chatRoomsStore = useChatRoomsStore()
   const chatRoomList = ref([])
   const isLoading = ref(false)
   const isFinished = ref(false)
@@ -233,18 +251,105 @@ export const useChatRoom = (pageSize = 999999999, route = null) => {
     isCompleted.value = false
   }
 
+  /**
+   * 从 store 加载房间列表到 sidebar
+   */
+  const loadRoomsFromStore = () => {
+    const storeRooms = chatRoomsStore.rooms
+    if (storeRooms && storeRooms.length > 0) {
+      // 将 store 中的房间转换为 sidebar 列表格式
+      const mappedRooms = storeRooms.map(mapStoreRoomToListItem)
+
+      // 合并到 chatRoomList，避免重复
+      mappedRooms.forEach(room => {
+        const exists = chatRoomList.value.find(item => item.taskId === room.taskId)
+        if (!exists) {
+          chatRoomList.value.push(room)
+        }
+      })
+
+      // 按创建时间倒序排序
+      chatRoomList.value.sort((a, b) => {
+        return dayjs(b.createTime).diff(dayjs(a.createTime))
+      })
+    }
+    isCompleted.value = true
+    isFinished.value = true
+  }
+
+  // 初始化时从 store 加载房间列表
+  tryOnMounted(() => {
+    loadRoomsFromStore()
+  })
+
+  // 监听 store 中房间列表的变化，同步更新 sidebar 列表
+  watch(
+    () => chatRoomsStore.rooms,
+    newRooms => {
+      // 获取 store 中所有房间的 ID 集合
+      const storeRoomIds = new Set(newRooms.map(room => room.id))
+
+      // 删除 chatRoomList 中已不存在于 store 的房间
+      chatRoomList.value = chatRoomList.value.filter(item => storeRoomIds.has(item.taskId))
+
+      // 更新现有房间的信息
+      if (newRooms && newRooms.length > 0) {
+        newRooms.forEach(storeRoom => {
+          const existingRoom = chatRoomList.value.find(item => item.taskId === storeRoom.id)
+          if (existingRoom) {
+            existingRoom.content = storeRoom.title
+            existingRoom.updateTime = storeRoom.updatedAt
+            existingRoom.aiModel = storeRoom.model
+            existingRoom.topFlag = storeRoom.topFlag || false
+            existingRoom.pinTime = storeRoom.pinTime || null
+          }
+        })
+      }
+    },
+    { deep: true }
+  )
+
   const getChatRoomList = () => {
     if (isFinished.value || isLoading.value) return Promise.resolve()
 
     isLoading.value = true
+    // 从 store 加载
+    loadRoomsFromStore()
+    isLoading.value = false
   }
 
   const pinChatRoom = params => {
     const { taskId } = params || {}
+    if (!taskId) return false
+
+    // 更新 store
+    chatRoomsStore.pinRoom(taskId)
+
+    // 更新 sidebar 列表
+    const room = chatRoomList.value.find(item => item.taskId === taskId)
+    if (room) {
+      room.topFlag = true
+      room.pinTime = new Date().toISOString()
+    }
+
+    return true
   }
 
   const unpinChatRoom = params => {
     const { taskId } = params || {}
+    if (!taskId) return false
+
+    // 更新 store
+    chatRoomsStore.unpinRoom(taskId)
+
+    // 更新 sidebar 列表
+    const room = chatRoomList.value.find(item => item.taskId === taskId)
+    if (room) {
+      room.topFlag = false
+      room.pinTime = null
+    }
+
+    return true
   }
 
   const renameChatRoom = params => {
@@ -252,13 +357,26 @@ export const useChatRoom = (pageSize = 999999999, route = null) => {
   }
 
   const deleteChatRoom = params => {
+    const { taskId } = params || {}
+
     return ElMessageBox.confirm('删除后，聊天记录将不可恢复。', '确认删除对话？', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       confirmButtonClass: 'el-button--danger',
       type: 'warning'
     })
-      .then(() => {})
+      .then(() => {
+        // 从 store 删除
+        chatRoomsStore.deleteRoom(taskId)
+
+        // 从 sidebar 列表删除
+        const index = chatRoomList.value.findIndex(item => item.taskId === taskId)
+        if (index !== -1) {
+          chatRoomList.value.splice(index, 1)
+        }
+
+        return true
+      })
       .catch(() => {
         // 用户取消删除操作
         return false

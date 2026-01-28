@@ -8,10 +8,12 @@
  *
  */
 import { ref, computed, nextTick, toValue } from 'vue'
+import { useEventBus } from '@vueuse/core'
 import { useOpenAISSESingle } from '@/hooks/use-sse/use-openai-sse'
 import { useAutoScroll, showMessage } from '@/hooks'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
+import { CHAT_ROOM_COMMAND } from '@/config/symbol'
 import { ILLEGAL_UNICODE_REG } from '../config'
 
 /**
@@ -22,6 +24,7 @@ import { ILLEGAL_UNICODE_REG } from '../config'
 export function useCompletions({ roomId }) {
   const apiSettingsStore = useApiSettingsStore()
   const chatRoomsStore = useChatRoomsStore()
+  const chatRoomEventBus = useEventBus(CHAT_ROOM_COMMAND)
 
   // 获取当前房间 ID（支持响应式和普通值）
   const getRoomId = () => toValue(roomId)
@@ -29,6 +32,9 @@ export function useCompletions({ roomId }) {
   // 是否正在加载中
   const loading = ref(false)
   const isReceiving = ref(false)
+
+  // 标记当前房间是否已添加到侧边栏
+  const roomAddedToSidebar = ref(false)
 
   // 输入框消息
   const message = ref('')
@@ -128,6 +134,27 @@ export function useCompletions({ roomId }) {
       if ((content && content.trim()) || (reasoning_content && reasoning_content.trim())) {
         loading.value = false
         isReceiving.value = true
+
+        // 收到第一个有效 token 时，将房间添加到侧边栏（如果尚未添加）
+        if (!roomAddedToSidebar.value) {
+          roomAddedToSidebar.value = true
+          const room = currentRoom.value
+          if (room) {
+            chatRoomEventBus.emit({
+              command: 'add-room',
+              params: {
+                taskId: room.id,
+                agentId: 0,
+                content: room.title,
+                createTime: room.createdAt,
+                updateTime: room.updatedAt,
+                aiModel: room.model,
+                topFlag: false,
+                pinTime: null
+              }
+            })
+          }
+        }
       }
 
       // 滚动到底部

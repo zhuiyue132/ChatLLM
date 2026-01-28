@@ -189,7 +189,7 @@ const {
 const { isCollapsed, widthSidebarCollapsed, widthSidebarExpanded, toggleSidebar } = useSidebar()
 
 const activeRoomId = computed(() => {
-  return route.query.conversationId || null
+  return route.query.roomId || null
 })
 
 const isActiveStartChat = computed(() => {
@@ -218,32 +218,22 @@ const handleChatRoomItemClick = (_event, room) => {
   // 发送关闭popover事件
   eventBusOfPopover.emit('close')
 
-  // 区分AI对话和智能体对话，二者页面不同
-  const path =
-    room.agentId === 0
-      ? '/completions/chat'
-      : room.agentId === 1
-        ? '/completions/multi-model-chat'
-        : '/agents/chat'
-
   const query = {
-    conversationId: room.taskId,
-    agentId: room.agentId
+    roomId: room.taskId
   }
   if (room.chatDetailId) {
     query.chatDetailId = room.chatDetailId
   }
 
   router.replace({
-    path,
+    path: '/completions/chat',
     query
   })
 
   setTimeout(() => {
     eventBusOfHistory.emit({
       taskId: room.taskId,
-      aiModel: room.aiModel,
-      agentId: room.agentId
+      aiModel: room.aiModel
     })
   }, 100)
 }
@@ -280,7 +270,7 @@ const handleChatRoomItemOperation = async (command, room) => {
       if (res) {
         if (activeRoomId.value === room.taskId) {
           router.replace({
-            path: '/agents'
+            path: '/completions'
           })
         }
       }

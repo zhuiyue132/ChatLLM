@@ -54,11 +54,7 @@
         <div class="action-list-self-wrap">
           <div class="action-list-self-wrap-left">
             <!-- 模型选择 -->
-            <ModelSelector
-              v-if="showModelSelect"
-              v-model="model"
-              :model-list="modelList"
-            />
+            <ModelSelector v-if="showModelSelect" v-model="model" :model-list="modelList" />
 
             <!-- 深度思考 -->
             <DeepThinkButton v-if="showModelSelect && showDeepThinkBtn" v-model="deepThink" />

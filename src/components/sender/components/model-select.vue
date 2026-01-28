@@ -29,11 +29,7 @@
     </div>
     <template #dropdown>
       <xs-dropdown-menu>
-        <xs-dropdown-item
-          v-for="model in modelList"
-          :key="model?.code"
-          :command="model?.code"
-        >
+        <xs-dropdown-item v-for="model in modelList" :key="model?.code" :command="model?.code">
           <div
             class="model-item"
             :class="{
@@ -43,11 +39,6 @@
             <div class="model-name">
               <ModelIcon :name="model.code" :size="18" />
               <span>{{ model.name }} </span>
-              <i
-                v-if="model.enableGenerateImage || model.enableVision"
-                v-title="getImageTitle(model)"
-                class="iconfont icon-tupian"
-              ></i>
             </div>
           </div>
         </xs-dropdown-item>
@@ -97,13 +88,6 @@ const onVisiableChange = visible => {
 
 const onCommand = model => {
   currentModel.value = model
-}
-
-const getImageTitle = model => {
-  if (model.enableGenerateImage && model.enableVision) return '支持识别图片和生成图片'
-  if (model.enableGenerateImage) return '支持生成图片'
-  if (model.enableVision) return '支持识别图片'
-  return ''
 }
 </script>
 
