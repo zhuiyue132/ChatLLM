@@ -119,6 +119,29 @@ export const createOpenAISSERequest = (options = {}) => {
       })
     }
 
+    // 处理图片数据，转换为 HTML img 标签
+    if (delta.images && Array.isArray(delta.images)) {
+      const imageHtml = delta.images
+        .map(img => {
+          const url = img.image_url?.url || img.url || ''
+          return url
+            ? `<div class="sse-image-wrapper"><img src="${url}" style="max-width: 512px; max-height: 512px;" /></div>`
+            : ''
+        })
+        .filter(Boolean)
+        .join('\n')
+
+      if (imageHtml) {
+        content.value += `\n\n${imageHtml}\n\n`
+        onToken({
+          token: imageHtml,
+          content: content.value,
+          reasoning_content: reasoningContent.value,
+          requestId
+        })
+      }
+    }
+
     if (chunk.usage) {
       usage.value = chunk.usage
     }
