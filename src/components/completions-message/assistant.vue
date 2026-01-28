@@ -16,17 +16,17 @@
         <div class="model-info">
           <!-- 模型logo -->
           <div class="model-logo">
-            <img :src="modelLogo" :alt="modelName" />
+            <ModelIcon :name="model" :size="26" />
           </div>
           <!-- 模型名称标签 -->
           <div class="model-name-tag">
-            <span>{{ modelName }}</span>
+            <span>{{ modelDisplayName }}</span>
           </div>
         </div>
       </div>
 
       <div v-if="filePercent" class="oversize-tips">
-        超出字数限制，{{ modelName }} 只阅读了前
+        超出字数限制，{{ modelDisplayName }} 只阅读了前
         {{ Math.ceil(Number(filePercent) * 100) + '%' }}
       </div>
 
@@ -121,11 +121,11 @@
 
 <script setup>
 import MarkdownRenderer from '../markdown-renderer/index.vue'
+import ModelIcon from '../model-icon/index.vue'
 import { onCopy } from '@/utils'
 import { ref, computed } from 'vue'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import ChatMessageItemLoading from '../agent-message/loading.vue'
-import { getProviderImageByModelName } from '@/views/completions/utils'
 import ImageItem from './image-item.vue'
 import { showMessage } from '@/hooks'
 
@@ -217,16 +217,10 @@ const LoadingComponent = computed(() => {
 const mdContainer = ref(null)
 const showThinking = ref(true)
 
-// 获取模型logo
-const modelLogo = computed(() => {
-  // 从model字符串中提取模型类型
-
-  return getProviderImageByModelName(props.model)
-})
-
 // 获取模型显示名称
-const modelName = computed(() => {
-  return 'DeepSeek'
+const modelDisplayName = computed(() => {
+  // 直接使用 model prop，如果没有则显示默认值
+  return props.model || 'AI'
 })
 
 // 思考状态文本
@@ -332,16 +326,6 @@ const regenerateMessage = () => {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 26px;
-        height: 26px;
-        border-radius: 0;
-        background: #fff;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
       }
 
       .model-name-tag {
