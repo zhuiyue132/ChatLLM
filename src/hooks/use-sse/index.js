@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-07-22
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-26
+ * @LastEditTime : 2026-01-28
  * @FilePath     : /ChatLLM/src/hooks/use-sse/index.js
  * @Description  : SSE（Server-Sent Events）请求钩子，基于 @microsoft/fetch-event-source
  */
@@ -12,6 +12,9 @@ import { fetchEventSource } from "@microsoft/fetch-event-source";
 import qs from "qs";
 import { showMessage } from "../use-message";
 import { uuid as getUuid } from "@/utils/random";
+
+// 导出 OpenAI SSE hook
+export * from "./use-openai-sse";
 
 /**
  * SSE 连接状态
