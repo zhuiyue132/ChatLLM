@@ -96,7 +96,7 @@ const allFailed = ref(false)
 
 // 从模型名匹配图标名
 const matchIcon = modelName => {
-  const name = modelName.toLowerCase()
+  const name = modelName?.toLowerCase() || ''
 
   // 1. 先尝试映射表精确匹配
   for (const [keyword, icon] of Object.entries(MODEL_ICON_MAP)) {

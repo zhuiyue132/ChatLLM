@@ -148,6 +148,8 @@ const buildMessageTree = (cherryMessages, blocksMap) => {
  */
 const parseTopicTitles = cherryData => {
   const titleMap = new Map()
+  const createdAtMap = new Map()
+  const updatedAtMap = new Map()
 
   try {
     const localStorage = cherryData.localStorage
@@ -173,6 +175,8 @@ const parseTopicTitles = cherryData => {
       for (const topic of topics) {
         if (topic.id && topic.name) {
           titleMap.set(topic.id, topic.name)
+          createdAtMap.set(topic.id, topic.createdAt)
+          updatedAtMap.set(topic.id, topic.updatedAt)
         }
       }
     }
@@ -180,7 +184,7 @@ const parseTopicTitles = cherryData => {
     console.warn('解析 Cherry Studio topic 标题失败:', e)
   }
 
-  return titleMap
+  return [titleMap, createdAtMap, updatedAtMap]
 }
 
 /**
@@ -197,10 +201,12 @@ export const convertCherryStudioData = cherryData => {
   const { topics, message_blocks = [] } = indexedDB
 
   // 解析 topic 标题
-  const titleMap = parseTopicTitles(cherryData)
+  const [titleMap, createdAtMap, updatedAtMap] = parseTopicTitles(cherryData)
+  // console.log(titleMap, createdAtMap, updatedAtMap)
 
   // 构建 blockId -> block 映射
   const blocksMap = new Map()
+
   for (const block of message_blocks) {
     blocksMap.set(block.id, block)
   }
@@ -211,22 +217,29 @@ export const convertCherryStudioData = cherryData => {
   for (const topic of topics) {
     const roomId = `room-imported-${topic.id}`
 
-    // 优先从 titleMap 获取标题，否则使用 topic.name 或默认值
-    const title = titleMap.get(topic.id) || topic.name || '导入的对话'
+    const title = titleMap.get(topic.id) || topic.name || ''
+    const createdAt = createdAtMap.get(topic.id) || new Date().toISOString()
+    const updatedAt = updatedAtMap.get(topic.id) || new Date().toISOString()
 
-    // 创建房间
-    rooms.push({
-      id: roomId,
-      title,
-      model: extractModelName(topic.model),
-      createdAt: topic.createdAt || new Date().toISOString(),
-      updatedAt: topic.updatedAt || new Date().toISOString(),
-      topFlag: false,
-      pinTime: null
-    })
+    const messageTree = buildMessageTree(topic.messages || [], blocksMap)
 
-    // 转换消息为树形结构
-    messages[roomId] = buildMessageTree(topic.messages || [], blocksMap)
+    const assistantModels = topic.messages.map(msg => extractModelName(msg.model)).filter(Boolean)
+
+    if (messageTree && messageTree.children.length > 0 && assistantModels.length > 0 && title) {
+      // 创建房间
+      rooms.push({
+        id: roomId,
+        title,
+        model: extractModelName(topic.model),
+        createdAt,
+        updatedAt,
+        topFlag: false,
+        pinTime: null
+      })
+
+      // 转换消息为树形结构
+      messages[roomId] = messageTree
+    }
   }
 
   return { rooms, messages }
