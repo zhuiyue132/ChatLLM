@@ -353,7 +353,39 @@ export const useChatRoom = (pageSize = 999999999, route = null) => {
   }
 
   const renameChatRoom = params => {
-    const { taskId } = params || {}
+    const { taskId, content } = params || {}
+    if (!taskId) return Promise.resolve(false)
+
+    return ElMessageBox.prompt('', '重命名对话', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputValue: content || '',
+      inputPlaceholder: '请输入新的对话名称',
+      inputValidator: value => {
+        if (!value || !value.trim()) {
+          return '对话名称不能为空'
+        }
+        return true
+      }
+    })
+      .then(({ value }) => {
+        const trimmedValue = value.trim()
+
+        // 更新 store
+        chatRoomsStore.updateRoomTitle(taskId, trimmedValue)
+
+        // 更新 sidebar 列表
+        const room = chatRoomList.value.find(item => item.taskId === taskId)
+        if (room) {
+          room.content = trimmedValue
+        }
+
+        return true
+      })
+      .catch(() => {
+        // 用户取消操作
+        return false
+      })
   }
 
   const deleteChatRoom = params => {

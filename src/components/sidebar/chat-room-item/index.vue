@@ -10,19 +10,14 @@
       <i v-else class="icon-duihua-1" />
     </div>
 
-    <div class="chat-room-info">
-      <div
-        v-title="chatRoomInfo.content"
-        :data-chatid="chatRoomInfo.id"
-        :data-first="chatRoomInfo.firstContent || ''"
-        class="chat-room-content"
-        :class="{ 'is-loading': chatRoomInfo.isTitleLoading }"
-      >
-        {{ chatRoomInfo.content }}
-      </div>
-      <div class="chat-room-agent-name">
-        {{ isCompletions ? '对话' : chatRoomInfo.agentName }}
-      </div>
+    <div
+      v-title="chatRoomInfo.content"
+      :data-chatid="chatRoomInfo.id"
+      :data-first="chatRoomInfo.firstContent || ''"
+      class="chat-room-content"
+      :class="{ 'is-loading': chatRoomInfo.isTitleLoading }"
+    >
+      {{ chatRoomInfo.content }}
     </div>
 
     <template v-if="!isActive">
@@ -41,9 +36,6 @@
     <div v-show="isActive" class="chat-room-operation chat-room-operation-dropdown">
       <xs-dropdown
         placement="right-start"
-        :style="{
-          marginTop: '3px'
-        }"
         :persistent="false"
         :popper-options="setPopperPosition(0, 6)"
         :teleported="true"
@@ -105,7 +97,7 @@ const handleChatRoomItemOperation = command => {
 <style scoped lang="scss">
 .chat-room-item-wrap {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   width: 100%;
   padding: 8px;
@@ -115,7 +107,7 @@ const handleChatRoomItemOperation = command => {
 
   --display-dropdown: block;
 
-  @include flex-gap(4px, row);
+  @include flex-gap(8px, row);
 
   &:hover {
     background: #e4e4e7;
@@ -127,11 +119,8 @@ const handleChatRoomItemOperation = command => {
     color: #007e54;
     background: #e0f2e7;
 
-    .chat-room-info {
-      .chat-room-content,
-      .chat-room-agent-name {
-        color: #007e54;
-      }
+    .chat-room-content {
+      color: #007e54;
     }
   }
 
@@ -139,13 +128,12 @@ const handleChatRoomItemOperation = command => {
     display: flex;
     align-items: center;
     flex: 0 0 auto;
-    flex-direction: column;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
 
     i {
-      font-size: 20px;
+      font-size: 18px;
     }
 
     img {
@@ -154,55 +142,41 @@ const handleChatRoomItemOperation = command => {
     }
   }
 
-  .chat-room-info {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    width: 0;
+  .chat-room-content {
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+    user-select: none;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #595959;
+    font-size: 14px;
+    line-height: 20px;
 
-    .chat-room-content {
-      position: relative;
-      overflow: hidden;
-      flex: 1;
-      user-select: none;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      color: #595959;
-      font-size: 16px;
-
-      &.is-loading {
-        animation: shimmer 1.2s infinite linear;
-        background: linear-gradient(
-          90deg,
-          #595959 0%,
-          #595959 40%,
-          #d0d0d0 50%,
-          #595959 60%,
-          #595959 100%
-        );
-        background-clip: text;
-        background-size: 200% 100%;
-        -webkit-text-fill-color: transparent;
-      }
-    }
-
-    .chat-room-agent-name {
-      overflow: hidden;
-      flex: 1;
-      user-select: none;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      color: #8c8c8c;
-      font-size: 14px;
+    &.is-loading {
+      animation: shimmer 1.2s infinite linear;
+      background: linear-gradient(
+        90deg,
+        #595959 0%,
+        #595959 40%,
+        #d0d0d0 50%,
+        #595959 60%,
+        #595959 100%
+      );
+      background-clip: text;
+      background-size: 200% 100%;
+      -webkit-text-fill-color: transparent;
     }
   }
 
   .chat-room-operation {
     display: flex;
     align-items: center;
-    align-self: center;
     flex: 0 0 auto;
     justify-content: center;
+    width: 20px;
+    height: 20px;
 
     img {
       width: 20px;
@@ -211,7 +185,8 @@ const handleChatRoomItemOperation = command => {
 
     i {
       outline: none;
-      font-size: 20px;
+      font-size: 18px;
+      line-height: 20px;
     }
   }
 
