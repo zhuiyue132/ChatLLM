@@ -79,6 +79,7 @@
           :hidden-input-when-files="false"
           :min-rows="2"
           show-model-select
+          show-mention-model
           agent-code="completions"
           @submit="handleSendMessage"
           @stop="handleManualStop"

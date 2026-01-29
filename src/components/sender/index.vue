@@ -26,10 +26,22 @@
       :auto-size="{ minRows: minRows, maxRows: 6 }"
       submit-type="enter"
       :class="{ 'footer-unenable': !footerEnable }"
+      :options="mentionOptions"
+      :filter-option="showMentionModel ? undefined : () => true"
       @submit="handleSendClick"
       @cancel="handleCancel"
+      @select="handleMentionSelect"
     >
+      <!-- @模型 下拉列表项自定义渲染 -->
+      <template v-if="showMentionModel" #trigger-label="{ item }">
+        <div class="mention-model-item">
+          <ModelIcon :name="item.value" :size="18" />
+          <span>{{ item.label }}</span>
+        </div>
+      </template>
+
       <template v-if="filesUploaded.length > 0" #header>
+        <!-- 已上传文件列表 -->
         <div
           class="upload-files-list"
           :class="{
@@ -82,11 +94,12 @@
 
 <script setup>
 import MentionSender from '../mention-sender/index.vue'
-import { ref, computed, useSlots } from 'vue'
+import { ref, computed, useSlots, nextTick } from 'vue'
 import Loading from '../mention-sender/components/loading-button/index.vue'
 import { showMessage } from '@/hooks'
 import FloatButton from '../float-button/index.vue'
 import ModelSelector from './components/model-select.vue'
+import ModelIcon from '@/components/model-icon/index.vue'
 import FileItem from './components/file-item.vue'
 import { useVModel } from '@vueuse/core'
 import './common.scss'
@@ -280,6 +293,12 @@ const props = defineProps({
   floatButtonOffset: {
     type: String,
     default: '-42px'
+  },
+
+  // 是否启用 @模型 功能
+  showMentionModel: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -350,6 +369,31 @@ const footerEnable = computed(() => {
     props.showTemplateSettingBtn
   )
 })
+
+// ========== @模型 功能相关 ==========
+// 将 modelList 转换为 mention options 格式，过滤掉当前选中的模型
+const mentionOptions = computed(() => {
+  if (!props.showMentionModel) return []
+  return props.modelList
+    .filter(item => item.code !== model.value)
+    .map(item => ({
+      label: item.name,
+      value: item.code
+    }))
+})
+
+// 处理 mention 选择事件
+const handleMentionSelect = (option, prefix) => {
+  if (prefix === '@' && props.showMentionModel) {
+    // 更新当前模型
+    model.value = option.value
+    // 清除输入框中的 @模型名 文本
+    nextTick(() => {
+      // 匹配 @模型名 后可能跟着的空格
+      inputValue.value = inputValue.value.replace(/@\S+\s?/, '')
+    })
+  }
+}
 
 // 已上传文件
 const filesUploaded = ref([])
@@ -517,6 +561,21 @@ defineExpose({
         height: 100%;
         padding: 0;
       }
+    }
+  }
+}
+
+.el-mention__popper {
+  .el-mention-dropdown {
+    .el-mention-dropdown__item {
+      padding: 0 12px;
+    }
+
+    .mention-model-item {
+      display: flex;
+      align-items: center;
+
+      @include flex-gap(6px, row);
     }
   }
 }

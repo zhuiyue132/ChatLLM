@@ -20,6 +20,7 @@
           :allow-empty-message="false"
           :placeholder="PLACEHOLDER_MAP.DEFAULT"
           show-model-select
+          show-mention-model
           agent-code="completions"
           @submit="handleMessageSubmit"
         />

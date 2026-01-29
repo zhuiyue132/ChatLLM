@@ -226,6 +226,10 @@ const props = defineProps({
   triggerPopoverOffset: {
     type: Number,
     default: 20
+  },
+  triggerStrings: {
+    type: [String, Array],
+    default: '@'
   }
 })
 
@@ -359,6 +363,12 @@ function clear() {
 // 在这判断组合键的回车键 (目前支持四种模式)
 function handleKeyDown(e) {
   if (props.readOnly) return // 直接返回，不执行后续逻辑
+
+  // 如果下拉框可见，不处理回车，让 el-mention 处理选择
+  if (popoverVisible.value && e.keyCode === 13) {
+    return
+  }
+
   const _resetSelectionRange = () => {
     const cursorPosition = e.target.selectionStart // 获取光标位置
     const textBeforeCursor = internalValue.value.slice(0, cursorPosition) // 光标前的文本
