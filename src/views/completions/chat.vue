@@ -94,8 +94,9 @@ import AgentSender from '@/components/sender/index.vue'
 import CompletionsUserMessage from '@/components/completions-message/user.vue'
 import CompletionsAssistantMessage from '@/components/completions-message/assistant.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
+import { FETCH_CHAR_HISTORY } from '@/config/symbol'
 import { useRoute, onBeforeRouteLeave, useRouter } from 'vue-router'
-import { tryOnMounted, useElementSize, useWindowScroll, useEventListener } from '@vueuse/core'
+import { tryOnMounted, useElementSize, useWindowScroll, useEventListener, useEventBus } from '@vueuse/core'
 import { useCompletions } from './hooks/use-completions'
 
 defineOptions({
@@ -145,6 +146,8 @@ const {
   isReceiving,
   chatHistoryLoading,
   editingMessageId,
+  scrollToBottom,
+  enableAutoScroll,
   stopSSE,
   sendMessage,
   fetchChatHistory,
@@ -181,9 +184,24 @@ tryOnMounted(async () => {
         router.replace({
           name: 'Completions'
         })
+      } else {
+        // 有聊天记录时，滚动到底部
+        enableAutoScroll()
+        scrollToBottom(true)
       }
     })
   }
+})
+
+// 监听侧边栏点击切换对话事件
+const eventBusOfHistory = useEventBus(FETCH_CHAR_HISTORY)
+eventBusOfHistory.on(() => {
+  nextTick(() => {
+    if (chatHistory.value.length > 0) {
+      enableAutoScroll()
+      scrollToBottom(true)
+    }
+  })
 })
 
 const handleSendMessage = (payload = {}) => {

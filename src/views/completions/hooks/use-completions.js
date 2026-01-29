@@ -623,6 +623,10 @@ export function useCompletions({ roomId }) {
     chatHistoryLoading,
     editingMessageId,
 
+    // 滚动相关
+    scrollToBottom,
+    enableAutoScroll,
+
     // 模型相关
     models,
     currentModelValue,
