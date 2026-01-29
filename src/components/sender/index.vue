@@ -593,7 +593,7 @@ defineExpose({
     align-items: center;
     justify-content: space-between;
     height: 58px;
-    padding: 0 12px 16px 16px;
+    padding: 0 12px 0 16px;
 
     &-left {
       display: flex;
