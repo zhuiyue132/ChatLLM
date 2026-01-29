@@ -2,109 +2,290 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-08-27
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-28
+ * @LastEditTime : 2026-01-29
  * @FilePath     : /ChatLLM/src/components/api-settings-dialog/index.vue
- * @Description  : API 配置弹窗
+ * @Description  : 设置弹窗 - 包含 API 配置、模型选择、默认模型、知识库设置
  *
 -->
 
 <template>
   <bi-dialog
     v-model="dialogVisible"
-    title="API 配置"
-    width="800px"
-    :show-footer="true"
+    title="设置"
+    width="900px"
+    :show-footer="false"
     :close-on-click-modal="false"
     append-to-body
-    @confirm="handleSave"
-    @cancel="handleCancel"
+    custom-class="settings-dialog"
   >
-    <div class="api-settings-container">
-      <!-- 左侧：API 配置 -->
-      <div class="api-config-section">
-        <div class="section-title">API 配置</div>
-        <el-form
-          ref="formRef"
-          :model="formData"
-          :rules="formRules"
-          label-position="top"
-          class="api-form"
+    <div class="settings-container">
+      <!-- 左侧菜单 -->
+      <div class="settings-sidebar">
+        <div
+          v-for="item in menuList"
+          :key="item.key"
+          class="sidebar-item"
+          :class="{ active: activeMenu === item.key }"
+          @click="activeMenu = item.key"
         >
-          <el-form-item label="API Base URL" prop="baseURL">
-            <el-input
-              v-model="formData.baseURL"
-              placeholder="例如: https://api.openai.com/v1"
-              clearable
-            />
-            <div class="form-item-tip">OpenAI 兼容的 API 地址</div>
-          </el-form-item>
-
-          <el-form-item label="API Key" prop="apiKey">
-            <el-input
-              v-model="formData.apiKey"
-              :type="showApiKey ? 'text' : 'password'"
-              placeholder="请输入 API Key"
-              clearable
-            >
-              <template #suffix>
-                <el-icon class="toggle-password" @click="showApiKey = !showApiKey">
-                  <i :class="showApiKey ? 'iconfont icon-eye' : 'iconfont icon-eye-close'" />
-                </el-icon>
-              </template>
-            </el-input>
-            <div class="form-item-tip">密钥将安全存储在本地浏览器中</div>
-          </el-form-item>
-
-          <el-button
-            type="primary"
-            :loading="fetchingModels"
-            :disabled="!canFetchModels"
-            @click="handleFetchModels"
-          >
-            {{ fetchingModels ? '获取中...' : '获取模型列表' }}
-          </el-button>
-        </el-form>
+          <i :class="item.icon"></i>
+          <span>{{ item.label }}</span>
+        </div>
       </div>
 
-      <!-- 右侧：模型选择 -->
-      <div class="model-select-section">
-        <div class="section-title">
-          模型选择
-          <span v-if="localSelectedModels.length" class="selected-count">
-            已选 {{ localSelectedModels.length }} 个
-          </span>
-        </div>
+      <!-- 右侧内容区 -->
+      <div class="settings-content">
+        <!-- API 配置 -->
+        <div v-show="activeMenu === 'api'" class="content-panel">
+          <div class="panel-title">API 配置</div>
+          <div class="panel-desc">配置 OpenAI 兼容的 API 地址和密钥</div>
 
-        <div v-if="!availableModels.length" class="model-empty">
-          <template v-if="fetchError">
-            <div class="error-message">{{ fetchError }}</div>
-          </template>
-          <template v-else>
-            <div class="empty-tip">请先配置 API 并获取模型列表</div>
-          </template>
-        </div>
+          <el-form
+            ref="apiFormRef"
+            :model="formData"
+            :rules="formRules"
+            label-position="top"
+            class="settings-form"
+          >
+            <el-form-item label="API Base URL" prop="baseURL">
+              <el-input
+                v-model="formData.baseURL"
+                placeholder="例如: https://api.openai.com/v1"
+                clearable
+              />
+              <div class="form-item-tip">请输入 OpenAI 兼容的 API 地址</div>
+            </el-form-item>
 
-        <div v-else class="model-list">
-          <el-checkbox-group v-model="localSelectedModels">
-            <div
-              v-for="model in availableModels"
-              :key="model.id"
-              class="model-item"
-              :class="{ selected: localSelectedModels.includes(model.id) }"
-            >
-              <el-checkbox :value="model.id">
-                <div class="model-info">
-                  <ModelIcon :name="model.id" :size="20" />
-                  <span class="model-name">{{ model.id }}</span>
-                </div>
-              </el-checkbox>
+            <el-form-item label="API Key" prop="apiKey">
+              <el-input
+                v-model="formData.apiKey"
+                :type="showApiKey ? 'text' : 'password'"
+                placeholder="请输入 API Key"
+                clearable
+              >
+                <template #suffix>
+                  <el-icon class="toggle-password" @click="showApiKey = !showApiKey">
+                    <i :class="showApiKey ? 'iconfont icon-eye' : 'iconfont icon-eye-close'" />
+                  </el-icon>
+                </template>
+              </el-input>
+              <div class="form-item-tip">密钥将安全存储在本地浏览器中</div>
+            </el-form-item>
+
+            <div class="form-actions">
+              <el-button
+                :loading="fetchingModels"
+                :disabled="!canFetchModels"
+                @click="handleFetchModels"
+              >
+                {{ fetchingModels ? '获取中...' : '获取模型列表' }}
+              </el-button>
+              <el-button type="primary" @click="handleSaveApiConfig">保存</el-button>
             </div>
-          </el-checkbox-group>
+
+            <div v-if="fetchError" class="fetch-error">{{ fetchError }}</div>
+            <div v-else-if="availableModels.length" class="fetch-success">
+              <i class="iconfont icon-check-circle"></i>
+              已获取 {{ availableModels.length }} 个模型
+            </div>
+          </el-form>
         </div>
 
-        <div v-if="availableModels.length" class="model-actions">
-          <el-button size="small" text @click="handleSelectAll">全选</el-button>
-          <el-button size="small" text @click="handleClearSelection">清空</el-button>
+        <!-- 模型选择 -->
+        <div v-show="activeMenu === 'models'" class="content-panel">
+          <div class="panel-title">
+            模型选择
+            <span v-if="localSelectedModels.length" class="selected-count">
+              已选 {{ localSelectedModels.length }} 个
+            </span>
+          </div>
+          <div class="panel-desc">选择要在对话中使用的模型</div>
+
+          <!-- 搜索框 -->
+          <el-input
+            v-model="modelSearchKeyword"
+            placeholder="搜索模型..."
+            clearable
+            class="model-search"
+          >
+            <template #prefix>
+              <i class="iconfont icon-sousuo"></i>
+            </template>
+          </el-input>
+
+          <div v-if="!availableModels.length" class="model-empty">
+            <div class="empty-tip">请先在「API 配置」中获取模型列表</div>
+          </div>
+
+          <template v-else>
+            <div class="model-list">
+              <el-checkbox-group v-model="localSelectedModels">
+                <div
+                  v-for="model in filteredModels"
+                  :key="model.id"
+                  class="model-item"
+                  :class="{ selected: localSelectedModels.includes(model.id) }"
+                >
+                  <el-checkbox :value="model.id">
+                    <div class="model-info">
+                      <ModelIcon :name="model.id" :size="20" />
+                      <span class="model-name">{{ model.id }}</span>
+                    </div>
+                  </el-checkbox>
+                </div>
+              </el-checkbox-group>
+            </div>
+
+            <div class="panel-footer">
+              <div class="model-actions">
+                <el-button size="small" text @click="handleSelectAll">全选</el-button>
+                <el-button size="small" text @click="handleClearSelection">清空</el-button>
+              </div>
+              <el-button type="primary" @click="handleSaveModels">保存</el-button>
+            </div>
+          </template>
+        </div>
+
+        <!-- 默认模型设置 -->
+        <div v-show="activeMenu === 'defaults'" class="content-panel">
+          <div class="panel-title">默认模型设置</div>
+          <div class="panel-desc">设置各种场景下的默认模型</div>
+
+          <el-form label-position="top" class="settings-form">
+            <el-form-item label="默认对话模型">
+              <el-select
+                v-model="defaultModels.chat"
+                placeholder="选择默认对话模型"
+                filterable
+                clearable
+                class="full-width"
+              >
+                <el-option
+                  v-for="model in savedSelectedModels"
+                  :key="model"
+                  :label="model"
+                  :value="model"
+                >
+                  <div class="model-option">
+                    <ModelIcon :name="model" :size="18" />
+                    <span>{{ model }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div class="form-item-tip">新建对话时默认使用的模型</div>
+            </el-form-item>
+
+            <el-form-item label="标题总结模型">
+              <el-select
+                v-model="defaultModels.summary"
+                placeholder="选择标题总结模型"
+                filterable
+                clearable
+                class="full-width"
+              >
+                <el-option
+                  v-for="model in savedSelectedModels"
+                  :key="model"
+                  :label="model"
+                  :value="model"
+                >
+                  <div class="model-option">
+                    <ModelIcon :name="model" :size="18" />
+                    <span>{{ model }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div class="form-item-tip">用于自动生成对话标题的模型</div>
+            </el-form-item>
+
+            <el-form-item label="翻译模型">
+              <el-select
+                v-model="defaultModels.translate"
+                placeholder="选择翻译模型"
+                filterable
+                clearable
+                class="full-width"
+              >
+                <el-option
+                  v-for="model in savedSelectedModels"
+                  :key="model"
+                  :label="model"
+                  :value="model"
+                >
+                  <div class="model-option">
+                    <ModelIcon :name="model" :size="18" />
+                    <span>{{ model }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div class="form-item-tip">用于文本翻译功能的模型</div>
+            </el-form-item>
+          </el-form>
+
+          <div v-if="!savedSelectedModels.length" class="no-models-tip">
+            <i class="iconfont icon-info-circle"></i>
+            请先在「模型选择」中选择并保存要使用的模型
+          </div>
+
+          <div v-else class="panel-footer">
+            <div></div>
+            <el-button type="primary" @click="handleSaveDefaultModels">保存</el-button>
+          </div>
+        </div>
+
+        <!-- 知识库设置 -->
+        <div v-show="activeMenu === 'knowledge'" class="content-panel">
+          <div class="panel-title">知识库设置</div>
+          <div class="panel-desc">配置知识库连接以启用 RAG 功能</div>
+
+          <el-form label-position="top" class="settings-form">
+            <el-form-item>
+              <el-switch
+                v-model="knowledgeConfig.enabled"
+                active-text="启用知识库"
+                inactive-text=""
+              />
+            </el-form-item>
+
+            <template v-if="knowledgeConfig.enabled">
+              <el-form-item label="知识库 API 地址">
+                <el-input
+                  v-model="knowledgeConfig.apiUrl"
+                  placeholder="例如: https://your-knowledge-base.com/api"
+                  clearable
+                />
+              </el-form-item>
+
+              <el-form-item label="知识库 API Key">
+                <el-input
+                  v-model="knowledgeConfig.apiKey"
+                  :type="showKbApiKey ? 'text' : 'password'"
+                  placeholder="请输入知识库 API Key"
+                  clearable
+                >
+                  <template #suffix>
+                    <el-icon class="toggle-password" @click="showKbApiKey = !showKbApiKey">
+                      <i :class="showKbApiKey ? 'iconfont icon-eye' : 'iconfont icon-eye-close'" />
+                    </el-icon>
+                  </template>
+                </el-input>
+              </el-form-item>
+
+              <el-form-item label="默认知识库">
+                <el-input
+                  v-model="knowledgeConfig.defaultCollection"
+                  placeholder="输入默认知识库名称或 ID"
+                  clearable
+                />
+                <div class="form-item-tip">对话时默认查询的知识库</div>
+              </el-form-item>
+            </template>
+          </el-form>
+
+          <div class="panel-footer">
+            <div></div>
+            <el-button type="primary" @click="handleSaveKnowledge">保存</el-button>
+          </div>
         </div>
       </div>
     </div>
@@ -113,6 +294,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import BiDialog from '@/components/dialog/index.vue'
 import ModelIcon from '@/components/model-icon/index.vue'
 import { useApiSettingsStore } from '@/stores/api-settings'
@@ -140,12 +322,25 @@ const dialogVisible = computed({
   }
 })
 
-const formRef = ref(null)
+// 菜单配置
+const menuList = [
+  { key: 'api', label: 'API 配置', icon: 'iconfont icon-api' },
+  { key: 'models', label: '模型选择', icon: 'iconfont icon-moxing-lora' },
+  { key: 'defaults', label: '默认模型', icon: 'iconfont icon-setting' },
+  { key: 'knowledge', label: '知识库', icon: 'iconfont icon-zhishiku' }
+]
+
+const activeMenu = ref('api')
+
+// API 配置表单
+const apiFormRef = ref(null)
 const showApiKey = ref(false)
+const showKbApiKey = ref(false)
 const fetchingModels = ref(false)
 const fetchError = ref('')
 const availableModels = ref([])
 const localSelectedModels = ref([])
+const modelSearchKeyword = ref('')
 
 const formData = reactive({
   baseURL: '',
@@ -164,8 +359,37 @@ const formRules = {
   apiKey: [{ required: true, message: '请输入 API Key', trigger: 'blur' }]
 }
 
+// 默认模型设置
+const defaultModels = reactive({
+  chat: '',
+  summary: '',
+  translate: ''
+})
+
+// 知识库配置
+const knowledgeConfig = reactive({
+  enabled: false,
+  apiUrl: '',
+  apiKey: '',
+  defaultCollection: ''
+})
+
 const canFetchModels = computed(() => {
   return formData.baseURL && formData.apiKey && /^https?:\/\/.+/.test(formData.baseURL)
+})
+
+// 已保存到 store 的模型列表（用于默认模型设置）
+const savedSelectedModels = computed(() => {
+  return apiSettingsStore.selectedModels || []
+})
+
+// 过滤后的模型列表（根据搜索关键字）
+const filteredModels = computed(() => {
+  if (!modelSearchKeyword.value) {
+    return availableModels.value
+  }
+  const keyword = modelSearchKeyword.value.toLowerCase()
+  return availableModels.value.filter(model => model.id.toLowerCase().includes(keyword))
 })
 
 // 从 store 加载配置
@@ -173,14 +397,29 @@ const loadSettings = () => {
   formData.baseURL = apiSettingsStore.baseURL
   formData.apiKey = apiSettingsStore.apiKey
   localSelectedModels.value = [...apiSettingsStore.selectedModels]
+
+  // 加载默认模型设置
+  defaultModels.chat = apiSettingsStore.defaultChatModel || ''
+  defaultModels.summary = apiSettingsStore.defaultSummaryModel || ''
+  defaultModels.translate = apiSettingsStore.defaultTranslateModel || ''
+
+  // 加载知识库配置
+  const kb = apiSettingsStore.knowledgeBase || {}
+  knowledgeConfig.enabled = kb.enabled || false
+  knowledgeConfig.apiUrl = kb.apiUrl || ''
+  knowledgeConfig.apiKey = kb.apiKey || ''
+  knowledgeConfig.defaultCollection = kb.defaultCollection || ''
 }
 
 // 弹窗打开时加载配置
 watch(dialogVisible, visible => {
   if (visible) {
     loadSettings()
+    activeMenu.value = 'api'
     showApiKey.value = false
+    showKbApiKey.value = false
     fetchError.value = ''
+    modelSearchKeyword.value = ''
     // 如果已有配置，自动获取模型列表
     if (canFetchModels.value) {
       handleFetchModels()
@@ -213,7 +452,7 @@ const handleFetchModels = async () => {
 
 // 全选
 const handleSelectAll = () => {
-  localSelectedModels.value = availableModels.value.map(m => m.id)
+  localSelectedModels.value = filteredModels.value.map(m => m.id)
 }
 
 // 清空选择
@@ -221,84 +460,167 @@ const handleClearSelection = () => {
   localSelectedModels.value = []
 }
 
-const handleSave = async () => {
-  if (!formRef.value) return
+// 保存 API 配置
+const handleSaveApiConfig = async () => {
+  if (!apiFormRef.value) return
 
   try {
-    await formRef.value.validate()
-    apiSettingsStore.updateSettings({
+    await apiFormRef.value.validate()
+    apiSettingsStore.updateApiConfig({
       baseURL: formData.baseURL,
-      apiKey: formData.apiKey,
-      defaultModel: localSelectedModels.value[0] || ''
+      apiKey: formData.apiKey
     })
-    apiSettingsStore.updateSelectedModels(localSelectedModels.value)
-    emit('save', {
-      ...formData,
-      selectedModels: localSelectedModels.value
-    })
-    dialogVisible.value = false
+    ElMessage.success('API 配置已保存')
   } catch (e) {
     // 校验失败
   }
 }
 
-const handleCancel = () => {
-  dialogVisible.value = false
+// 保存模型选择
+const handleSaveModels = () => {
+  apiSettingsStore.updateSelectedModels(localSelectedModels.value)
+  ElMessage.success('模型选择已保存')
+}
+
+// 保存默认模型设置
+const handleSaveDefaultModels = () => {
+  apiSettingsStore.updateDefaultModels({
+    chat: defaultModels.chat,
+    summary: defaultModels.summary,
+    translate: defaultModels.translate
+  })
+  ElMessage.success('默认模型设置已保存')
+}
+
+// 保存知识库配置
+const handleSaveKnowledge = () => {
+  apiSettingsStore.updateKnowledgeBase({
+    enabled: knowledgeConfig.enabled,
+    apiUrl: knowledgeConfig.apiUrl,
+    apiKey: knowledgeConfig.apiKey,
+    defaultCollection: knowledgeConfig.defaultCollection
+  })
+  ElMessage.success('知识库设置已保存')
 }
 </script>
 
 <style lang="scss" scoped>
-.api-settings-container {
+.settings-container {
   display: flex;
-  gap: 24px;
-  padding: 24px;
-  min-height: 400px;
+  min-height: 500px;
 }
 
-.section-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  color: #262626;
-  font-size: 16px;
-  font-weight: 600;
+.settings-sidebar {
+  flex: 0 0 180px;
+  padding: 16px 0;
+  border-right: 1px solid #f0f0f0;
+  background-color: #fafafa;
 
-  .selected-count {
-    color: #1890ff;
-    font-size: 12px;
-    font-weight: normal;
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 20px;
+    margin: 4px 8px;
+    color: #595959;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    .iconfont {
+      font-size: 18px;
+    }
+
+    &:hover {
+      color: #262626;
+      background-color: #f0f0f0;
+    }
+
+    &.active {
+      color: var(--main-color, #007e54);
+      font-weight: 500;
+      background-color: rgb(0 126 84 / 8%);
+
+      .iconfont {
+        color: var(--main-color, #007e54);
+      }
+    }
   }
 }
 
-.api-config-section {
-  flex: 0 0 320px;
-  padding-right: 24px;
-  border-right: 1px solid #f0f0f0;
+.settings-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 500px;
+}
 
-  .api-form {
-    :deep(.el-form-item) {
-      margin-bottom: 16px;
+.content-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px;
+  overflow: hidden;
 
-      .el-form-item__label {
-        padding-bottom: 6px;
-        color: #262626;
-        font-size: 14px;
-        font-weight: 500;
-        line-height: 22px;
+  .panel-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+    color: #262626;
+    font-size: 18px;
+    font-weight: 600;
+
+    .selected-count {
+      color: var(--main-color, #007e54);
+      font-size: 13px;
+      font-weight: normal;
+    }
+  }
+
+  .panel-desc {
+    flex-shrink: 0;
+    margin-bottom: 24px;
+    color: #8c8c8c;
+    font-size: 14px;
+  }
+}
+
+.settings-form {
+  flex: 1;
+  overflow-y: auto;
+
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
+
+    .el-form-item__label {
+      padding-bottom: 6px;
+      color: #262626;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 22px;
+    }
+
+    .el-input {
+      .el-input__wrapper {
+        padding: 8px 12px;
+        border-radius: 6px;
       }
+    }
 
-      .el-input {
-        .el-input__wrapper {
-          padding: 8px 12px;
-          border-radius: 4px;
-        }
+    .el-select {
+      &.full-width {
+        width: 100%;
       }
     }
   }
 
   .form-item-tip {
-    margin-top: 4px;
+    margin-top: 6px;
     color: #8c8c8c;
     font-size: 12px;
     line-height: 18px;
@@ -319,24 +641,59 @@ const handleCancel = () => {
   }
 }
 
-.model-select-section {
-  flex: 1;
+.form-actions {
   display: flex;
-  flex-direction: column;
-  min-width: 0;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.fetch-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  color: #ff4d4f;
+  font-size: 13px;
+  border-radius: 6px;
+  background-color: #fff2f0;
+}
+
+.fetch-success {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  color: #52c41a;
+  font-size: 13px;
+  border-radius: 6px;
+  background-color: #f6ffed;
+
+  .iconfont {
+    font-size: 16px;
+  }
+}
+
+.model-search {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+
+  :deep(.el-input__wrapper) {
+    padding: 8px 12px;
+    border-radius: 6px;
+  }
+
+  .iconfont {
+    color: #8c8c8c;
+    font-size: 16px;
+  }
 }
 
 .model-empty {
-  flex: 1;
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   color: #8c8c8c;
   font-size: 14px;
-
-  .error-message {
-    color: #ff4d4f;
-  }
 
   .empty-tip {
     text-align: center;
@@ -345,7 +702,6 @@ const handleCancel = () => {
 
 .model-list {
   flex: 1;
-  max-height: 360px;
   overflow-y: auto;
   margin-bottom: 12px;
   padding-right: 8px;
@@ -363,13 +719,13 @@ const handleCancel = () => {
     transition: all 0.2s;
 
     &:hover {
-      border-color: #1890ff;
-      background-color: #f0f7ff;
+      border-color: var(--main-color, #007e54);
+      background-color: rgb(0 126 84 / 4%);
     }
 
     &.selected {
-      border-color: #1890ff;
-      background-color: #e6f4ff;
+      border-color: var(--main-color, #007e54);
+      background-color: rgb(0 126 84 / 8%);
     }
 
     :deep(.el-checkbox) {
@@ -397,22 +753,55 @@ const handleCancel = () => {
       font-size: 14px;
       color: #262626;
     }
-
-    .model-owner {
-      flex-shrink: 0;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      color: #8c8c8c;
-      background-color: #f5f5f5;
-    }
   }
+}
+
+.panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .model-actions {
   display: flex;
   gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  span {
+    font-size: 14px;
+  }
+}
+
+.no-models-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  color: #8c8c8c;
+  font-size: 14px;
+  border-radius: 6px;
+  background-color: #fafafa;
+
+  .iconfont {
+    color: #faad14;
+    font-size: 16px;
+  }
+}
+</style>
+
+<style lang="scss">
+.settings-dialog {
+  .el-dialog__body {
+    padding: 0;
+  }
 }
 </style>

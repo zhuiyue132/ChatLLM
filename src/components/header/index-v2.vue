@@ -106,7 +106,7 @@ const menuList = ref([
   {
     command: 'api-settings',
     icon: 'iconfont icon-setting',
-    label: 'API 配置'
+    label: '设置'
   }
 ])
 
