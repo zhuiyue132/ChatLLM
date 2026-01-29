@@ -44,8 +44,8 @@ const senderRef = ref(null)
 // 输入框内容
 const inputMessage = ref('')
 
-// 当前选中的模型
-const currentModel = ref(apiSettingsStore.defaultModel || '')
+// 当前选中的模型（使用有效的默认模型，处理默认模型不存在的情况）
+const currentModel = ref(apiSettingsStore.effectiveDefaultChatModel || '')
 
 // 模型列表，转换为 ModelSelector 所需格式
 const modelList = computed(() => {
@@ -62,7 +62,7 @@ const modelList = computed(() => {
  */
 const handleMessageSubmit = (payload = {}) => {
   const { message } = payload
-  const model = currentModel.value || apiSettingsStore.defaultModel
+  const model = currentModel.value || apiSettingsStore.effectiveDefaultChatModel
 
   if (!message || !message.trim()) {
     return

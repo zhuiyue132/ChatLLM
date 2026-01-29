@@ -70,7 +70,7 @@ export function useCompletions({ roomId }) {
   const currentModelValue = computed({
     get: () => {
       const room = currentRoom.value
-      return room?.model || apiSettingsStore.defaultModel
+      return room?.model || apiSettingsStore.effectiveDefaultChatModel
     },
     set: val => {
       const id = getRoomId()

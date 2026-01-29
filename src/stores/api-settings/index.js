@@ -57,6 +57,16 @@ export const useApiSettingsStore = defineStore(
     // 是否有可用模型
     const hasModels = computed(() => selectedModels.value.length > 0)
 
+    // 获取有效的默认对话模型（如果设置的默认模型不在列表中，返回列表第一个）
+    const effectiveDefaultChatModel = computed(() => {
+      const models = selectedModels.value
+      if (!models.length) return ''
+      if (defaultChatModel.value && models.includes(defaultChatModel.value)) {
+        return defaultChatModel.value
+      }
+      return models[0]
+    })
+
     // 更新 API 配置
     const updateApiConfig = ({ baseURL: url, apiKey: key }) => {
       if (url !== undefined) baseURL.value = url
@@ -119,6 +129,7 @@ export const useApiSettingsStore = defineStore(
       settings,
       isConfigured,
       hasModels,
+      effectiveDefaultChatModel,
       // 方法
       updateApiConfig,
       updateDefaultModels,
