@@ -68,8 +68,9 @@ const handleMessageSubmit = (payload = {}) => {
     return
   }
 
-  // 1. 创建新房间
-  const roomId = chatRoomsStore.createRoom(model, '新对话')
+  // 1. 创建新房间，使用用户第一句话作为标题（截取前50个字符）
+  const title = message.trim().slice(0, 50)
+  const roomId = chatRoomsStore.createRoom(model, title)
 
   // 2. 存储待发送的消息到 sessionStorage
   window.sessionStorage.setItem(
