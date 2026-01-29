@@ -73,7 +73,7 @@
 
 <script setup>
 import { computed, watch, ref, onMounted } from 'vue'
-// import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 // import { useEventBus } from '@vueuse/core'
 import { setPopperPosition } from '@/utils'
 // import { AGENT_OPERATION_COMMAND } from '@/config/symbol'
@@ -83,7 +83,7 @@ import { useDebounceFn } from '@vueuse/core'
 import ApiSettingsDialog from '@/components/api-settings-dialog/index.vue'
 
 // const route = useRoute()
-// const router = useRouter()
+const router = useRouter()
 // const eventBus = useEventBus(AGENT_OPERATION_COMMAND)
 
 defineOptions({
@@ -119,7 +119,11 @@ const handleUserCommand = useDebounceFn(command => {
 
 const handleUserDropdownVisibleChange = visible => {}
 
-const handleBackClick = () => {}
+const handleBackClick = () => {
+  router.replace({
+    path: '/completions'
+  })
+}
 </script>
 
 <style lang="scss">

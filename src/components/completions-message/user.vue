@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-07-22
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-28
+ * @LastEditTime : 2026-01-29
  * @FilePath     : /ChatLLM/src/components/completions-message/user.vue
  * @Description  : 用户消息组件
  * 
@@ -488,7 +488,7 @@ const handleNextPage = () => {
       white-space: nowrap;
       letter-spacing: 0.96px;
       color: #8c8c8c;
-      font-size: 14px;
+      font-size: 15px;
     }
   }
 }

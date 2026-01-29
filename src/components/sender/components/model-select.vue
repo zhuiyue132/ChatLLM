@@ -94,6 +94,7 @@ const onCommand = model => {
 <style lang="scss" scoped>
 .trigger {
   outline: none;
+  border-radius: 6px;
 
   .sender-button {
     font-family:
@@ -120,6 +121,15 @@ const onCommand = model => {
       &.visible {
         transform: rotate(180deg);
       }
+    }
+  }
+
+  &:focus-visible {
+    .sender-button {
+      color: #000;
+      border-color: rgb(179, 217, 200);
+      background-color: rgb(230, 242, 237);
+      /* background-color: #e0f2e7; */
     }
   }
 }

@@ -38,7 +38,7 @@ defineProps({
 
     .el-dropdown-menu__item:not(.is-disabled):hover,
     .el-dropdown-menu__item:not(.is-disabled):focus {
-      background-color: transparent;
+      background-color: #f6f6f6;
     }
   }
 }
