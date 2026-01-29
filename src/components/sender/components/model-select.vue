@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-08-21
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-28
+ * @LastEditTime : 2026-01-29
  * @FilePath     : /ChatLLM/src/components/sender/components/model-select.vue
  * @Description  : 模型下拉框（单选）
  *
@@ -19,7 +19,7 @@
   >
     <div class="trigger">
       <div class="sender-button">
-        <i class="iconfont icon-moxing-lora sender-icon"></i>
+        <ModelIcon :name="currentModel" :size="16" />
         <span>{{ currentModelName }}</span>
 
         <div class="arrow-icon" :class="{ visible: poperVisible }">
@@ -98,6 +98,11 @@ const onCommand = model => {
   .sender-button {
     font-family:
       -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+    display: flex;
+    align-items: center;
+
+    @include flex-gap(4px, row);
 
     .arrow-icon {
       display: flex;
