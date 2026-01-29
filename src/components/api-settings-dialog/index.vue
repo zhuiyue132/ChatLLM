@@ -15,6 +15,7 @@
     width="800px"
     :show-footer="true"
     :close-on-click-modal="false"
+    append-to-body
     @confirm="handleSave"
     @cancel="handleCancel"
   >
