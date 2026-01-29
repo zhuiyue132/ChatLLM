@@ -86,6 +86,11 @@ export const createOpenAISSERequest = (options = {}) => {
   const processChunk = chunk => {
     if (!chunk || chunk.done) return
 
+    // 先处理 usage（可能在 choices 为空时出现）
+    if (chunk.usage) {
+      usage.value = chunk.usage
+    }
+
     const choice = chunk.choices?.[0]
     if (!choice) return
 
@@ -143,10 +148,6 @@ export const createOpenAISSERequest = (options = {}) => {
           requestId
         })
       }
-    }
-
-    if (chunk.usage) {
-      usage.value = chunk.usage
     }
   }
 

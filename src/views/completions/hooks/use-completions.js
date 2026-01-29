@@ -178,7 +178,8 @@ export function useCompletions({ roomId }) {
         chatRoomsStore.updateMessage(id, receivingMessageId.value, {
           finished: true,
           error: false,
-          reasoningTime: reasoning_duration || 0
+          reasoningTime: reasoning_duration || 0,
+          usage: usage || null
         })
       }
 

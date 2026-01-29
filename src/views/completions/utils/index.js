@@ -2,32 +2,11 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-11-04
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2025-11-07
- * @FilePath     : /bi-agents/src/views/completions/utils/index.js
+ * @LastEditTime : 2026-01-29
+ * @FilePath     : /ChatLLM/src/views/completions/utils/index.js
  * @Description  : 补全工具函数
  *
  */
-
-/**
- * 获取提供商图片URL
- * @param {*} name
- * @returns {String} 图片URL
- */
-export const getProviderImageUrl = name => {
-  return new URL(`../../../assets/images/ai-provider/${name}.png`, import.meta.url).href
-}
-
-/**
- * 根据模型名称获取提供商图片URL
- * @param {*} modelName
- * @returns {String} 提供商图片URL
- */
-export const getProviderImageByModelName = modelName => {
-  // 匹配到以上关键词的模型品牌名称
-  const providerName = modelName.match(/claude|deepseek|qwen|doubao|gemini|llama|gpt/gi)?.[0]
-  if (!providerName) return ''
-  return getProviderImageUrl(providerName.toLowerCase())
-}
 
 /**
  * 构建树形结构

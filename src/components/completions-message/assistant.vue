@@ -114,6 +114,9 @@
             <ArrowRight />
           </el-icon>
         </div>
+
+        <!-- Token 使用量 -->
+        <span v-if="tokenUsageText" class="token-usage">{{ tokenUsageText }}</span>
       </div>
     </template>
   </div>
@@ -205,6 +208,11 @@ const props = defineProps({
   imageList: {
     type: Array,
     default: () => []
+  },
+  // Token 使用情况
+  usage: {
+    type: Object,
+    default: null
   }
 })
 
@@ -275,6 +283,16 @@ const isFirstPage = computed(() => {
 
 const isLastPage = computed(() => {
   return props.currentPage >= props.totalPages
+})
+
+// Token 使用量显示文本
+const tokenUsageText = computed(() => {
+  if (!props.usage) return ''
+  const { prompt_tokens, completion_tokens } = props.usage
+  if (prompt_tokens !== undefined && completion_tokens !== undefined) {
+    return `提示 ${prompt_tokens} / 补全 ${completion_tokens} tokens`
+  }
+  return ''
 })
 
 // 处理上一页
@@ -532,8 +550,14 @@ const regenerateMessage = () => {
         white-space: nowrap;
         letter-spacing: 0.96px;
         color: #8c8c8c;
-        font-size: 14px;
+        font-size: 15px;
       }
+    }
+
+    .token-usage {
+      white-space: nowrap;
+      color: #bfbfbf;
+      font-size: 12px;
     }
   }
 }

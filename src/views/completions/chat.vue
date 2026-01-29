@@ -51,6 +51,7 @@
             :thinking-duration="msg.reasoningTime"
             :current-page="msg.pageIndex + 1"
             :total-pages="msg.siblingCount || 1"
+            :usage="msg.usage"
             @regenerate="handleRegenerateAnswer"
             @prev="handleAssistantPrevPage(msg.parentId)"
             @next="handleAssistantNextPage(msg.parentId)"
