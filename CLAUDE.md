@@ -4,73 +4,69 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-ChatLLM 是一个基于 Vue 3 的 AI 对话应用，支持多模型对话、深度思考、图片生成等功能。使用 SSE (Server-Sent Events) 实现流式对话响应。
+ChatLLM 是一个基于 Vue 3 的 AI 对话应用，支持多模型对话、深度思考（推理内容）、流式响应等功能。核心特性是树形消息结构，支持多分支对话。
 
-## 常用命令
-
-```bash
-# 开发（用户会自行启动，不要主动启动）
-npm run dev
-
-# 构建
-npm run build
-
-# 代码检查
-npm run lint
-
-# 代码格式化
-npm run format
-
-# 样式检查
-npm run stylelint
-
-# 提交代码（使用 commitizen）
-npm run commit
-```
 
 ## 技术栈
 
 - **框架**: Vue 3 + Vite 7
-- **状态管理**: Pinia (带持久化插件)
+- **状态管理**: Pinia + pinia-plugin-persistedstate
 - **UI 组件**: Element Plus (SCSS 主题定制)
-- **路由**: Vue Router 4
-- **样式**: SCSS + Element Plus 主题覆盖
-- **Markdown 渲染**: unified/remark/rehype 生态 + KaTeX + Mermaid
+- **Markdown 渲染**: unified/remark/rehype + KaTeX + Mermaid
 
-## 架构概览
+## 核心架构
 
-### 目录结构
+### 状态管理
 
+**`useChatRoomsStore`** (`src/stores/chat-rooms/index.js`)
+- 管理对话房间和消息树
+- 消息使用树形结构存储，每个节点有 `children` 数组和 `currentIndex` 索引
+- 支持多分支对话：用户编辑消息或重新生成回答时创建新分支
+- 持久化 key: `chat-llm-rooms`
+
+**消息树结构**:
+```javascript
+{
+  id, role, content, reasoningContent, reasoningTime,
+  model, parentId, children: [], currentIndex: 0,
+  finished, error, usage, createdAt
+}
 ```
-src/
-├── api/           # API 请求模块
-├── components/    # 通用组件
-├── config/        # 应用配置
-├── directives/    # 自定义指令 (v-title, v-xs-loading, v-overflow-title)
-├── hooks/         # 组合式函数
-├── layouts/       # 布局组件
-├── stores/        # Pinia 状态管理
-├── styles/        # 全局样式和 Element Plus 主题覆盖
-├── utils/         # 工具函数
-└── views/         # 页面视图
-```
 
-### 核心模块
+**`useApiSettingsStore`** (`src/stores/api-settings/index.js`)
+- 管理 API 配置（baseURL、apiKey、模型列表）
+- 持久化 key: `chat-llm-api-settings`
 
-**SSE 通信 (`src/hooks/use-sse/index.js`)**
-- 基于 `@microsoft/fetch-event-source` 封装
-- 支持自动重连、手动断开、状态管理
-- 通过 UUID 匹配请求和响应
+### SSE 通信
 
-**对话管理 (`src/views/completions/hooks/use-completions.js`)**
-- 树形结构存储对话历史，支持多分支对话
-- 通过 `currentIndex` 在不同分支间切换
-- 支持消息编辑、重新生成、分页浏览
+**三层 API 设计** (`src/hooks/use-sse/use-openai-sse.js`):
+1. `createOpenAISSERequest` - 单个请求实例
+2. `useOpenAISSE` - 多请求管理器
+3. `useOpenAISSESingle` - 单请求简化版（对话场景推荐）
 
-**Markdown 渲染 (`src/components/x-markdown-core/`)**
-- 支持同步和异步渲染模式
-- 内置 Mermaid 图表、KaTeX 数学公式支持
-- 可通过 `codeXRender` 自定义代码块渲染
+**状态**: `idle` → `connecting` → `streaming` → `done`/`error`/`aborted`
+
+**特性**:
+- 支持推理内容（`delta.reasoning_content`）和推理计时
+- 自动处理非流式响应
+- 支持 AbortController 取消
+
+### 对话逻辑
+
+**`useCompletions`** (`src/views/completions/hooks/use-completions.js`)
+- 核心对话 hook，处理消息发送、流式接收、分支切换
+- 消息发送流程：创建用户消息 → 创建空 assistant 消息 → 发送 SSE → 实时更新内容
+- 支持消息编辑、重新生成、分页浏览分支
+
+### 组件通信
+
+| 方式 | 场景 |
+|-----|------|
+| Props + Emit | 父子组件 |
+| Pinia Store | 全局状态 |
+| Event Bus | 跨组件事件（`src/config/symbol.js` 定义符号） |
+| Provide/Inject | Markdown 组件配置注入 |
+| SessionStorage | 首页到对话页的消息传递 |
 
 ### 路径别名
 
@@ -83,18 +79,16 @@ src/
 - Element Plus 主题覆盖: `src/styles/element-plus/`
 - 组件样式使用 `<style lang="scss" scoped>`
 
-## 提交规范
+## 关键文件
 
-使用 cz-git 进行规范化提交，支持的类型：
-- `feat`: 新功能
-- `fix`: 修复
-- `docs`: 文档变更
-- `style`: 代码格式
-- `refactor`: 重构
-- `perf`: 性能优化
-- `chore`: 构建/工具变动
+- `src/views/completions/hooks/use-completions.js` - 对话核心逻辑
+- `src/hooks/use-sse/use-openai-sse.js` - SSE 通信实现
+- `src/stores/chat-rooms/index.js` - 房间和消息状态管理
+- `src/components/sender/index.vue` - 消息发送器组件
+- `src/components/x-markdown/` - Markdown 渲染组件
+
 
 ## 环境变量
 
-环境变量文件位于 `./env` 目录，通过 `import.meta.env` 访问：
+位于 `./env` 目录，通过 `import.meta.env` 访问：
 - `VITE_APP_WEB_URL`: API 基础地址
