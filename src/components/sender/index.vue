@@ -55,12 +55,6 @@
           <div class="action-list-self-wrap-left">
             <!-- 模型选择 -->
             <ModelSelector v-if="showModelSelect" v-model="model" :model-list="modelList" />
-
-            <!-- 深度思考 -->
-            <DeepThinkButton v-if="showModelSelect && showDeepThinkBtn" v-model="deepThink" />
-
-            <!-- 单选类型选择 -->
-            <RadioButton v-if="showRadioBtn" v-model="radioValue" :list="radioList" />
           </div>
 
           <div class="action-list-self-wrap-right">
@@ -94,9 +88,7 @@ import { showMessage } from '@/hooks'
 import FloatButton from '../float-button/index.vue'
 import ModelSelector from './components/model-select.vue'
 import FileItem from './components/file-item.vue'
-import RadioButton from './components/radio-button.vue'
 import { useVModel } from '@vueuse/core'
-import DeepThinkButton from './components/deep-think.vue'
 import './common.scss'
 
 defineOptions({
@@ -398,21 +390,11 @@ const sendButtonProps = computed(() => {
     return { class: 'disabled', customTitle: '文件上传中，请稍候' }
   }
 
-  if (props.showFileBtn && props.showModelSelect) {
-    const list = filesUploaded.value.filter(file => file.belong === 'file')
-
-    if (list.length > 1) {
-      const totalTokens = list.reduce((acc, file) => acc + Number(file.tokens || 0), 0)
-    }
-  }
-
   if (!isNotEmpty.value) {
     if (props.allowEmptyMessage) {
       return { class: 'disabled', customTitle: '请上传文件' }
     }
     return { class: 'disabled', customTitle: '请输入你的问题' }
-  } else {
-    // 爆品分析智能体单独判断
   }
 
   // 可以发送
@@ -474,11 +456,6 @@ const handleSendClick = (extraData = {}) => {
 
 const handleStopClick = () => {
   emits('stop')
-}
-
-// 公共模板设置确认处理
-const handleTemplateSettingConfirmed = data => {
-  emits('template-setting-confirmed', data)
 }
 
 // 定义要暴露的方法

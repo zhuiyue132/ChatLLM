@@ -120,7 +120,7 @@
 </template>
 
 <script setup>
-import MarkdownRenderer from '../markdown-renderer/index.vue'
+import MarkdownRenderer from '../x-markdown/markdown-renderer.vue'
 import ModelIcon from '../model-icon/index.vue'
 import { onCopy } from '@/utils'
 import { ref, computed, watch } from 'vue'

@@ -1,11 +1,6 @@
 <!--
- * @Author       : zhuiyue132
- * @Date         : 2025-08-05
- * @LastEditors  : zhuiyue132
- * @LastEditTime : 2025-08-05
- * @FilePath     : /bi-agents/src/components/x-markdown/index.vue
- * @Description  : 
- * 
+ * @Description  : XMarkdown 组件
+ *
 -->
 
 <template>
@@ -23,9 +18,9 @@
 
 <script setup>
 import { computed, useSlots } from 'vue'
-import { MarkdownRenderer } from '../x-markdown-core'
-import { useMarkdownContext } from '../x-markdown-core/components/markdown-provider'
-import { MARKDOWN_CORE_PROPS } from '../x-markdown-core/shared/constants'
+import { MarkdownRenderer } from './render'
+import { useMarkdownContext } from './components/markdown-provider'
+import { MARKDOWN_CORE_PROPS } from './shared/constants'
 
 const props = defineProps(MARKDOWN_CORE_PROPS)
 
