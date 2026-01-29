@@ -292,17 +292,26 @@ export const useChatRoom = (pageSize = 999999999, route = null) => {
       // 删除 chatRoomList 中已不存在于 store 的房间
       chatRoomList.value = chatRoomList.value.filter(item => storeRoomIds.has(item.taskId))
 
-      // 更新现有房间的信息
+      // 更新现有房间的信息 & 添加新房间
       if (newRooms && newRooms.length > 0) {
         newRooms.forEach(storeRoom => {
           const existingRoom = chatRoomList.value.find(item => item.taskId === storeRoom.id)
           if (existingRoom) {
+            // 更新现有房间
             existingRoom.content = storeRoom.title
             existingRoom.updateTime = storeRoom.updatedAt
             existingRoom.aiModel = storeRoom.model
             existingRoom.topFlag = storeRoom.topFlag || false
             existingRoom.pinTime = storeRoom.pinTime || null
+          } else {
+            // 添加新房间
+            chatRoomList.value.push(mapStoreRoomToListItem(storeRoom))
           }
+        })
+
+        // 按创建时间倒序排序
+        chatRoomList.value.sort((a, b) => {
+          return dayjs(b.createTime).diff(dayjs(a.createTime))
         })
       }
     },

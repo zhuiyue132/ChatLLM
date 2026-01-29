@@ -437,6 +437,33 @@ export const useChatRoomsStore = defineStore(
       currentRoomId.value = null
     }
 
+    /**
+     * 导入数据（合并模式）
+     * @param {Array} importRooms - 要导入的房间列表
+     * @param {Object} importMessages - 要导入的消息数据
+     * @returns {number} 导入的房间数量
+     */
+    const importData = (importRooms, importMessages) => {
+      let importedCount = 0
+
+      // 导入房间（跳过已存在的）
+      for (const room of importRooms) {
+        if (!rooms.value.find(r => r.id === room.id)) {
+          rooms.value.push(room)
+          importedCount++
+        }
+      }
+
+      // 导入消息（跳过已存在的）
+      for (const [roomId, tree] of Object.entries(importMessages)) {
+        if (!messages.value[roomId]) {
+          messages.value[roomId] = tree
+        }
+      }
+
+      return importedCount
+    }
+
     return {
       // 状态
       rooms,
@@ -466,7 +493,8 @@ export const useChatRoomsStore = defineStore(
       handlePrevPage,
       handleNextPage,
       // 工具
-      clearAll
+      clearAll,
+      importData
     }
   },
   {
