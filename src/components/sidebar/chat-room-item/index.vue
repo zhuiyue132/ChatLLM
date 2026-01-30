@@ -6,12 +6,11 @@
     @click.stop="handleChatRoomItemClick($event)"
   >
     <div class="chat-room-icon">
-      <i v-if="!isCompletions" class="icon-brain" />
-      <i v-else class="icon-duihua-1" />
+      <i class="icon-duihua-1" />
     </div>
 
     <div
-      v-title="chatRoomInfo.content"
+      v-title="chatRoomInfo.content || chatRoomInfo.title"
       :data-chatid="chatRoomInfo.id"
       :data-first="chatRoomInfo.firstContent || ''"
       class="chat-room-content"
@@ -19,19 +18,6 @@
     >
       {{ chatRoomInfo.content }}
     </div>
-
-    <template v-if="!isActive">
-      <div v-if="chatRoomInfo.state === 'RUNNING'" class="chat-room-operation">
-        <img :src="IconLoading" class="animate-spin" alt="loading" />
-      </div>
-
-      <div
-        v-else-if="chatRoomInfo.unreadMessageCount > 0"
-        class="chat-room-operation chat-room-new-badge"
-      >
-        <span>NEW</span>
-      </div>
-    </template>
 
     <div v-show="isActive" class="chat-room-operation chat-room-operation-dropdown">
       <xs-dropdown
@@ -78,11 +64,6 @@ const props = defineProps({
     type: Boolean,
     default: false
   }
-})
-
-const isCompletions = computed(() => {
-  return [0, 1].includes(props.chatRoomInfo.agentId)
-  // return !props.chatRoomInfo.headUrl
 })
 
 const handleChatRoomItemClick = event => {

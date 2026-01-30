@@ -2,20 +2,18 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-08-13
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-26
+ * @LastEditTime : 2026-01-30
  * @FilePath     : /ChatLLM/src/components/sidebar/hooks/use-chat-room.js
  * @Description  : 侧边栏的对话历史, 每一个对话视为一个房间，房间内包含多轮对话（在MainV2 布局组件中使用，所以先放hooks里吧）
  *
  */
 
 import { ref, computed, watch } from 'vue'
-import { useEventBus, tryOnMounted } from '@vueuse/core'
+import { tryOnMounted } from '@vueuse/core'
 import { ElMessageBox } from 'element-plus'
-import { CHAT_ROOM_COMMAND } from '@/config/symbol'
 import { useInfiniteScroll } from '@vueuse/core'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
 import dayjs from 'dayjs'
-import { wait } from '@/utils'
 
 /**
  * 将 store 中的房间格式转换为 sidebar 列表所需的格式
@@ -24,16 +22,16 @@ import { wait } from '@/utils'
  */
 const mapStoreRoomToListItem = room => ({
   taskId: room.id,
-  agentId: 0, // AI 对话默认为 0
   content: room.title,
   createTime: room.createdAt,
   updateTime: room.updatedAt,
   aiModel: room.model,
   topFlag: room.topFlag || false,
-  pinTime: room.pinTime || null
+  pinTime: room.pinTime || null,
+  isTitleLoading: room.isTitleLoading || false
 })
 
-export const useChatRoom = (pageSize = 999999999, route = null) => {
+export const useChatRoom = () => {
   const chatRoomsStore = useChatRoomsStore()
   const chatRoomList = ref([])
   const isLoading = ref(false)
@@ -41,22 +39,10 @@ export const useChatRoom = (pageSize = 999999999, route = null) => {
   const isCompleted = ref(false)
 
   // 获取URL中的agentId参数
-  const agentIdFromUrl = ref(route?.query?.agentId || null)
 
   // 根据agentId过滤后的聊天房间列表
   const filteredChatRoomList = computed(() => {
-    if (!agentIdFromUrl.value) {
-      if (route.path.includes('/completions')) {
-        return chatRoomList.value.filter(room => room.agentId === 0 || room.agentId === 1)
-      }
-      // 如果没有agentId参数，显示所有对话房间
-      return chatRoomList.value
-    }
-    // 如果有agentId参数，只显示该agent的对话房间
-    if (agentIdFromUrl.value === '0' || agentIdFromUrl.value === '1') {
-      return chatRoomList.value.filter(room => room.agentId === 0 || room.agentId === 1)
-    }
-    return chatRoomList.value.filter(room => String(room.agentId) === String(agentIdFromUrl.value))
+    return chatRoomList.value
   })
 
   const filteredChatRoomGroupList = computed(() => {
@@ -179,78 +165,6 @@ export const useChatRoom = (pageSize = 999999999, route = null) => {
     return result
   })
 
-  const eventBus = useEventBus(CHAT_ROOM_COMMAND)
-
-  const handleCommand = ({ command, params }) => {
-    console.log(222223333, command, params)
-    switch (command) {
-      case 'delete':
-        // 删除临时对话（不经过二次确认，直接删除）
-        // TODO: 删除临时对话
-        break
-      case 'add-room':
-        // 更新对话列表
-        // 为了避免重复添加，先检查是否已存在
-        if (chatRoomList.value.find(item => item.taskId === params.taskId)) {
-          return
-        }
-
-        params.isTitleLoading = true
-        // 五秒后自动关闭
-        setTimeout(() => {
-          chatRoomList.value[0].isTitleLoading = false
-        }, 5000)
-
-        chatRoomList.value.unshift(params)
-        break
-      case 'modify-title':
-        setTimeout(async () => {
-          // eslint-disable-next-line no-case-declarations
-          const room = chatRoomList.value.find(item => item.taskId === params.taskId)
-          if (!room) return
-          room.isTitleLoading = true
-          room.content = ''
-
-          const titles = params.title?.split('')?.filter(Boolean)
-
-          for (let index = 0; index < titles.length; index++) {
-            const t = titles[index]
-            room.content += t
-            await wait(50)
-          }
-
-          setTimeout(() => {
-            room.isTitleLoading = false
-          }, 200)
-        }, 1500)
-
-        break
-    }
-  }
-
-  eventBus.on(handleCommand)
-
-  // 分页参数，后端采用游标分页
-  const cursor = ref({
-    lastCreateTime: null,
-    lastId: null,
-    pageSize,
-    page: 1
-  })
-
-  // 重置游标和数据
-  const resetHistory = () => {
-    chatRoomList.value = []
-    cursor.value = {
-      lastCreateTime: null,
-      lastId: null,
-      pageSize,
-      page: 1
-    }
-    isFinished.value = false
-    isCompleted.value = false
-  }
-
   /**
    * 从 store 加载房间列表到 sidebar
    */
@@ -303,6 +217,7 @@ export const useChatRoom = (pageSize = 999999999, route = null) => {
             existingRoom.aiModel = storeRoom.model
             existingRoom.topFlag = storeRoom.topFlag || false
             existingRoom.pinTime = storeRoom.pinTime || null
+            existingRoom.isTitleLoading = storeRoom.isTitleLoading || false
           } else {
             // 添加新房间
             chatRoomList.value.push(mapStoreRoomToListItem(storeRoom))
@@ -445,24 +360,12 @@ export const useChatRoom = (pageSize = 999999999, route = null) => {
     )
   }
 
-  // 监听route变化，更新agentId参数
-  if (route) {
-    watch(
-      () => route.query.agentId,
-      newAgentId => {
-        agentIdFromUrl.value = newAgentId || null
-      }
-    )
-  }
-
   return {
     isLoading,
     isFinished,
     isCompleted,
     chatRoomList,
     filteredChatRoomGroupList,
-    agentIdFromUrl,
-    resetHistory,
     getChatRoomList,
     pinChatRoom,
     unpinChatRoom,

@@ -12,14 +12,6 @@ defineProps({
   content: {
     type: String,
     default: '### 你好'
-  },
-  agentId: {
-    type: [Number, String],
-    default: null
-  },
-  agentCode: {
-    type: String,
-    default: ''
   }
 })
 </script>

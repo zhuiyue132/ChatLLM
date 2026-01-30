@@ -10,3 +10,4 @@
 
 export * from './use-message'
 export * from './use-auto-scroll'
+export * from './use-title-generator'

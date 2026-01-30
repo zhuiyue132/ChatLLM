@@ -64,7 +64,7 @@
               </div>
               <ChatRoomItem
                 v-for="chatRoomInfo in group.chatRoomList"
-                :key="`chat-room-${chatRoomInfo.agentId}-${chatRoomInfo.taskId}`"
+                :key="`chat-room-${chatRoomInfo.taskId}`"
                 :chat-room-info="chatRoomInfo"
                 :is-active="activeRoomId === chatRoomInfo.taskId"
                 @chat-room-item-click="handleChatRoomItemClick($event, chatRoomInfo)"
@@ -113,7 +113,7 @@ const {
   unpinChatRoom,
   renameChatRoom,
   deleteChatRoom
-} = useChatRoom(999999999, route)
+} = useChatRoom()
 
 const { isCollapsed, widthSidebarCollapsed, widthSidebarExpanded, toggleSidebar } = useSidebar()
 

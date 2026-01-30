@@ -173,18 +173,12 @@ const props = defineProps({
     type: Number,
     default: 0
   },
-  agentId: {
-    type: [String, Number],
-    default: ''
-  },
+
   conversationId: {
     type: [String, Number],
     default: ''
   },
-  agentCode: {
-    type: String,
-    default: ''
-  },
+
   messageId: {
     type: [String, Number],
     default: ''

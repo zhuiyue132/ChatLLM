@@ -2,18 +2,16 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-11-03
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-28
+ * @LastEditTime : 2026-01-30
  * @FilePath     : /ChatLLM/src/views/completions/hooks/use-completions.js
  * @Description  : 单模型对话（OpenAI API 格式）
  *
  */
 import { ref, computed, nextTick, toValue } from 'vue'
-import { useEventBus } from '@vueuse/core'
 import { useOpenAISSESingle } from '@/hooks/use-sse/use-openai-sse'
-import { useAutoScroll, showMessage } from '@/hooks'
+import { useAutoScroll, showMessage, useTitleGenerator } from '@/hooks'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
-import { CHAT_ROOM_COMMAND } from '@/config/symbol'
 import { ILLEGAL_UNICODE_REG } from '../config'
 
 /**
@@ -24,7 +22,9 @@ import { ILLEGAL_UNICODE_REG } from '../config'
 export function useCompletions({ roomId }) {
   const apiSettingsStore = useApiSettingsStore()
   const chatRoomsStore = useChatRoomsStore()
-  const chatRoomEventBus = useEventBus(CHAT_ROOM_COMMAND)
+
+  // 初始化标题生成器
+  const { generateTitleSync } = useTitleGenerator()
 
   // 获取当前房间 ID（支持响应式和普通值）
   const getRoomId = () => toValue(roomId)
@@ -32,9 +32,6 @@ export function useCompletions({ roomId }) {
   // 是否正在加载中
   const loading = ref(false)
   const isReceiving = ref(false)
-
-  // 标记当前房间是否已添加到侧边栏
-  const roomAddedToSidebar = ref(false)
 
   // 输入框消息
   const message = ref('')
@@ -137,27 +134,6 @@ export function useCompletions({ roomId }) {
       if ((content && content.trim()) || (reasoning_content && reasoning_content.trim())) {
         loading.value = false
         isReceiving.value = true
-
-        // 收到第一个有效 token 时，将房间添加到侧边栏（如果尚未添加）
-        if (!roomAddedToSidebar.value) {
-          roomAddedToSidebar.value = true
-          const room = currentRoom.value
-          if (room) {
-            chatRoomEventBus.emit({
-              command: 'add-room',
-              params: {
-                taskId: room.id,
-                agentId: 0,
-                content: room.title,
-                createTime: room.createdAt,
-                updateTime: room.updatedAt,
-                aiModel: room.model,
-                topFlag: false,
-                pinTime: null
-              }
-            })
-          }
-        }
       }
 
       // 滚动到底部
@@ -165,7 +141,7 @@ export function useCompletions({ roomId }) {
         scrollToBottom()
       }
     },
-    onDone: ({ content, reasoning_content, reasoning_duration, usage }) => {
+    onDone: async ({ content, reasoning_content, reasoning_duration, usage }) => {
       console.log('[OpenAI SSE] 请求完成', {
         content,
         reasoning_content,
@@ -181,6 +157,28 @@ export function useCompletions({ roomId }) {
           reasoningTime: reasoning_duration || 0,
           usage: usage || null
         })
+
+        // 如果房间还没有标题，自动生成一个
+        const room = chatRoomsStore.rooms.find(r => r.id === id)
+        if (room) {
+          try {
+            // 获取对话历史用于生成标题
+            const messages = chatRoomsStore.getMessages(id)
+            if (messages.length > 0 && messages.length <= 2) {
+              chatRoomsStore.updateRoomIsTitleLoading(id, true)
+              const title = await generateTitleSync(messages)
+              if (title && title.trim()) {
+                // 更新房间标题
+                chatRoomsStore.updateRoomTitle(id, title.trim())
+              }
+            }
+          } catch (error) {
+            console.warn('[OpenAI SSE] 生成标题失败:', error)
+            // 生成标题失败不影响正常对话
+          } finally {
+            chatRoomsStore.updateRoomIsTitleLoading(id, false)
+          }
+        }
       }
 
       loading.value = false

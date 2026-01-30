@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2026-01-28
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-28
+ * @LastEditTime : 2026-01-30
  * @FilePath     : /ChatLLM/src/stores/chat-rooms/index.js
  * @Description  : 对话房间和消息管理 Store
  */
@@ -82,6 +82,7 @@ export const useChatRoomsStore = defineStore(
       rooms.value.unshift({
         id: roomId,
         title,
+        isTitleLoading: false,
         model,
         createdAt: now,
         updatedAt: now,
@@ -137,6 +138,13 @@ export const useChatRoomsStore = defineStore(
       if (room) {
         room.title = title
         room.updatedAt = new Date().toISOString()
+      }
+    }
+
+    const updateRoomIsTitleLoading = (roomId, isTitleLoading) => {
+      const room = rooms.value.find(r => r.id === roomId)
+      if (room) {
+        room.isTitleLoading = isTitleLoading
       }
     }
 
@@ -478,6 +486,7 @@ export const useChatRoomsStore = defineStore(
       deleteRoom,
       setCurrentRoom,
       updateRoomTitle,
+      updateRoomIsTitleLoading,
       updateRoomModel,
       pinRoom,
       unpinRoom,

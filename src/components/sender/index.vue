@@ -66,7 +66,11 @@
         <div class="action-list-self-wrap">
           <div class="action-list-self-wrap-left">
             <!-- 模型选择 -->
-            <ModelSelector v-if="showModelSelect && modelList.length > 0" v-model="model" :model-list="modelList" />
+            <ModelSelector
+              v-if="showModelSelect && modelList.length > 0"
+              v-model="model"
+              :model-list="modelList"
+            />
             <!-- 没有模型时显示配置按钮 -->
             <el-button
               v-else-if="showModelSelect && modelList.length === 0"
@@ -205,17 +209,6 @@ const props = defineProps({
 
   // 价格区间模板ID
   priceRangeTemplateId: {
-    type: String,
-    default: ''
-  },
-
-  // 智能体id
-  agentId: {
-    type: [String, Number],
-    default: ''
-  },
-  // 智能体code
-  agentCode: {
     type: String,
     default: ''
   },
