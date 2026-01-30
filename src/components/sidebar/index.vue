@@ -1,12 +1,3 @@
-<!--
- * @Author       : zhuiyue132
- * @Date         : 2025-08-08
- * @LastEditors: LMMQ 11288531+lmmq@user.noreply.gitee.com
- * @LastEditTime: 2025-08-27 19:12:17
- * @FilePath     : /ChatLLM/src/components/sidebar/index.vue
- * @Description  : 侧边栏（入口+历史记录）
- * 
--->
 <template>
   <div
     class="sidebar-wrapper"
@@ -80,9 +71,6 @@
                 @chat-room-item-operation="handleChatRoomItemOperation($event, chatRoomInfo)"
               />
             </div>
-            <div class="section-footer">
-              <span class="section-footer-label">没有更多数据了</span>
-            </div>
           </div>
 
           <div v-if="isCompleted && filteredChatRoomGroupList.length === 0" class="history-section">
@@ -96,16 +84,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { setPopperPosition } from '@/utils'
-import { useEventBus, useVModel, tryOnMounted } from '@vueuse/core'
+import { useEventBus, tryOnMounted } from '@vueuse/core'
 import { APP_NAME } from '@/config/app'
 import AgentEmpty from '@/components/empty/index.vue'
-import {
-  AGENT_UNREADCOUNT_COMMAND,
-  RECEIVE_CHAT_TASK_COMMAND,
-  FETCH_CHAR_HISTORY
-} from '@/config/symbol'
-import { XsDropdown, XsDropdownMenu, XsDropdownItem } from '@/components/xs-dropdown'
+import { FETCH_CHAR_HISTORY } from '@/config/symbol'
 import { useSidebar } from '@/hooks/use-sidebar'
 
 import ChatRoomItem from './chat-room-item/index.vue'
@@ -115,75 +97,22 @@ defineOptions({
   name: 'CommonSidebar'
 })
 
-const props = defineProps({
-  platformList: {
-    type: Array,
-    default: () => []
-  },
-  platform: {
-    type: String,
-    default: ''
-  }
-})
-
 const router = useRouter()
 const route = useRoute()
 
-const eventBus = useEventBus(AGENT_UNREADCOUNT_COMMAND)
-const eventBusOfReceiveChatTask = useEventBus(RECEIVE_CHAT_TASK_COMMAND)
 const eventBusOfHistory = useEventBus(FETCH_CHAR_HISTORY)
 const eventBusOfPopover = useEventBus('popover-action')
-
-eventBusOfReceiveChatTask.on(() => {
-  // console.log('接收到 RECEIVE_CHAT_TASK_COMMAND 事件', message?.data?.asyncTaskId)
-
-  setTimeout(() => {}, 2000)
-})
-
-eventBus.on(({ type, params }) => {
-  console.log('接收到消息')
-  console.log(type, params)
-
-  startTaskProcess()
-
-  const { agentId, taskId } = params
-
-  const index = chatRoomList.value.findIndex(
-    item => item.taskId === taskId && +item.agentId === +agentId
-  )
-
-  if (index === -1) return
-  const agent = chatRoomList.value[index]
-
-  if (type === 'subtract') {
-    chatRoomList.value.splice(index, 1, {
-      ...agent,
-      unreadReportCount: agent.unreadReportCount - 1
-    })
-  } else if (type === 'add') {
-    chatRoomList.value.splice(index, 1, {
-      ...agent,
-      unreadReportCount: agent.unreadReportCount + 1
-    })
-  }
-})
-
-const emit = defineEmits(['update:platform'])
-
-const currentPlatform = useVModel(props, 'platform', emit)
 
 const scrollRef = ref()
 
 const {
   isCompleted,
-  chatRoomList,
   filteredChatRoomGroupList,
-  getChatRoomList,
+
   pinChatRoom,
   unpinChatRoom,
   renameChatRoom,
-  deleteChatRoom,
-  createInfiniteScroll
+  deleteChatRoom
 } = useChatRoom(999999999, route)
 
 const { isCollapsed, widthSidebarCollapsed, widthSidebarExpanded, toggleSidebar } = useSidebar()
@@ -201,14 +130,6 @@ tryOnMounted(() => {})
 const handleStartChat = () => {
   router.push({
     path: '/completions'
-  })
-}
-
-const handlePlatformChange = platform => {
-  currentPlatform.value = platform
-  router.push({
-    path: '/agents',
-    query: { platform }
   })
 }
 
@@ -303,23 +224,6 @@ const handleChatRoomItemOperation = async (command, room) => {
         font-weight: 400;
       }
     }
-  }
-}
-
-.platform-item {
-  display: flex;
-  justify-content: space-between;
-  min-width: 76px;
-
-  @include flex-gap(4px, row);
-
-  .icon-rightPlain {
-    margin-right: 0;
-    font-size: 12px;
-  }
-
-  &.active {
-    color: #007e54;
   }
 }
 
