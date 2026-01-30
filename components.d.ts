@@ -7,8 +7,10 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    ApiModelPanel: typeof import('./src/components/api-settings-dialog/components/api-model-panel/index.vue')['default']
     ApiSettingsDialog: typeof import('./src/components/api-settings-dialog/index.vue')['default']
     Assistant: typeof import('./src/components/completions-message/assistant.vue')['default']
+    BackupPanel: typeof import('./src/components/api-settings-dialog/components/backup-panel/index.vue')['default']
     ChatRoomItem: typeof import('./src/components/sidebar/chat-room-item/index.vue')['default']
     ClearButton: typeof import('./src/components/mention-sender/components/clear-button/index.vue')['default']
     CodeX: typeof import('./src/components/x-markdown/components/code-x/index.vue')['default']
@@ -31,6 +33,8 @@ declare module 'vue' {
     ElOption: typeof import('element-plus/es')['ElOption']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElStep: typeof import('element-plus/es')['ElStep']
+    ElSteps: typeof import('element-plus/es')['ElSteps']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     Empty: typeof import('./src/components/empty/index.vue')['default']
     FileItem: typeof import('./src/components/sender/components/file-item.vue')['default']
@@ -40,6 +44,7 @@ declare module 'vue' {
     ImageItem: typeof import('./src/components/completions-message/image-item.vue')['default']
     ImageUpload: typeof import('./src/components/sender/components/image-upload.vue')['default']
     IndexV2: typeof import('./src/components/header/index-v2.vue')['default']
+    KnowledgePanel: typeof import('./src/components/api-settings-dialog/components/knowledge-panel/index.vue')['default']
     Loading: typeof import('./src/components/completions-message/loading.vue')['default']
     LoadingButton: typeof import('./src/components/mention-sender/components/loading-button/index.vue')['default']
     MarkdownRenderer: typeof import('./src/components/x-markdown/markdown-renderer.vue')['default']
@@ -52,6 +57,9 @@ declare module 'vue' {
     SendButton: typeof import('./src/components/mention-sender/components/send-button/index.vue')['default']
     Sender: typeof import('./src/components/sender/index.vue')['default']
     Sidebar: typeof import('./src/components/sidebar/index.vue')['default']
+    StepApiConfig: typeof import('./src/components/api-settings-dialog/components/api-model-panel/step-api-config.vue')['default']
+    StepDefaultModels: typeof import('./src/components/api-settings-dialog/components/api-model-panel/step-default-models.vue')['default']
+    StepModelSelect: typeof import('./src/components/api-settings-dialog/components/api-model-panel/step-model-select.vue')['default']
     User: typeof import('./src/components/completions-message/user.vue')['default']
     XMarkdown: typeof import('./src/components/x-markdown/index.vue')['default']
     XsDropdown: typeof import('./src/components/xs-dropdown/xs-dropdown.vue')['default']
