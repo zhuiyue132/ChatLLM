@@ -36,7 +36,7 @@ import AgentSender from '@/components/sender/index.vue'
 import ApiSettingsDialog from '@/components/api-settings-dialog/index.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { useRouter } from 'vue-router'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
 import { useEventBus } from '@vueuse/core'
@@ -60,8 +60,19 @@ eventBus.on(() => {
 // 输入框内容
 const inputMessage = ref('')
 
-// 当前选中的模型（使用有效的默认模型，处理默认模型不存在的情况）
+// 当前选中的模型（支持用户手动切换）
 const currentModel = ref(apiSettingsStore.effectiveDefaultChatModel || '')
+
+// 监听默认模型变化，如果当前模型是默认值且用户没有手动修改过，则更新
+watch(
+  () => apiSettingsStore.effectiveDefaultChatModel,
+  newModel => {
+    if (newModel && newModel !== currentModel.value) {
+      currentModel.value = newModel
+    }
+  },
+  { immediate: false }
+)
 
 // 模型列表，转换为 ModelSelector 所需格式
 const modelList = computed(() => {
