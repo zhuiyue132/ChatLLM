@@ -26,21 +26,36 @@
         />
       </div>
     </div>
+
+    <!-- 设置对话框 -->
+    <ApiSettingsDialog v-model="showSettingsDialog" />
   </div>
 </template>
 <script setup>
 import AgentSender from '@/components/sender/index.vue'
+import ApiSettingsDialog from '@/components/api-settings-dialog/index.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { useRouter } from 'vue-router'
 import { ref, computed } from 'vue'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
+import { useEventBus } from '@vueuse/core'
+import { OPEN_SETTINGS_COMMAND } from '@/config/symbol'
 
 const router = useRouter()
 const apiSettingsStore = useApiSettingsStore()
 const chatRoomsStore = useChatRoomsStore()
 
 const senderRef = ref(null)
+
+// 设置对话框显示状态
+const showSettingsDialog = ref(false)
+
+// 监听打开设置事件
+const eventBus = useEventBus(OPEN_SETTINGS_COMMAND)
+eventBus.on(() => {
+  showSettingsDialog.value = true
+})
 
 // 输入框内容
 const inputMessage = ref('')
@@ -66,6 +81,12 @@ const handleMessageSubmit = (payload = {}) => {
   const model = currentModel.value || apiSettingsStore.effectiveDefaultChatModel
 
   if (!message || !message.trim()) {
+    return
+  }
+
+  // 检查是否有可用模型
+  if (!apiSettingsStore.hasModels) {
+    // 不显示错误提示，因为按钮已经不可用
     return
   }
 

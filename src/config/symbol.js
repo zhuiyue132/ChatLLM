@@ -25,3 +25,6 @@ export const FETCH_CHAR_HISTORY = Symbol('fetch-history')
 
 // x-markdown-core 的 provider 键
 export const MARKDOWN_PROVIDER_KEY = Symbol('vue-element-plus-x-markdown-provider')
+
+// 打开设置对话框事件
+export const OPEN_SETTINGS_COMMAND = Symbol('open-settings-command')

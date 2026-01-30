@@ -66,7 +66,16 @@
         <div class="action-list-self-wrap">
           <div class="action-list-self-wrap-left">
             <!-- 模型选择 -->
-            <ModelSelector v-if="showModelSelect" v-model="model" :model-list="modelList" />
+            <ModelSelector v-if="showModelSelect && modelList.length > 0" v-model="model" :model-list="modelList" />
+            <!-- 没有模型时显示配置按钮 -->
+            <el-button
+              v-else-if="showModelSelect && modelList.length === 0"
+              type="primary"
+              size="small"
+              @click="handleOpenSettings"
+            >
+              请先配置模型
+            </el-button>
           </div>
 
           <div class="action-list-self-wrap-right">
@@ -101,7 +110,8 @@ import FloatButton from '../float-button/index.vue'
 import ModelSelector from './components/model-select.vue'
 import ModelIcon from '@/components/model-icon/index.vue'
 import FileItem from './components/file-item.vue'
-import { useVModel } from '@vueuse/core'
+import { useVModel, useEventBus } from '@vueuse/core'
+import { OPEN_SETTINGS_COMMAND } from '@/config/symbol'
 import './common.scss'
 
 defineOptions({
@@ -434,6 +444,11 @@ const sendButtonProps = computed(() => {
     return { class: 'disabled', customTitle: '文件上传中，请稍候' }
   }
 
+  // 如果显示模型选择但没有模型
+  if (props.showModelSelect && props.modelList.length === 0) {
+    return { class: 'disabled', customTitle: '请先配置模型' }
+  }
+
   if (!isNotEmpty.value) {
     if (props.allowEmptyMessage) {
       return { class: 'disabled', customTitle: '请上传文件' }
@@ -500,6 +515,12 @@ const handleSendClick = (extraData = {}) => {
 
 const handleStopClick = () => {
   emits('stop')
+}
+
+// 打开设置对话框
+const eventBus = useEventBus(OPEN_SETTINGS_COMMAND)
+const handleOpenSettings = () => {
+  eventBus.emit()
 }
 
 // 定义要暴露的方法
