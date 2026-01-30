@@ -29,19 +29,21 @@
     </div>
     <template #dropdown>
       <xs-dropdown-menu>
-        <xs-dropdown-item v-for="model in modelList" :key="model?.code" :command="model?.code">
-          <div
-            class="model-item"
-            :class="{
-              active: currentModel === model.code
-            }"
-          >
-            <div class="model-name">
-              <ModelIcon :name="model.code" :size="18" />
-              <span>{{ model.name }} </span>
+        <el-scrollbar max-height="300px">
+          <xs-dropdown-item v-for="model in modelList" :key="model?.code" :command="model?.code">
+            <div
+              class="model-item"
+              :class="{
+                active: currentModel === model.code
+              }"
+            >
+              <div class="model-name">
+                <ModelIcon :name="model.code" :size="18" />
+                <span>{{ model.name }} </span>
+              </div>
             </div>
-          </div>
-        </xs-dropdown-item>
+          </xs-dropdown-item>
+        </el-scrollbar>
       </xs-dropdown-menu>
     </template>
   </xs-dropdown>
