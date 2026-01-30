@@ -2,17 +2,11 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-11-19
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-28
+ * @LastEditTime : 2026-01-30
  * @FilePath     : /ChatLLM/src/api/completions/index.js
  * @Description  :
  *
  */
-
-import { get } from '../request/http'
-
-export const getModelList = async () => {
-  return get('/v1/models')
-}
 
 /**
  * 使用自定义配置获取模型列表
@@ -20,10 +14,14 @@ export const getModelList = async () => {
  * @param {string} apiKey - API 密钥
  */
 export const getModelListWithConfig = async (baseURL, apiKey) => {
-  return get('/v1/models', null, {
-    customBaseUrl: baseURL,
+  const response = await fetch(`${baseURL}/v1/models`, {
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
     }
   })
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  return await response.json()
 }
