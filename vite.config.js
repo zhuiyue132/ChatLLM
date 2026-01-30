@@ -141,7 +141,7 @@ export default defineConfig(({ mode }) => {
               }
               // 工具库
               if (
-                ["lodash-es", "dayjs", "axios"].some(pkg =>
+                ["lodash-es", "dayjs"].some(pkg =>
                   id.includes(`/node_modules/${pkg}/`)
                 )
               ) {

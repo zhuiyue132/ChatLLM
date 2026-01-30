@@ -63,7 +63,6 @@
 - **[Mermaid](https://mermaid-js.github.io/)** - 图表和流程图
 
 ### 工具库
-- **[axios](https://axios-http.com/)** - HTTP 请求库
 - **[localforage](https://localforage.github.io/localForage/)** - 离线存储
 - **[dayjs](https://day.js.org/)** - 轻量级日期处理
 - **[@vueuse/core](https://vueuse.org/)** - Vue 组合式工具集
