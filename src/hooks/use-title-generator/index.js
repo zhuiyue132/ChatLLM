@@ -10,6 +10,7 @@
 import { ref } from 'vue'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useOpenAISSESingle } from '@/hooks/use-sse/use-openai-sse'
+import { storeToRefs } from 'pinia'
 
 /**
  * 对话标题生成 hook
@@ -18,6 +19,8 @@ import { useOpenAISSESingle } from '@/hooks/use-sse/use-openai-sse'
 export const useTitleGenerator = () => {
   const apiSettings = useApiSettingsStore()
 
+  const { baseURL, apiKey } = storeToRefs(apiSettings)
+
   // 状态
   const isGenerating = ref(false)
   const error = ref(null)
@@ -25,8 +28,8 @@ export const useTitleGenerator = () => {
 
   // 使用 SSE hook 的单请求模式
   const sse = useOpenAISSESingle({
-    baseURL: apiSettings.baseURL,
-    apiKey: apiSettings.apiKey,
+    baseURL: baseURL.value,
+    apiKey: apiKey.value,
     onDone: ({ content }) => {
       // 处理生成的标题
       const title = content.trim()
@@ -92,7 +95,10 @@ export const useTitleGenerator = () => {
 
     const requestMessages = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: JSON.stringify(filteredMessages) }
+      {
+        role: 'user',
+        content: filteredMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n')
+      }
     ]
 
     // 发送请求
@@ -143,6 +149,7 @@ export const useTitleGenerator = () => {
    */
   const generateTitleSync = async (messages, model = null) => {
     try {
+      console.log('generateTitleSync', messages, model)
       const title = await generateTitle(messages, model)
       return title
     } catch (err) {

@@ -32,10 +32,22 @@
 
         <template #dropdown>
           <xs-dropdown-menu :custom-style="{ width: '120px' }">
-            <xs-dropdown-item v-if="!chatRoomInfo.topFlag" command="pin">置顶</xs-dropdown-item>
-            <xs-dropdown-item v-else command="unpin">取消置顶</xs-dropdown-item>
-            <xs-dropdown-item command="rename">重命名</xs-dropdown-item>
-            <xs-dropdown-item command="delete">删除</xs-dropdown-item>
+            <xs-dropdown-item v-if="!chatRoomInfo.topFlag" command="pin">
+              <i class="iconfont icon-dianshu"></i>
+              置顶
+            </xs-dropdown-item>
+            <xs-dropdown-item v-else command="unpin">
+              <i class="iconfont icon-dianshu"></i>
+              取消置顶
+            </xs-dropdown-item>
+            <xs-dropdown-item command="rename">
+              <i class="iconfont icon-moxing-lora"></i>
+              重命名
+            </xs-dropdown-item>
+            <xs-dropdown-item command="delete">
+              <i class="iconfont icon-shanchu1"></i>
+              删除
+            </xs-dropdown-item>
           </xs-dropdown-menu>
         </template>
       </xs-dropdown>
@@ -44,10 +56,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { setPopperPosition } from '@/utils'
 import { XsDropdown, XsDropdownMenu, XsDropdownItem } from '@/components/xs-dropdown'
-import IconLoading from '@/assets/images/sidebar/loading.svg'
 
 const emit = defineEmits(['chat-room-item-click', 'chat-room-item-operation'])
 
@@ -55,7 +65,7 @@ defineOptions({
   name: 'ChatRoomItem'
 })
 
-const props = defineProps({
+defineProps({
   chatRoomInfo: {
     type: Object,
     default: () => ({})
@@ -158,11 +168,6 @@ const handleChatRoomItemOperation = command => {
     justify-content: center;
     width: 20px;
     height: 20px;
-
-    img {
-      width: 20px;
-      height: 20px;
-    }
 
     i {
       outline: none;

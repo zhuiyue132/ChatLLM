@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2026-01-28
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-28
+ * @LastEditTime : 2026-01-30
  * @FilePath     : /ChatLLM/src/hooks/use-sse/use-openai-sse.js
  * @Description  : OpenAI API SSE 请求钩子，支持标准 v1/chat/completions 接口
  */

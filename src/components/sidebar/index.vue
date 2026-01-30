@@ -93,6 +93,9 @@ import { useSidebar } from '@/hooks/use-sidebar'
 import ChatRoomItem from './chat-room-item/index.vue'
 import { useChatRoom } from './hooks/use-chat-room'
 
+import { useTitleGenerator } from '@/hooks'
+import { useChatRoomsStore } from '@/stores/chat-rooms'
+
 defineOptions({
   name: 'CommonSidebar'
 })
@@ -111,9 +114,10 @@ const {
 
   pinChatRoom,
   unpinChatRoom,
-  renameChatRoom,
   deleteChatRoom
 } = useChatRoom()
+
+const chatRoomsStore = useChatRoomsStore()
 
 const { isCollapsed, widthSidebarCollapsed, widthSidebarExpanded, toggleSidebar } = useSidebar()
 
@@ -182,7 +186,22 @@ const handleChatRoomItemOperation = async (command, room) => {
       break
     }
     case 'rename': {
-      await renameChatRoom(room)
+      const { generateTitleSync } = useTitleGenerator()
+      const _room = chatRoomsStore.rooms.find(r => r.id === room.taskId)
+      if (_room) {
+        try {
+          const messages = chatRoomsStore.getMessages(_room.id)
+          chatRoomsStore.updateRoomIsTitleLoading(_room.id, true)
+          const title = await generateTitleSync(messages)
+          if (title) {
+            chatRoomsStore.updateRoomTitle(_room.id, title)
+          }
+        } catch (error) {
+          console.error('rename chat room title error', error)
+        } finally {
+          chatRoomsStore.updateRoomIsTitleLoading(_room.id, false)
+        }
+      }
       break
     }
     case 'delete': {
