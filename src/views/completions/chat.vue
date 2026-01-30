@@ -96,7 +96,13 @@ import CompletionsAssistantMessage from '@/components/completions-message/assist
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { FETCH_CHAR_HISTORY } from '@/config/symbol'
 import { useRoute, onBeforeRouteLeave, useRouter } from 'vue-router'
-import { tryOnMounted, useElementSize, useWindowScroll, useEventListener, useEventBus } from '@vueuse/core'
+import {
+  tryOnMounted,
+  useElementSize,
+  useWindowScroll,
+  useEventListener,
+  useEventBus
+} from '@vueuse/core'
 import { useCompletions } from './hooks/use-completions'
 
 defineOptions({

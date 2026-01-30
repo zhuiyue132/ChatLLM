@@ -10,12 +10,21 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+// 从环境变量获取默认值
+const getDefaultApiConfig = () => ({
+  baseURL: import.meta.env.VITE_APP_API_BASE_URL || '',
+  apiKey: import.meta.env.VITE_APP_API_KEY || ''
+})
+
 export const useApiSettingsStore = defineStore(
   'api-settings',
   () => {
-    // API 配置
-    const baseURL = ref('')
-    const apiKey = ref('')
+    // 获取默认配置
+    const defaultConfig = getDefaultApiConfig()
+
+    // API 配置（使用环境变量作为默认值）
+    const baseURL = ref(defaultConfig.baseURL)
+    const apiKey = ref(defaultConfig.apiKey)
 
     // 用户选择的模型列表（可用模型）
     const selectedModels = ref([])
@@ -99,10 +108,11 @@ export const useApiSettingsStore = defineStore(
       }
     }
 
-    // 重置配置
+    // 重置配置（恢复到环境变量默认值）
     const resetSettings = () => {
-      baseURL.value = ''
-      apiKey.value = ''
+      const defaultConfig = getDefaultApiConfig()
+      baseURL.value = defaultConfig.baseURL
+      apiKey.value = defaultConfig.apiKey
       defaultChatModel.value = ''
       defaultSummaryModel.value = ''
       defaultTranslateModel.value = ''
