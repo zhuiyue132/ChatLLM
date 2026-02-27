@@ -4,6 +4,7 @@
 -->
 <script>
 import { defineComponent, h, toValue } from 'vue'
+import hljs from 'highlight.js'
 import { useMarkdownContext } from '../markdown-provider'
 import Mermaid from '../mermaid/index.vue'
 
@@ -17,6 +18,20 @@ export default defineComponent({
   setup(props) {
     const context = useMarkdownContext()
     const { codeXRender } = toValue(context)
+    const getHighlightHtml = (content, language) => {
+      if (!content) {
+        return null
+      }
+      try {
+        if (language && hljs.getLanguage(language)) {
+          return hljs.highlight(content, { language, ignoreIllegals: true }).value
+        }
+        return hljs.highlightAuto(content).value
+      } catch {
+        return null
+      }
+    }
+
     return () => {
       if (props.raw.inline) {
         if (codeXRender && codeXRender.inline) {
@@ -42,8 +57,16 @@ export default defineComponent({
       }
 
       // 默认渲染代码块
+      const highlighted = getHighlightHtml(props.raw.content, language)
       return h('pre', { class: 'elx-code-block' }, [
-        h('code', { class: language ? `language-${language}` : '' }, props.raw.content)
+        h(
+          'code',
+          {
+            class: ['hljs', language ? `language-${language}` : ''],
+            ...(highlighted ? { innerHTML: highlighted } : {})
+          },
+          highlighted ? null : props.raw.content
+        )
       ])
     }
   }

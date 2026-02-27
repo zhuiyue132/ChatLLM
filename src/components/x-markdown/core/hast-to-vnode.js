@@ -27,6 +27,14 @@ export function renderChildren(nodeList, ctx, parent, slots, customAttrs) {
       case 'root':
         return renderChildren(node.children, ctx, parent, slots, customAttrs)
       case 'element': {
+        if (
+          node.tagName === 'pre' &&
+          node.children?.length === 1 &&
+          node.children[0]?.type === 'element' &&
+          node.children[0]?.tagName === 'code'
+        ) {
+          return renderChildren(node.children, ctx, node, slots, customAttrs)
+        }
         const { attrs, context, aliasList, vnodeProps } = getVNodeInfos(
           node,
           parent,
