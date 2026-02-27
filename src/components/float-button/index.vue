@@ -116,16 +116,16 @@ const scrollToBottom = () => {
 }
 
 // 移动端适配
-@media (width <= 768px) {
+@include mobile {
   .float-button-container {
     right: 16px;
     bottom: 16px;
   }
 
   .float-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
   }
 
   .arrow-icon {

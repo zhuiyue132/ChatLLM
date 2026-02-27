@@ -10,8 +10,12 @@
 <template>
   <div class="header-v2-wrapper">
     <div class="header-v2-left">
-      <!-- 返回按钮 -->
-      <div v-if="showBackBtn && !isCollapsed">
+      <!-- 移动端汉堡菜单按钮 -->
+      <div v-if="isMobile" class="hamburger-btn" @click="toggleSidebar">
+        <i class="iconfont icon-fenlan"></i>
+      </div>
+      <!-- 返回按钮（桌面端） -->
+      <div v-else-if="showBackBtn && !isCollapsed">
         <div class="back-btn__wrapper" @click="handleBackClick">
           <i class="icon-arrowRight icon-back"></i>
           <span>返回</span>
@@ -97,7 +101,7 @@ defineProps({
   }
 })
 
-const { isCollapsed } = useSidebar()
+const { isCollapsed, isMobile, toggleSidebar } = useSidebar()
 
 // API 配置弹窗显示状态
 const apiSettingsVisible = ref(false)
@@ -328,6 +332,31 @@ const handleBackClick = () => {
         padding: 0;
       }
     }
+  }
+
+  .hamburger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+
+    .iconfont {
+      font-size: 24px;
+      color: #333;
+    }
+
+    &:active {
+      background-color: #f0f0f0;
+    }
+  }
+
+  @include mobile {
+    height: 56px;
+    padding: 8px 12px;
   }
 }
 </style>

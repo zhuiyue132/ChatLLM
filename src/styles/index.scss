@@ -36,8 +36,13 @@ body,
   html,
   body,
   #app {
-    width: 100%;
-    min-width: auto;
+    width: 100% !important;
+    min-width: auto !important;
+    overflow-x: hidden;
+  }
+
+  body {
+    @include safe-area-padding(both);
   }
 }
 

@@ -1,11 +1,13 @@
 <template>
   <div
     class="sidebar-wrapper"
+    :class="{ 'is-mobile': isMobile }"
     :style="{
-      '--width-sidebar-block': isCollapsed ? `0` : `${widthSidebarExpanded}px`,
+      '--width-sidebar-block': isMobile ? '0px' : isCollapsed ? `0` : `${widthSidebarExpanded}px`,
       '--width-sidebar-header': isCollapsed
         ? `${widthSidebarCollapsed}px`
-        : `${widthSidebarExpanded}px`
+        : `${widthSidebarExpanded}px`,
+      '--sidebar-translate': isMobile ? (isCollapsed ? '-100%' : '0') : '0'
     }"
   >
     <div class="sidebar-block" />
@@ -119,7 +121,7 @@ const {
 
 const chatRoomsStore = useChatRoomsStore()
 
-const { isCollapsed, widthSidebarCollapsed, widthSidebarExpanded, toggleSidebar } = useSidebar()
+const { isCollapsed, widthSidebarCollapsed, widthSidebarExpanded, toggleSidebar, isMobile, closeSidebar } = useSidebar()
 
 const activeRoomId = computed(() => {
   return route.query.roomId || null
@@ -135,6 +137,8 @@ const handleStartChat = () => {
   router.push({
     path: '/completions'
   })
+  // 移动端导航后自动关闭侧边栏
+  if (isMobile.value) closeSidebar()
 }
 
 const handleChatRoomItemClick = (_event, room) => {
@@ -154,6 +158,9 @@ const handleChatRoomItemClick = (_event, room) => {
     path: '/completions/chat',
     query
   })
+
+  // 移动端导航后自动关闭侧边栏
+  if (isMobile.value) closeSidebar()
 
   setTimeout(() => {
     eventBusOfHistory.emit({
@@ -442,6 +449,33 @@ const handleChatRoomItemOperation = async (command, room) => {
         line-height: normal;
       }
     }
+  }
+}
+
+// 移动端侧边栏：抽屉模式
+.is-mobile {
+  .sidebar-block:not(.sidebar) {
+    display: none;
+  }
+
+  .sidebar {
+    width: #{280px};
+    transform: translateX(var(--sidebar-translate, 0));
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+
+  .sidebar-header-block:not(.sidebar-header) {
+    display: none;
+  }
+
+  .sidebar-header {
+    position: relative;
+    width: 100% !important;
+  }
+
+  .sidebar-header-collapsed {
+    display: none !important;
   }
 }
 </style>

@@ -12,7 +12,8 @@
   <bi-dialog
     v-model="dialogVisible"
     title="设置"
-    width="1100px"
+    :width="isMobile ? '100%' : '1100px'"
+    :fullscreen="isMobile"
     :show-footer="false"
     :close-on-click-modal="false"
     append-to-body
@@ -52,10 +53,13 @@ import { MENU_LIST } from './config'
 import ApiModelPanel from './components/api-model-panel/index.vue'
 import KnowledgePanel from './components/knowledge-panel/index.vue'
 import BackupPanel from './components/backup-panel/index.vue'
+import { useSidebar } from '@/hooks/use-sidebar'
 
 defineOptions({
   name: 'ApiSettingsDialog'
 })
+
+const { isMobile } = useSidebar()
 
 const props = defineProps({
   modelValue: {
@@ -155,6 +159,38 @@ const handlePanelSaved = () => {
   flex-direction: column;
   overflow: hidden;
   max-height: 720px;
+}
+
+@include mobile {
+  .settings-container {
+    flex-direction: column;
+    min-height: auto;
+    height: 100%;
+  }
+
+  .settings-sidebar {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px 0;
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
+
+    .sidebar-item {
+      flex: 0 0 auto;
+      margin: 0 4px;
+      white-space: nowrap;
+      padding: 0 16px;
+      height: 36px;
+    }
+  }
+
+  .settings-content {
+    flex: 1;
+    max-height: none;
+    overflow-y: auto;
+  }
 }
 </style>
 

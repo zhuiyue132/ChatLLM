@@ -492,4 +492,22 @@ const handleNextPage = () => {
     }
   }
 }
+
+@include mobile {
+  .edit-mode-container {
+    width: 100%;
+  }
+
+  .message-actions {
+    .action-icon {
+      @include touch-target;
+    }
+
+    .pagination-controls {
+      .pagination-arrow {
+        @include touch-target;
+      }
+    }
+  }
+}
 </style>

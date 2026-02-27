@@ -12,6 +12,15 @@
     <!-- 侧边栏 -->
     <CommonSidebar />
 
+    <!-- 移动端遮罩层 -->
+    <transition name="overlay-fade">
+      <div
+        v-if="isMobile && !isCollapsed"
+        class="sidebar-overlay"
+        @click="closeSidebar"
+      />
+    </transition>
+
     <!-- 右侧内容区域 -->
     <div class="main-content">
       <!-- 顶部导航栏 -->
@@ -30,8 +39,10 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import PageHeader from '@/components/header/index-v2.vue'
 import CommonSidebar from '@/components/sidebar/index.vue'
+import { useSidebar } from '@/hooks/use-sidebar'
 
 const route = useRoute()
+const { isMobile, isCollapsed, closeSidebar } = useSidebar()
 
 // 方便在路由中配置classNames
 const classNames = computed(() => {
@@ -63,8 +74,35 @@ const showBackBtn = computed(() => {
 .main-content {
   overflow: visible;
   flex: 1;
+  min-width: 0;
   min-height: 100vh;
   background-color: #fff;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1998;
+  width: 100%;
+  height: 100%;
+  background: rgb(0 0 0 / 40%);
+}
+
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+  opacity: 0;
+}
+
+@include mobile {
+  .main-content {
+    width: 100%;
+  }
 }
 
 .fade-enter-active,

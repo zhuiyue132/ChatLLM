@@ -33,6 +33,52 @@
   }
 }
 
+/**
+ * 响应式断点 mixin
+ */
+@mixin mobile {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: 769px) {
+    @content;
+  }
+}
+
+/**
+ * 触控目标：确保可点击元素至少 44x44px
+ */
+@mixin touch-target($size: 44px) {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: $size;
+    min-height: $size;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/**
+ * 安全区域 padding（刘海屏/底部横条）
+ */
+@mixin safe-area-padding($position: bottom) {
+  @if $position == bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  } @else if $position == top {
+    padding-top: env(safe-area-inset-top);
+  } @else if $position == both {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 .xs-custom-title,
 .xs-custom-overflow-title {
   position: fixed;

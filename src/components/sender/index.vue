@@ -756,5 +756,29 @@ defineExpose({
       display: none;
     }
   }
+
+  @include mobile {
+    max-width: 100%;
+
+    .action-list-self-wrap {
+      height: 48px;
+      padding: 0 8px 0 12px;
+    }
+
+    :deep(.el-sender-wrap) {
+      .el-sender-content {
+        padding-top: 12px;
+        padding-bottom: 4px;
+      }
+
+      .el-sender-header {
+        padding: 12px 16px 0;
+      }
+    }
+
+    :deep(.el-textarea .el-textarea__inner) {
+      font-size: 16px !important; // 防止 iOS 自动缩放
+    }
+  }
 }
 </style>

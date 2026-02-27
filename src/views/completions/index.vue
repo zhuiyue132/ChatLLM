@@ -172,4 +172,23 @@ const handleMessageSubmit = (payload = {}) => {
   border-radius: 28px;
   background: #f5f5f5;
 }
+
+@include mobile {
+  .chat-container {
+    padding: 0 16px 24px;
+    height: calc(100vh - 56px);
+  }
+
+  .chat-content {
+    width: 100%;
+  }
+
+  .welcome-title {
+    font-size: 24px;
+  }
+
+  .input-section {
+    max-width: 100%;
+  }
+}
 </style>

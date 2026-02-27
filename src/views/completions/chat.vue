@@ -331,4 +331,32 @@ onBeforeRouteLeave(async (to, from, next) => {
     }
   }
 }
+
+@include mobile {
+  .chat-page {
+    padding-top: 16px;
+    min-height: calc(100vh - 56px);
+  }
+
+  .chat-history-container {
+    width: 100% !important;
+    padding: 0 12px;
+    box-sizing: border-box;
+  }
+
+  .input-container {
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 12px 0 0;
+
+    @include safe-area-padding(bottom);
+
+    &-content {
+      width: 100% !important;
+      padding: 0 12px;
+      box-sizing: border-box;
+    }
+  }
+}
 </style>

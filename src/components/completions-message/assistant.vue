@@ -555,4 +555,26 @@ const regenerateMessage = () => {
     }
   }
 }
+
+@include mobile {
+  .assistant-message {
+    .thinking-section .thinking-content {
+      padding-left: 8px;
+
+      .thinking-text-content {
+        padding-left: 8px;
+      }
+    }
+
+    .message-actions {
+      .action-button {
+        @include touch-target;
+      }
+
+      .pagination-controls .pagination-arrow {
+        @include touch-target;
+      }
+    }
+  }
+}
 </style>
