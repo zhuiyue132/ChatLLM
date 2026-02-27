@@ -14,6 +14,7 @@ import MainLayout from './layouts/main.vue'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { useEventListener } from '@vueuse/core'
+import { useWebdavBackup } from '@/hooks/use-webdav-backup'
 
 const currentLayout = computed(() => {
   return MainLayout
@@ -24,6 +25,8 @@ const visibilityChangeHandler = async () => {
 }
 
 useEventListener(window, 'visibilitychange', visibilityChangeHandler)
+
+useWebdavBackup({ autoStart: true })
 </script>
 
 <template>

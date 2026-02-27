@@ -244,3 +244,57 @@ export const convertCherryStudioData = cherryData => {
 
   return { rooms, messages }
 }
+
+/**
+ * 导出应用备份数据（包含应用设置与对话数据）
+ * @param {Object} options - 备份选项
+ * @param {Object} options.apiSettings - API 设置快照
+ * @param {Object} options.backupSettings - 备份设置快照
+ * @param {Array} options.rooms - 房间列表
+ * @param {Object} options.messages - 消息数据
+ * @returns {Object}
+ */
+export const exportAppBackup = ({ apiSettings, backupSettings, rooms, messages }) => {
+  const chatData = exportChatData(rooms, messages)
+  return {
+    version: '2.0',
+    exportedAt: new Date().toISOString(),
+    appSettings: {
+      apiSettings: apiSettings || {},
+      backupSettings: backupSettings || {}
+    },
+    chatData
+  }
+}
+
+/**
+ * 导入应用备份数据（兼容仅对话数据格式）
+ * @param {Object} jsonData - 备份 JSON
+ * @returns {Object} { appSettings, rooms, messages }
+ */
+export const importAppBackup = jsonData => {
+  if (!jsonData) {
+    throw new Error('无效的备份数据')
+  }
+
+  const hasAppSettings = !!jsonData.appSettings
+  let chatPayload = null
+
+  if (jsonData.chatData?.data?.rooms && jsonData.chatData?.data?.messages) {
+    chatPayload = jsonData.chatData
+  } else if (jsonData.data?.rooms && jsonData.data?.messages) {
+    chatPayload = jsonData
+  }
+
+  if (!chatPayload) {
+    throw new Error('备份数据缺少对话信息')
+  }
+
+  const { rooms, messages } = importNativeData(chatPayload)
+
+  return {
+    appSettings: hasAppSettings ? jsonData.appSettings : null,
+    rooms,
+    messages
+  }
+}

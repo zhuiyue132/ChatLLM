@@ -7,7 +7,7 @@
  * @Description  : vite配置
  *
  */
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { fileURLToPath, URL } from "node:url";
 import AutoImport from "unplugin-auto-import/vite";
@@ -22,6 +22,9 @@ import ElementPlus from "unplugin-element-plus/vite";
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const isProd = mode === "production";
+  const env = loadEnv(mode, process.cwd(), "");
+  const webdavProxyTarget =
+    env.VITE_WEBDAV_PROXY_TARGET || "https://webdav.123pan.cn/webdav";
   return {
     base: BASE_URL,
     envDir: "./env",
@@ -86,6 +89,14 @@ export default defineConfig(({ mode }) => {
       open: false,
       cors: true,
       allowedHosts: [".ecbis.com"],
+      proxy: {
+        "/webdav": {
+          target: webdavProxyTarget,
+          changeOrigin: true,
+          secure: false,
+          rewrite: path => path.replace(/^\/webdav/, ""),
+        },
+      },
     },
     build: {
       // 直接关闭，需要的自行打开
