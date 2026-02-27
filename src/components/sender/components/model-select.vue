@@ -128,9 +128,9 @@ const onCommand = model => {
 
   &:focus-visible {
     .sender-button {
-      color: #000;
-      border-color: rgb(179, 217, 200);
-      background-color: rgb(230, 242, 237);
+      color: var(--text-normal-color);
+      border-color: var(--main-color);
+      background-color: var(--bg-highlight);
       /* background-color: #e0f2e7; */
     }
   }
@@ -156,13 +156,13 @@ const onCommand = model => {
 
     .iconfont {
       transform: translateY(1px);
-      color: #595959;
+      color: var(--text-light-color);
       font-size: 14px;
     }
   }
 }
 
 .model-item.active {
-  color: #007e54;
+  color: var(--main-color);
 }
 </style>

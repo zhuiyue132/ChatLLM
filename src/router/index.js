@@ -71,7 +71,12 @@ router.beforeEach(async (to, from, next) => {
   // If the persistent storage is localstorage or sessionStorage, this is not necessary, because the APIs of these two are synchronous;
   // The localforage API is asynchronous because of the nature of indexDB, as indexDB's API is inherently asynchronous, so it cannot be changed to a synchronous API;
   if (!from.name) {
-    Object.keys(stores).forEach(storeName => stores[storeName]())
+    Object.keys(stores).forEach(storeName => {
+      const store = stores[storeName]
+      if (typeof store === 'function') {
+        store()
+      }
+    })
   }
 
   next()

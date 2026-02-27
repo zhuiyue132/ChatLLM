@@ -280,11 +280,11 @@ const handleConfirm = () => {
   justify-content: space-between;
   height: 56px;
   padding: 0 24px;
-  border-bottom: 1px solid #d4dbe9;
-  background: #fff;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-app);
 
   .bi-dialog__title {
-    color: #000;
+    color: var(--text-normal-color);
     font-family: 'Microsoft YaHei', sans-serif;
     font-size: 16px;
     font-weight: 400;
@@ -316,7 +316,7 @@ const handleConfirm = () => {
   // min-height: 200px;
   padding: 0;
   padding-bottom: 12px;
-  background: #fff;
+  background: var(--bg-app);
 }
 
 .bi-dialog__footer {
@@ -325,8 +325,8 @@ const handleConfirm = () => {
   justify-content: flex-end;
   height: 56px;
   padding: 16px 24px;
-  border-top: 1px solid #d4dbe9;
-  background: #fff;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-app);
 
   .bi-dialog__actions {
     display: flex;
@@ -335,23 +335,23 @@ const handleConfirm = () => {
     .bi-dialog__cancel-btn {
       height: 32px;
       padding: 8px 16px;
-      color: #8c8c8c;
-      border: 1px solid #d4dbe9;
+      color: var(--text-dblight-color);
+      border: 1px solid var(--border-color);
       border-radius: 2px;
-      background: #fff;
+      background: var(--bg-app);
       font-size: 12px;
       font-weight: 400;
 
       &:hover {
-        color: #595959;
-        border-color: #bfbfbf;
+        color: var(--text-light-color);
+        border-color: var(--text-tblight-color);
       }
     }
 
     .bi-dialog__confirm-btn {
       height: 32px;
       padding: 8px 16px;
-      color: #fff;
+      color: var(--text-white-color);
       border: none;
       border-radius: 2px;
       background: var(--main-color);

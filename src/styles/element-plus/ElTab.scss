@@ -1,5 +1,5 @@
 .el-tabs.el-tabs--card {
-  --el-border-color-light: #d4dbe9;
+  --el-border-color-light: var(--border-color);
   --el-tabs-header-height: auto;
 
   .el-tabs__header {

@@ -290,7 +290,7 @@ const handleNextPage = () => {
   padding-bottom: 12px;
   border: 1px solid var(--main-color, #007e54);
   border-radius: 16px;
-  background: #f6f6f6;
+  background: var(--bg-muted);
 
   @include flex-gap(8px, column);
 
@@ -302,7 +302,7 @@ const handleNextPage = () => {
       .el-textarea__inner {
         padding: 0;
         resize: none !important;
-        color: #000;
+        color: var(--text-normal-color);
         border: none;
         background: transparent;
         box-shadow: none;
@@ -312,7 +312,7 @@ const handleNextPage = () => {
         line-height: 1.6em;
 
         &::placeholder {
-          color: #999;
+          color: var(--text-dblight-color);
         }
 
         &:focus {
@@ -339,26 +339,26 @@ const handleNextPage = () => {
       line-height: normal;
 
       &.cancel-button {
-        color: #000;
-        border-color: #d4dbe9;
-        background: #fff;
+        color: var(--text-normal-color);
+        border-color: var(--border-color);
+        background: var(--bg-app);
 
         &:hover,
         &:focus {
           color: var(--main-color, #007e54);
           border-color: var(--main-color, #007e54);
-          background: #fff;
+          background: var(--bg-app);
         }
 
         &:active {
           color: var(--main-color, #007e54);
           border-color: var(--main-color, #007e54);
-          background: #fff;
+          background: var(--bg-app);
         }
       }
 
       &.send-button {
-        color: #fff;
+        color: var(--text-white-color);
         border-color: var(--main-color, #007e54);
         background: var(--main-color, #007e54);
 
@@ -379,7 +379,7 @@ const handleNextPage = () => {
         &:disabled {
           cursor: not-allowed;
           opacity: 0.5;
-          color: #fff;
+          color: var(--text-white-color);
           border-color: var(--main-color, #007e54);
           background: var(--main-color, #007e54);
 
@@ -401,19 +401,19 @@ const handleNextPage = () => {
   justify-content: flex-end;
   width: 100%;
 
-  .message-content {
+    .message-content {
     display: flex;
     align-items: center;
     padding: 8px 12px;
     border-radius: 4px;
-    background: #f6f6f6;
+    background: var(--bg-muted);
 
     @include flex-gap(12px, row);
 
     .message-text {
       width: 100%;
       word-break: break-all;
-      color: #000;
+      color: var(--text-normal-color);
       font-family: 'Source Han Sans CN', sans-serif;
       font-size: 16px;
       font-weight: 400;
@@ -442,7 +442,7 @@ const handleNextPage = () => {
     line-height: 16px;
 
     i {
-      color: #8c8c8c;
+      color: var(--text-dblight-color);
       font-size: 16px;
     }
 
@@ -468,7 +468,7 @@ const handleNextPage = () => {
   .pagination-controls {
     display: flex;
     align-items: center;
-    color: #595959;
+    color: var(--text-light-color);
 
     .pagination-arrow {
       cursor: pointer;
@@ -487,7 +487,7 @@ const handleNextPage = () => {
     .pagination-text {
       white-space: nowrap;
       letter-spacing: 0.96px;
-      color: #8c8c8c;
+      color: var(--text-dblight-color);
       font-size: 15px;
     }
   }

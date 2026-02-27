@@ -51,6 +51,7 @@ import { ref, computed, watch, markRaw } from 'vue'
 import BiDialog from '@/components/dialog/index.vue'
 import { MENU_LIST } from './config'
 import ApiModelPanel from './components/api-model-panel/index.vue'
+import AppearancePanel from './components/appearance-panel/index.vue'
 import KnowledgePanel from './components/knowledge-panel/index.vue'
 import BackupPanel from './components/backup-panel/index.vue'
 import { useSidebar } from '@/hooks/use-sidebar'
@@ -80,6 +81,7 @@ const dialogVisible = computed({
 // 面板组件映射（使用 markRaw 避免响应式开销）
 const panelComponents = {
   'api-model': markRaw(ApiModelPanel),
+  appearance: markRaw(AppearancePanel),
   knowledge: markRaw(KnowledgePanel),
   backup: markRaw(BackupPanel)
 }
@@ -116,8 +118,8 @@ const handlePanelSaved = () => {
 .settings-sidebar {
   flex: 0 0 180px;
   padding: 16px 0;
-  border-right: 1px solid #f0f0f0;
-  background-color: #fafafa;
+  border-right: 1px solid var(--border-color-light);
+  background-color: var(--bg-panel);
 
   .sidebar-item {
     display: flex;
@@ -126,7 +128,7 @@ const handlePanelSaved = () => {
     height: 44px;
     padding: 0 20px;
     margin: 4px 8px;
-    color: #595959;
+    color: var(--text-light-color);
     font-size: 14px;
     border-radius: 6px;
     cursor: pointer;
@@ -137,14 +139,14 @@ const handlePanelSaved = () => {
     }
 
     &:hover {
-      color: #262626;
-      background-color: #f0f0f0;
+      color: var(--text-normal-color);
+      background-color: var(--bg-hover);
     }
 
     &.active {
       color: var(--main-color, #007e54);
       font-weight: 500;
-      background-color: rgb(0 126 84 / 8%);
+      background-color: rgb(0 126 84 / 12%);
 
       .iconfont {
         color: var(--main-color, #007e54);
@@ -175,7 +177,7 @@ const handlePanelSaved = () => {
     overflow-x: auto;
     padding: 8px 0;
     border-right: none;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-color-light);
 
     .sidebar-item {
       flex: 0 0 auto;

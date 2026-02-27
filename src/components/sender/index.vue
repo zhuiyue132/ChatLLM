@@ -631,7 +631,7 @@ defineExpose({
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #c7cdc6;
+          color: var(--text-faint-color);
 
           i {
             font-size: 14px;
@@ -657,19 +657,19 @@ defineExpose({
         height: 40px;
         cursor: pointer;
         border-radius: 100%;
-        background: #e0f2e7;
+        background: var(--bg-highlight);
 
         &.disabled {
           cursor: not-allowed;
-          background: #e0f2e7;
+          background: var(--bg-highlight);
         }
 
         &:not(.disabled):active {
-          background: #00a377 !important;
+          background: var(--main-color) !important;
         }
 
         i {
-          color: #fff;
+          color: var(--text-white-color);
           font-size: 20px;
         }
 
@@ -702,8 +702,8 @@ defineExpose({
       --el-border-radius-base: 12px;
 
       overflow: hidden;
-      border-color: rgb(212 219 233 / 100%);
-      box-shadow: 0 5px 12px 0 rgb(0 163 119 / 7%) !important;
+      border-color: var(--border-color);
+      box-shadow: var(--shadow-soft) !important;
     }
 
     .el-sender-header {
@@ -741,7 +741,7 @@ defineExpose({
         position: absolute;
         top: 6px;
         left: 6px;
-        color: #9898a9;
+        color: var(--text-placeholder-color);
         font-family: 'Source Han Sans CN', sans-serif;
         font-size: 16px;
         font-weight: 400;

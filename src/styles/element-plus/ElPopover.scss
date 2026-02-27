@@ -26,10 +26,10 @@
 
 .xs-popover {
   padding: 16px !important;
-  background-color: #fff !important;
-  border: 1px solid #e2e6ef !important;
+  background-color: var(--bg-app) !important;
+  border: 1px solid var(--border-color-light) !important;
   border-radius: 1px !important;
-  box-shadow: 0 2px 4px rgb(60 99 235 / 15%) !important;
+  box-shadow: var(--shadow-dropdown) !important;
   box-sizing: border-box !important;
   width: 222px !important;
   z-index: 5001 !important;
@@ -37,10 +37,10 @@
 
 .user-popover {
   padding: 0 !important;
-  background-color: #fff !important;
-  border: 1px solid #e2e6ef !important;
+  background-color: var(--bg-app) !important;
+  border: 1px solid var(--border-color-light) !important;
   border-radius: 1px !important;
-  box-shadow: 0 2px 4px rgb(60 99 235 / 15%) !important;
+  box-shadow: var(--shadow-dropdown) !important;
   box-sizing: border-box !important;
   min-width: 322px !important;
   z-index: 5001 !important;

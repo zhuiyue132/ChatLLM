@@ -23,6 +23,8 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn' // 导入dayjs中文语言包
 import './styles/index.scss'
 import 'element-plus/theme-chalk/src/index.scss'
+import 'element-plus/theme-chalk/dark/css-vars.css'
+import './styles/theme-overrides.scss'
 import 'github-markdown-css/github-markdown-light.css'
 
 const pinia = createPinia()

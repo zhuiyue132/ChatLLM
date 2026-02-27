@@ -1,0 +1,20 @@
+:root,
+html {
+  --el-color-primary: var(--main-color);
+  --el-color-primary-light-3: var(--main-color-light-3);
+  --el-color-primary-light-5: var(--main-color-light-5);
+  --el-color-primary-light-7: var(--main-color-light-7);
+  --el-color-primary-light-8: var(--main-color-light-8);
+  --el-color-primary-light-9: var(--main-color-light-9);
+  --el-color-primary-dark-2: var(--main-color-dark-2);
+}
+
+html.dark {
+  --el-color-primary: var(--main-color);
+  --el-color-primary-light-3: var(--main-color-light-3);
+  --el-color-primary-light-5: var(--main-color-light-5);
+  --el-color-primary-light-7: var(--main-color-light-7);
+  --el-color-primary-light-8: var(--main-color-light-8);
+  --el-color-primary-light-9: var(--main-color-light-9);
+  --el-color-primary-dark-2: var(--main-color-dark-2);
+}

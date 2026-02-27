@@ -1,14 +1,14 @@
 // 公共el-checkbox样式，非全局改动勿动！！！
 body {
   .el-checkbox {
-    --el-checkbox-text-color: var(--el-color-black);
+    --el-checkbox-text-color: var(--text-normal-color);
     --el-checkbox-font-weight: 400;
     --el-checkbox-border-radius: 1px;
     --el-checkbox-input-width: 14px;
     --el-checkbox-input-height: 14px;
-    --el-checkbox-input-border: 1px solid #d4dbe9;
-    --el-checkbox-disabled-border-color: #d4dbe9;
-    --el-checkbox-disabled-input-fill: #f3f6ff;
+    --el-checkbox-input-border: 1px solid var(--border-color);
+    --el-checkbox-disabled-border-color: var(--border-color);
+    --el-checkbox-disabled-input-fill: var(--bg-subtle);
 
     // 禁用的checkbox整体设置鼠标手指状态
     &.is-disabled {

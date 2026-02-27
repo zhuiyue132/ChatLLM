@@ -162,14 +162,14 @@ const handleBackClick = () => {
   }
 
   .user-name {
-    color: #000;
+    color: var(--text-normal-color);
     font-size: 14px;
     font-weight: 700;
     line-height: 100%;
   }
 
   .user-company {
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 12px;
     font-weight: 400;
     line-height: 160%;
@@ -196,7 +196,7 @@ const handleBackClick = () => {
       align-items: center;
       justify-content: flex-start;
       height: 20px;
-      color: #222722;
+      color: var(--text-normal-color);
       font-size: 14px;
       font-weight: 400;
       line-height: 100%;
@@ -220,7 +220,7 @@ const handleBackClick = () => {
       align-items: center;
       justify-content: flex-start;
       height: 20px;
-      color: #bfbfbf;
+      color: var(--text-tblight-color);
       font-size: 12px;
       font-weight: 400;
       line-height: 100%;
@@ -240,7 +240,7 @@ const handleBackClick = () => {
     width: 100%;
     height: 41px;
     padding: 0 16px;
-    color: #222722;
+    color: var(--text-normal-color);
     outline: none;
 
     &:active {
@@ -271,7 +271,7 @@ const handleBackClick = () => {
   width: 100%;
   height: 72px;
   padding: 16px;
-  background-color: #fff;
+  background-color: var(--bg-header);
 
   .back-btn__wrapper {
     display: flex;
@@ -279,7 +279,7 @@ const handleBackClick = () => {
     cursor: pointer;
     transition: transform 0.2s ease;
     letter-spacing: 0.84px;
-    color: var(--bi-20, #000);
+    color: var(--text-normal-color);
     font-family: 'Source Han Sans CN', sans-serif;
     font-size: 16px;
     font-weight: 400;
@@ -314,7 +314,7 @@ const handleBackClick = () => {
       padding: 8px 12px;
       cursor: pointer;
       transition: all 0.2s ease;
-      color: #fff;
+      color: var(--text-white-color);
       border: none;
       border-radius: 4px;
       outline: none;
@@ -346,11 +346,11 @@ const handleBackClick = () => {
 
     .iconfont {
       font-size: 24px;
-      color: #333;
+      color: var(--text-light-color);
     }
 
     &:active {
-      background-color: #f0f0f0;
+      background-color: var(--bg-hover);
     }
   }
 

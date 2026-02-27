@@ -125,7 +125,7 @@ defineExpose({ validate })
 
     .el-form-item__label {
       padding-bottom: 6px;
-      color: #262626;
+      color: var(--text-normal-color);
       font-size: 14px;
       font-weight: 500;
       line-height: 22px;
@@ -141,7 +141,7 @@ defineExpose({ validate })
 
   .form-item-tip {
     margin-top: 6px;
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 12px;
     line-height: 18px;
   }
@@ -150,12 +150,12 @@ defineExpose({ validate })
     cursor: pointer;
 
     .iconfont {
-      color: #8c8c8c;
+      color: var(--text-dblight-color);
       font-size: 16px;
       transition: color 0.2s;
 
       &:hover {
-        color: #595959;
+        color: var(--text-light-color);
       }
     }
   }
@@ -170,10 +170,10 @@ defineExpose({ validate })
 .fetch-error {
   margin-top: 12px;
   padding: 10px 12px;
-  color: #ff4d4f;
+  color: var(--error-text);
   font-size: 13px;
   border-radius: 6px;
-  background-color: #fff2f0;
+  background-color: var(--error-bg);
 }
 
 .fetch-success {
@@ -182,10 +182,10 @@ defineExpose({ validate })
   gap: 6px;
   margin-top: 12px;
   padding: 10px 12px;
-  color: #52c41a;
+  color: var(--success-text);
   font-size: 13px;
   border-radius: 6px;
-  background-color: #f6ffed;
+  background-color: var(--success-bg);
 
   .iconfont {
     font-size: 16px;

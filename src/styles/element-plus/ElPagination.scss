@@ -1,11 +1,11 @@
 %button-block {
-  border: 1px solid #d4dbe9;
+  border: 1px solid var(--border-color);
   border-radius: 1px;
 }
 
 .el-pagination {
-  --el-pagination-text-color: #1b2948;
-  --el-text-color-regular: #1b2948;
+  --el-pagination-text-color: var(--text-normal-color);
+  --el-text-color-regular: var(--text-normal-color);
   display: inline-flex;
   padding: 0;
 
@@ -21,7 +21,7 @@
     padding-right: 8px;
 
     .el-select__placeholder {
-      color: var(--black);
+      color: var(--text-normal-color);
       text-overflow: inherit;
       text-align: center;
     }
@@ -42,7 +42,7 @@
   }
 
   .el-input {
-    --el-input-text-color: #1b2948;
+    --el-input-text-color: var(--text-normal-color);
     font-size: 14px;
   }
 
@@ -68,7 +68,7 @@
         border-color: var(--main-color);
 
         + li {
-          border-left: 1px solid #e2e6ef;
+          border-left: 1px solid var(--border-color-light);
         }
       }
 
@@ -86,7 +86,7 @@
   .el-input__inner {
     // @extend %button-block;
     // box-shadow: none;
-    --el-input-border-color: #d4dbe9;
+    --el-input-border-color: var(--border-color);
     --el-input-focus-border-color: var(--main-color);
     --el-input-hover-border-color: var(--main-color);
     --el-input-border-radius: 2px;

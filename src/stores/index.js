@@ -11,3 +11,4 @@
 export * from './api-settings'
 export * from './chat-rooms'
 export * from './backup-settings'
+export * from './theme'

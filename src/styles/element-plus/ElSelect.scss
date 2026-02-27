@@ -1,7 +1,7 @@
 .el-select,
 .el-select__popper {
   --el-border-color-hover: var(--main-color);
-  --el-text-color-regular: #000;
+  --el-text-color-regular: var(--text-normal-color);
 }
 
 .el-select:hover:not(.el-select--disabled) .el-input__inner {

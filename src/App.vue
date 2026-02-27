@@ -9,12 +9,13 @@
 -->
 <script setup>
 import '@/assets/icon/iconfont.css'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import MainLayout from './layouts/main.vue'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { useEventListener } from '@vueuse/core'
 import { useWebdavBackup } from '@/hooks/use-webdav-backup'
+import { useThemeStore } from '@/stores/theme'
 
 const currentLayout = computed(() => {
   return MainLayout
@@ -27,6 +28,20 @@ const visibilityChangeHandler = async () => {
 useEventListener(window, 'visibilitychange', visibilityChangeHandler)
 
 useWebdavBackup({ autoStart: true })
+
+const themeStore = useThemeStore()
+
+watch(
+  () => themeStore.isDark,
+  isDark => {
+    const root = document.documentElement
+    root.classList.toggle('dark', isDark)
+    document.body.classList.toggle('dark', isDark)
+    root.dataset.theme = isDark ? 'dark' : 'light'
+    root.style.colorScheme = isDark ? 'dark' : 'light'
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -49,6 +64,14 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-app);
+  color: var(--text-normal-color);
+}
+
+#app {
+  min-height: 100%;
+  background-color: var(--bg-app);
+  color: var(--text-normal-color);
 }
 
 /* 移动端适配样式 */

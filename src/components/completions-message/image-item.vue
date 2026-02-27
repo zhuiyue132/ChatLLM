@@ -173,14 +173,14 @@ const handleRetry = () => {
     @include flex-gap(16px, column);
 
     .iconfont {
-      color: #bfbfbf;
+      color: var(--text-tblight-color);
       font-size: 32px;
     }
 
     .loading-progress {
       .loading-text {
         animation: fade-in-out 1.5s ease-in-out infinite;
-        color: #909399;
+        color: var(--text-dblight-color);
         font-size: 14px;
       }
     }
@@ -197,7 +197,7 @@ const handleRetry = () => {
   justify-content: center;
   width: 244px;
   height: 244px;
-  background-color: #f5f7fa;
+  background-color: var(--bg-subtle);
 
   .error-icon-wrapper {
     display: flex;
@@ -207,12 +207,12 @@ const handleRetry = () => {
     @include flex-gap(12px, column);
 
     .iconfont {
-      color: #bfbfbf;
+      color: var(--text-tblight-color);
       font-size: 32px;
     }
 
     .error-text {
-      color: #909399;
+      color: var(--text-dblight-color);
       font-size: 14px;
     }
 
@@ -228,7 +228,7 @@ const handleRetry = () => {
   display: inline-flex;
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid #d4dbe9;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
 
   &.is-loading {
@@ -262,10 +262,10 @@ const handleRetry = () => {
         justify-content: center;
         width: 100%;
         height: 100%;
-        background-color: #f5f7fa;
+        background-color: var(--bg-subtle);
 
         i {
-          color: #c0c4cc;
+          color: var(--text-tblight-color);
           font-size: 48px;
         }
       }
@@ -284,7 +284,7 @@ const handleRetry = () => {
       height: 100%;
       text-align: center;
       letter-spacing: 0.72px;
-      color: var(--bi-2025, #bfbfbf);
+      color: var(--text-tblight-color);
       background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwLDAsMjAlLDEwMCUiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRjJGM0Y1IiBvZmZzZXQ9IjI1JSIgLz4KICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0U1RTZFQiIgb2Zmc2V0PSIzNyUiIC8+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNGMkYzRjUiIG9mZnNldD0iNjMlIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3QgaWQ9InIiIHdpZHRoPSI0MDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiIC8+CiAgPGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii0zMDAlIiB0bz0iMCUiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiICAvPgo8L3N2Zz4=');
       background-position: 0% 0%;
       background-size: cover;
@@ -297,7 +297,7 @@ const handleRetry = () => {
       @include flex-gap(8px, column);
 
       .iconfont {
-        color: #bfbfbf;
+        color: var(--text-tblight-color);
         font-size: 32px;
       }
     }

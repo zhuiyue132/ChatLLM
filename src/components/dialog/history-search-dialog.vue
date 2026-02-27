@@ -362,11 +362,11 @@ onUnmounted(() => {
         border-radius: 8px;
 
         &:hover {
-          background: #eafaed;
+          background: var(--bg-highlight);
         }
 
         &.selected {
-          background: #eafaed;
+          background: var(--bg-highlight);
         }
 
         .item-content {
@@ -389,7 +389,7 @@ onUnmounted(() => {
             margin: 0;
             white-space: nowrap;
             text-overflow: ellipsis;
-            color: #000;
+            color: var(--text-normal-color);
             font-family: 'Source Han Sans CN', sans-serif;
             font-size: 16px;
             font-weight: 400;
@@ -408,7 +408,7 @@ onUnmounted(() => {
 
         .no-data-text,
         .no-more-text {
-          color: #595959;
+          color: var(--text-light-color);
           font-family: 'Source Han Sans CN', sans-serif;
           font-size: 12px;
           font-weight: 400;
@@ -425,11 +425,11 @@ onUnmounted(() => {
 }
 
 div.agent-select-popper.el-select__popper {
-  border: 1px solid #d4dbe9;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  box-shadow: 0 0 10px 0 rgb(41 104 178 / 10%);
+  box-shadow: var(--shadow-dropdown);
 
-  --el-fill-color-light: #eafaed;
+  --el-fill-color-light: var(--bg-highlight);
 }
 
 .history-search-dialog {

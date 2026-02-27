@@ -23,22 +23,22 @@ defineProps({
   .xs-dropdown-menu {
     .xs-dropdown-item.el-dropdown-menu__item {
       padding: 8px 16px;
-      color: #222722cc;
+      color: var(--text-normal-color);
       border-radius: 0;
       font-size: 14px;
 
       &:hover {
-        background-color: #f6f6f6;
+        background-color: var(--bg-hover);
       }
 
       &:active {
-        color: #007e54;
+        color: var(--main-color);
       }
     }
 
     .el-dropdown-menu__item:not(.is-disabled):hover,
     .el-dropdown-menu__item:not(.is-disabled):focus {
-      background-color: #f6f6f6;
+      background-color: var(--bg-hover);
     }
   }
 }

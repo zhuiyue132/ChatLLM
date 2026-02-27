@@ -107,7 +107,7 @@ const filteredModels = computed(() => {
   }
 
   .iconfont {
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 16px;
   }
 }
@@ -126,7 +126,7 @@ const filteredModels = computed(() => {
 
   .model-item {
     padding: 10px 12px;
-    border: 1px solid #e8e8e8;
+    border: 1px solid var(--border-color-muted);
     border-radius: 6px;
     transition: all 0.2s;
 
@@ -163,7 +163,7 @@ const filteredModels = computed(() => {
       text-overflow: ellipsis;
       white-space: nowrap;
       font-size: 14px;
-      color: #262626;
+      color: var(--text-normal-color);
     }
   }
 }

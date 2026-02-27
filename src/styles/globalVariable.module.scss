@@ -2,17 +2,34 @@
 :root {
   // 主题色
   --main-color: #017f46;
+  --main-color-light-3: #37a46a;
+  --main-color-light-5: #5bb887;
+  --main-color-light-7: #8ad1ac;
+  --main-color-light-8: #b4e3c8;
+  --main-color-light-9: #def4e9;
+  --main-color-dark-2: #00633a;
+  --bg-app: #fff;
+  --bg-header: #fff;
+  --bg-panel: #fafafa;
+  --bg-sidebar: #f1f2f4;
+  --bg-muted: #f6f6f6;
+  --bg-subtle: #f7f8fa;
+  --bg-hover: #e4e4e7;
+  --bg-active: #fff;
+  --bg-highlight: #f5fbf4;
+  --bg-tag: #e3e3e3;
 
   --black: #000;
   --white: #fff;
   --border-color: #d4dbe9;
+  --border-color-light: #f0f0f0;
+  --border-color-muted: #e8e8e8;
+  --border-color-strong: #d9d9d9;
   --disabled-color: #d4dbe9;
   --border-table-color: #d0d4dc;
 
   --main-text-color-65: rgba(0, 0, 0, 0.65);
-
   --main-text-color-45: rgba(0, 0, 0, 0.45);
-
   --main-text-color-25: rgba(0, 0, 0, 0.25);
 
   --form-error-color: #bd4206;
@@ -62,6 +79,9 @@
   --text-dblight-color: #8c8c8c;
   // black -25%
   --text-tblight-color: #bfbfbf;
+  --text-muted-color: #bfbfbf;
+  --text-faint-color: #c7cdc6;
+  --text-placeholder-color: #9898a9;
   // 底部文本颜色
   --footer-text-color: #1b2948;
 
@@ -118,12 +138,132 @@
   --input-height-large: 40px;
   --input-height-small: 32px;
   --el-border-radius-small: 4px !important;
+
+  --shadow-soft: 0 5px 12px 0 rgb(0 163 119 / 7%);
+  --shadow-elevated: 0 8px 24px 0 rgb(0 0 0 / 12%);
+  --shadow-dropdown: 0 0 10px 0 rgba(41, 104, 178, 0.1);
+
+  --code-bg: #f6f8fa;
+  --inline-code-bg: rgba(175, 184, 193, 0.2);
+
+  --error-bg: #ffeeeb;
+  --error-border: #ffd4cd;
+  --error-text: #ff4038;
+  --error-text-strong: #cf1322;
+  --success-bg: #f6ffed;
+  --success-text: #52c41a;
+  --warning-bg: #fafafa;
+  --warning-text: #8c8c8c;
+  --warning-accent: #faad14;
 }
 
 // 暗影皮肤
 .dark {
-  --main-color: #0ff;
-  --nav-bg-color: #ff0;
+  color-scheme: dark;
+  --main-color: #21c48c;
+  --main-color-light-3: #4fd0a2;
+  --main-color-light-5: #74dbb8;
+  --main-color-light-7: #a0e6ce;
+  --main-color-light-8: #c0f0de;
+  --main-color-light-9: #e1f7f0;
+  --main-color-dark-2: #1aa173;
+  --bg-app: #0f1115;
+  --bg-header: #121621;
+  --bg-panel: #141926;
+  --bg-sidebar: #141821;
+  --bg-muted: #1a202c;
+  --bg-subtle: #121621;
+  --bg-hover: #1d2331;
+  --bg-active: #202636;
+  --bg-highlight: #1d2a21;
+  --bg-tag: #2b3242;
+
+  --black: #000;
+  --white: #fff;
+  --border-color: #2c3445;
+  --border-color-light: #202635;
+  --border-color-muted: #2a303d;
+  --border-color-strong: #323b4f;
+  --disabled-color: #2c3445;
+  --border-table-color: #2c3445;
+
+  --main-text-color-65: rgba(245, 247, 250, 0.65);
+  --main-text-color-45: rgba(245, 247, 250, 0.45);
+  --main-text-color-25: rgba(245, 247, 250, 0.25);
+
+  --nav-bg-color: #0f1115;
+  --nav-normal-text-color: #9aa2b1;
+  --nav-active-text-color: #f5f7fa;
+  --nav-active-bg-color: #1a202c;
+
+  --sidebar-bg-color: #141821;
+  --sidebar-text-color: #c2c7d0;
+  --sidebar-subtext-color: #9aa2b1;
+  --sidebar-hover-text-color: #f5f7fa;
+  --sidebar-hover-bg-color: #1f2b3a;
+  --sidebar-active-text-color: #f5f7fa;
+  --sidebar-active-bg-color: #1a202c;
+  --img-viewer-bg-color: #141821;
+
+  --icon-btn-y-color: #9aa2b1;
+  --icon-btn-color: #8b93a3;
+
+  --data-red: #ff8a80;
+  --data-green: #7ee787;
+
+  --text-white-color: #fff;
+  --text-normal-color: #f5f7fa;
+  --text-light-color: #c2c7d0;
+  --text-dblight-color: #9aa2b1;
+  --text-tblight-color: #6b7280;
+  --text-muted-color: #6b7280;
+  --text-faint-color: #8b93a3;
+  --text-placeholder-color: #6b7280;
+  --footer-text-color: #9aa2b1;
+
+  --table-link-color: #56d6a1;
+  --table-header-fixed-bg-color: #1a202c;
+  --table-row-selected-color: #2c3e1f;
+  --table-row-selected-hover-color: #34452a;
+
+  --main-text-color: #f5f7fa;
+  --list-item-hover-bg-color: #1d2331;
+
+  --scrollbar-track-color: transparent;
+  --scrollbar-thumb-color: rgba(148, 163, 184, 0.45);
+  --scrollbar-shadow-color: transparent;
+
+  --placeholder-color: #6b7280 !important;
+
+  --table-border-bottom-color: #2c3445;
+
+  --plain-btn-active-border-color: #1f2b3a;
+  --plain-btn-active-bg-color: #1a202c;
+  --primary-button-hover-bg-color: #1fb179;
+  --primary-button-active-bg-color: #189868;
+
+  --salary-block-positive-color: #ff8a80;
+  --salary-block-negative-color: #7ee787;
+  --salary-block-zero-color: #9aa2b1;
+
+  --input-placeholder-color: #6b7280;
+
+  --shadow-soft: 0 5px 12px 0 rgb(0 0 0 / 25%);
+  --shadow-elevated: 0 8px 24px 0 rgb(0 0 0 / 35%);
+  --shadow-dropdown: 0 6px 24px 0 rgb(0 0 0 / 35%);
+
+  --code-bg: #1f2430;
+  --inline-code-bg: rgba(110, 118, 129, 0.4);
+
+  --error-bg: #3a1e1e;
+  --error-border: #5a2a2a;
+  --error-text: #ff8a80;
+  --error-text-strong: #ff6b6b;
+  --success-bg: #162618;
+  --success-text: #7ee787;
+  --warning-bg: #1b1f29;
+  --warning-text: #9aa2b1;
+  --warning-accent: #f5c542;
 }
 
 // 导出变量供js使用

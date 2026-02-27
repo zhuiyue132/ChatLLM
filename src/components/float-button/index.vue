@@ -69,11 +69,11 @@ const scrollToBottom = () => {
   opacity: 1;
   border: 1.5px solid var(--border-color);
   border-radius: 18px;
-  background: var(--white);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  background: var(--bg-app);
+  box-shadow: var(--shadow-elevated);
 
   i {
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 18px;
     font-weight: bold;
   }
@@ -86,18 +86,18 @@ const scrollToBottom = () => {
     //   fill: var(--main-color);
     // }
 
-    box-shadow: 0 -4px 6px 0 rgb(0 0 0 / 11%);
+    box-shadow: var(--shadow-elevated);
   }
 
   &:last-child {
     &:hover {
-      box-shadow: 0 4px 6px 0 rgb(0 0 0 / 11%);
+      box-shadow: var(--shadow-elevated);
     }
   }
 
   &:active {
     transform: translateY(1px);
-    box-shadow: 0 1px 4px rgb(0 0 0 / 15%);
+    box-shadow: var(--shadow-soft);
   }
 }
 

@@ -11,10 +11,10 @@
   padding: 4px 8px;
   cursor: pointer;
   user-select: none;
-  color: #000;
-  border: 1px solid #d4dbe9;
+  color: var(--text-normal-color);
+  border: 1px solid var(--border-color);
   border-radius: 15px;
-  background-color: #fff;
+  background-color: var(--bg-app);
   font-family: "Microsoft YaHei", "Source Han Sans CN", sans-serif;
   font-size: 14px;
   font-weight: 400;
@@ -32,21 +32,21 @@
   }
 
   &:hover {
-    color: #000;
-    border-color: rgb(179, 217, 200);
-    background-color: rgb(230, 242, 237);
+    color: var(--text-normal-color);
+    border-color: var(--main-color);
+    background-color: var(--bg-highlight);
     /* background-color: #e0f2e7; */
   }
 
   .iconfont {
-    color: #000;
+    color: var(--text-normal-color);
     font-size: 16px;
   }
 
   &.is-checked {
     color: var(--main-color, #007e54);
     border-color: rgba(255, 255, 255, 0);
-    background-color: #e0f2e7;
+    background-color: var(--bg-highlight);
 
     .iconfont {
       color: var(--main-color, #007e54);
@@ -54,10 +54,10 @@
   }
 
   &.is-disabled {
-    color: #898989;
+    color: var(--text-dblight-color);
 
     .iconfont {
-      color: #898989;
+      color: var(--text-dblight-color);
     }
   }
 

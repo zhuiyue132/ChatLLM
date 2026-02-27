@@ -57,7 +57,7 @@ const showBackBtn = computed(() => {
   display: flex;
   overflow: visible;
   min-height: 100vh;
-  background-color: #fff;
+  background-color: var(--bg-app);
 }
 
 .page-header {
@@ -72,7 +72,7 @@ const showBackBtn = computed(() => {
   flex: 1;
   min-width: 0;
   min-height: 100vh;
-  background-color: #fff;
+  background-color: var(--bg-app);
 }
 
 .sidebar-overlay {

@@ -369,13 +369,13 @@ const handleImportCherry = async () => {
 
   .panel-title {
     margin-bottom: 8px;
-    color: #262626;
+    color: var(--text-normal-color);
     font-size: 18px;
     font-weight: 600;
   }
 
   .panel-desc {
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 14px;
   }
 }
@@ -400,20 +400,20 @@ const handleImportCherry = async () => {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border-color-muted);
   border-radius: 8px;
 
   .backup-info {
     .backup-title {
       font-size: 14px;
       font-weight: 500;
-      color: #262626;
+      color: var(--text-normal-color);
       margin-bottom: 4px;
     }
 
     .backup-desc {
       font-size: 12px;
-      color: #8c8c8c;
+      color: var(--text-dblight-color);
     }
   }
 }
@@ -424,27 +424,27 @@ const handleImportCherry = async () => {
   gap: 8px;
   padding: 12px 16px;
   font-size: 13px;
-  color: #8c8c8c;
-  background: #fafafa;
+  color: var(--text-dblight-color);
+  background: var(--bg-panel);
   border-radius: 6px;
 
   .iconfont {
-    color: #faad14;
+    color: var(--warning-accent);
   }
 }
 
 .webdav-section {
   padding: 16px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color-light);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-app);
 }
 
 .section-title {
   margin-bottom: 16px;
   font-size: 15px;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-normal-color);
 }
 
 .settings-form {
@@ -453,7 +453,7 @@ const handleImportCherry = async () => {
 
     .el-form-item__label {
       padding-bottom: 6px;
-      color: #262626;
+      color: var(--text-normal-color);
       font-size: 14px;
       font-weight: 500;
       line-height: 22px;
@@ -472,7 +472,7 @@ const handleImportCherry = async () => {
 
   .form-item-tip {
     margin-top: 6px;
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 12px;
     line-height: 18px;
   }
@@ -481,12 +481,12 @@ const handleImportCherry = async () => {
     cursor: pointer;
 
     .iconfont {
-      color: #8c8c8c;
+      color: var(--text-dblight-color);
       font-size: 16px;
       transition: color 0.2s;
 
       &:hover {
-        color: #595959;
+        color: var(--text-light-color);
       }
     }
   }
@@ -497,12 +497,12 @@ const handleImportCherry = async () => {
   flex-direction: column;
   gap: 6px;
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-dblight-color);
   padding-top: 6px;
 }
 
 .webdav-error {
-  color: #cf1322;
+  color: var(--error-text-strong);
 }
 
 .panel-footer {
@@ -512,7 +512,7 @@ const handleImportCherry = async () => {
   flex-shrink: 0;
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color-light);
   gap: 12px;
 }
 

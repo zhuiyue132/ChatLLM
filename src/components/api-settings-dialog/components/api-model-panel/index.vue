@@ -156,13 +156,13 @@ defineExpose({ wizard })
 
   .panel-title {
     margin-bottom: 8px;
-    color: #262626;
+    color: var(--text-normal-color);
     font-size: 18px;
     font-weight: 600;
   }
 
   .panel-desc {
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 14px;
   }
 }
@@ -185,7 +185,7 @@ defineExpose({ wizard })
   justify-content: space-between;
   flex-shrink: 0;
   padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color-light);
 
   .footer-right {
     display: flex;

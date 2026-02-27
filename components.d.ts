@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     ApiModelPanel: typeof import('./src/components/api-settings-dialog/components/api-model-panel/index.vue')['default']
     ApiSettingsDialog: typeof import('./src/components/api-settings-dialog/index.vue')['default']
+    AppearancePanel: typeof import('./src/components/api-settings-dialog/components/appearance-panel/index.vue')['default']
     Assistant: typeof import('./src/components/completions-message/assistant.vue')['default']
     BackupPanel: typeof import('./src/components/api-settings-dialog/components/backup-panel/index.vue')['default']
     ChatRoomItem: typeof import('./src/components/sidebar/chat-room-item/index.vue')['default']
@@ -31,6 +32,8 @@ declare module 'vue' {
     ElInput: typeof import('element-plus/es')['ElInput']
     ElMention: typeof import('element-plus/es')['ElMention']
     ElOption: typeof import('element-plus/es')['ElOption']
+    ElRadioButton: typeof import('element-plus/es')['ElRadioButton']
+    ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElStep: typeof import('element-plus/es')['ElStep']

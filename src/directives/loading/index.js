@@ -98,7 +98,9 @@ const buildOptions = (el, binding, vm) => {
 
   // 获取尺寸和主题配置
   const size = getBindingValue(binding, 'size', 'medium')
-  const theme = getBindingValue(binding, 'theme', 'light')
+  const defaultTheme =
+    typeof document !== 'undefined' && document.body.classList.contains('dark') ? 'dark' : 'light'
+  const theme = getBindingValue(binding, 'theme', defaultTheme)
   const themeConfig = LOADING_THEMES[theme] || LOADING_THEMES.light
 
   // 计算最终尺寸：优先使用自定义尺寸，否则使用预设尺寸

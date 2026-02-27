@@ -51,8 +51,8 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px white inset !important;
-  -webkit-text-fill-color: #000 !important;
+  -webkit-box-shadow: 0 0 0 30px var(--bg-app) inset !important;
+  -webkit-text-fill-color: var(--text-normal-color) !important;
 }
 
 /* 字体加默认配置:可以省去写iconfont */
@@ -85,4 +85,67 @@ input:-webkit-autofill:active {
 
 .cursor-pointer:active {
   opacity: 0.6;
+}
+
+body .markdown-body {
+  color: var(--text-normal-color);
+  background-color: transparent;
+}
+
+body .markdown-body pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+}
+
+body .markdown-body pre code {
+  color: var(--text-normal-color);
+}
+
+body .markdown-body code {
+  color: var(--text-normal-color);
+}
+
+body .markdown-body table {
+  border-color: var(--border-color);
+}
+
+body .markdown-body table tr {
+  background-color: transparent;
+}
+
+body .markdown-body table th {
+  color: var(--text-normal-color);
+  background-color: var(--bg-subtle);
+  border-color: var(--border-color);
+}
+
+body .markdown-body table td {
+  color: var(--text-normal-color);
+  border-color: var(--border-color);
+}
+
+body .markdown-body table tbody tr:nth-child(2n) {
+  background-color: var(--bg-panel);
+}
+
+.dark body .markdown-body {
+  color: var(--text-normal-color);
+}
+
+.dark body .markdown-body a {
+  color: #4ea1ff;
+}
+
+.dark body .markdown-body blockquote {
+  color: var(--text-light-color);
+  border-left-color: var(--border-color-strong);
+}
+
+.dark body .markdown-body hr {
+  background-color: var(--border-color-strong);
+}
+
+.dark body .markdown-body table th,
+.dark body .markdown-body table td {
+  border-color: var(--border-color);
 }

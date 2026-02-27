@@ -101,17 +101,17 @@ const handleChatRoomItemOperation = command => {
   @include flex-gap(8px, row);
 
   &:hover {
-    background: #e4e4e7;
+    background: var(--bg-hover);
 
     --display-dropdown: block;
   }
 
   &.active {
-    color: #007e54;
-    background: #e0f2e7;
+    color: var(--main-color);
+    background: var(--bg-highlight);
 
     .chat-room-content {
-      color: #007e54;
+      color: var(--main-color);
     }
   }
 
@@ -141,7 +141,7 @@ const handleChatRoomItemOperation = command => {
     user-select: none;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: #595959;
+    color: var(--text-light-color);
     font-size: 14px;
     line-height: 20px;
 
@@ -149,11 +149,11 @@ const handleChatRoomItemOperation = command => {
       animation: shimmer 1.2s infinite linear;
       background: linear-gradient(
         90deg,
-        #595959 0%,
-        #595959 40%,
-        #d0d0d0 50%,
-        #595959 60%,
-        #595959 100%
+        var(--text-light-color) 0%,
+        var(--text-light-color) 40%,
+        var(--text-tblight-color) 50%,
+        var(--text-light-color) 60%,
+        var(--text-light-color) 100%
       );
       background-clip: text;
       background-size: 200% 100%;
@@ -183,7 +183,7 @@ const handleChatRoomItemOperation = command => {
     justify-content: center;
     box-sizing: border-box;
     padding: 3px 4px;
-    color: #fff;
+    color: var(--text-white-color);
     border-radius: 2px;
     background-color: #bd4206;
     font-size: 8px;

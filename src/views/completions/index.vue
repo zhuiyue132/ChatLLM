@@ -131,7 +131,7 @@ const handleMessageSubmit = (payload = {}) => {
   width: 100%;
   height: calc(100vh - 128px);
   padding: 0 100px 48px;
-  background-color: #fff;
+  background-color: var(--bg-app);
 }
 
 .chat-content {
@@ -152,7 +152,7 @@ const handleMessageSubmit = (payload = {}) => {
 .welcome-title {
   margin: 0;
   letter-spacing: 0.64px;
-  color: #000;
+  color: var(--text-normal-color);
   font-family: 'Source Han Sans CN', 'Microsoft YaHei', sans-serif;
   font-size: 32px;
   font-weight: 500;
@@ -168,9 +168,9 @@ const handleMessageSubmit = (payload = {}) => {
 .input-area {
   position: relative;
   padding: 12px 24px;
-  border: 0.8px solid #d4dbe9;
+  border: 0.8px solid var(--border-color);
   border-radius: 28px;
-  background: #f5f5f5;
+  background: var(--bg-muted);
 }
 
 @include mobile {

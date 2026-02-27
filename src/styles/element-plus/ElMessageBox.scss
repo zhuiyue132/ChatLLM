@@ -11,7 +11,7 @@ div.el-message-box {
   &__header {
     height: 40px;
     padding: 0 16px;
-    color: #000;
+    color: var(--text-normal-color);
     font-family: "Source Han Sans CN", sans-serif;
     font-size: 14px;
     font-weight: 500;
@@ -39,7 +39,7 @@ div.el-message-box {
     }
 
     .el-message-box__message {
-      color: #000;
+      color: var(--text-normal-color);
       font-family: "Source Han Sans CN", sans-serif;
       font-size: 14px;
       font-weight: 400;

@@ -31,8 +31,8 @@ defineProps({
 .xs-dropdown.el-popper.el-dropdown__popper.is-light {
   box-sizing: border-box;
   padding: 8px 0;
-  border: 0.5px solid rgb(212 219 233 / 100%);
+  border: 0.5px solid var(--border-color);
   border-radius: 10px;
-  box-shadow: 0 4px 14px 0 rgb(0 0 0 / 10%);
+  box-shadow: var(--shadow-elevated);
 }
 </style>

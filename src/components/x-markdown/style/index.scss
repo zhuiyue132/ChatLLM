@@ -26,15 +26,15 @@
 
   &::-webkit-scrollbar-track {
     border-radius: 4px;
-    background: #f1f1f1;
+    background: var(--scrollbar-track-color);
   }
 
   &::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background: #888;
+    background: var(--scrollbar-thumb-color);
 
     &:hover {
-      background: #555;
+      background: var(--scrollbar-thumb-color);
     }
   }
 }
@@ -44,7 +44,7 @@
   margin: 0;
   padding: 0.2em 0.4em;
   border-radius: 6px;
-  background-color: rgba(175, 184, 193, 0.2);
+  background-color: var(--inline-code-bg);
   font-family:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
     monospace;
@@ -56,7 +56,9 @@
   overflow: auto;
   padding: 16px;
   border-radius: 6px;
-  background-color: #f6f8fa;
+  background-color: var(--code-bg);
+  color: var(--text-normal-color);
+  border: 1px solid var(--border-color);
   font-size: 85%;
   line-height: 1.45;
 
@@ -68,6 +70,7 @@
     word-wrap: normal;
     border: 0;
     background-color: transparent;
+    color: inherit;
     font-family:
       ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
       "Liberation Mono", monospace;
@@ -82,15 +85,15 @@
 
   &::-webkit-scrollbar-track {
     border-radius: 4px;
-    background: #f1f1f1;
+    background: var(--scrollbar-track-color);
   }
 
   &::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background: #888;
+    background: var(--scrollbar-thumb-color);
 
     &:hover {
-      background: #555;
+      background: var(--scrollbar-thumb-color);
     }
   }
 }

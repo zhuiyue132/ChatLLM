@@ -117,13 +117,13 @@ const handleUpdate = (key, value) => {
   gap: 8px;
   padding: 12px 16px;
   margin-bottom: 20px;
-  color: #8c8c8c;
+  color: var(--text-dblight-color);
   font-size: 13px;
-  background: #fafafa;
+  background: var(--bg-panel);
   border-radius: 6px;
 
   .iconfont {
-    color: #faad14;
+    color: var(--warning-accent);
     font-size: 16px;
   }
 }
@@ -137,7 +137,7 @@ const handleUpdate = (key, value) => {
 
     .el-form-item__label {
       padding-bottom: 6px;
-      color: #262626;
+      color: var(--text-normal-color);
       font-size: 14px;
       font-weight: 500;
       line-height: 22px;
@@ -152,7 +152,7 @@ const handleUpdate = (key, value) => {
 
   .form-item-tip {
     margin-top: 6px;
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 12px;
     line-height: 18px;
   }

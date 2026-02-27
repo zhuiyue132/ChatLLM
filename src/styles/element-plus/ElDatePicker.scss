@@ -35,7 +35,7 @@ html {
   .el-month-table,
   .el-year-table {
     td.disabled .el-date-table-cell__text {
-      background-color: #fff;
+      background-color: var(--bg-app);
     }
   }
 }
@@ -73,7 +73,7 @@ html {
     padding: 10px 16px;
     padding-bottom: 0;
     text-align: center;
-    color: #000;
+    color: var(--text-normal-color);
     font-family: "Microsoft YaHei UI";
     font-size: 16px;
     font-weight: 400;
@@ -103,8 +103,8 @@ html {
       padding: 10px 16px;
       padding-bottom: 0;
       text-align: center;
-      color: #000;
-      border-bottom: solid 1px #ebeef5;
+      color: var(--text-normal-color);
+      border-bottom: solid 1px var(--border-color-light);
       font-family: "Microsoft YaHei UI";
       font-size: 16px;
       font-weight: 400;
@@ -164,7 +164,7 @@ html {
   --el-datepicker-inrange-bg-color: #eef3ff;
   --el-datepicker-inrange-hover-bg-color: #eef3ff;
   --el-text-color-placeholder: rgba(0, 0, 0, 0.15);
-  --el-text-color-regular: #000;
+  --el-text-color-regular: var(--text-normal-color);
 
   .el-date-range-picker__content {
     padding: 8px;
@@ -183,7 +183,7 @@ html {
         tr {
           &:first-child {
             th {
-              border-top: 1px solid #d4dbe9;
+              border-top: 1px solid var(--border-color);
               border-bottom: 0;
               background: #f3f6ff;
 
@@ -198,7 +198,7 @@ html {
                   left: -7px;
                   width: 7px;
                   height: 100%;
-                  border-top: 1px solid #d4dbe9;
+                  border-top: 1px solid var(--border-color);
                   background: #f3f6ff;
                 }
               }
@@ -244,7 +244,7 @@ html {
 
         &.current:not(.disabled) {
           .cell {
-            color: #fff;
+            color: var(--text-white-color);
             border-radius: 24px;
             background: var(--main-color);
           }
@@ -279,7 +279,7 @@ html {
             &.start-date,
             &.end-date {
               .#{$cell-text} {
-                color: #fff;
+                color: var(--text-white-color);
               }
             }
 

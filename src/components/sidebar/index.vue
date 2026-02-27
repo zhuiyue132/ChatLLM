@@ -249,7 +249,7 @@ const handleChatRoomItemOperation = async (command, room) => {
       margin: 0;
       margin-top: -24px;
       margin-bottom: 36px;
-      color: var(--bi-2045, #8c8c8c);
+      color: var(--text-dblight-color);
 
       .bi-empty__description {
         /* 雅黑-常规-12 */
@@ -274,8 +274,8 @@ const handleChatRoomItemOperation = async (command, room) => {
   display: flex;
   overflow: hidden;
   flex-direction: column;
-  border-right: 1px solid #d4dbe9;
-  background: #f1f2f4;
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-sidebar);
   font-family: 'Source Han Sans CN', sans-serif;
 
   .sidebar-header-block {
@@ -311,7 +311,7 @@ const handleChatRoomItemOperation = async (command, room) => {
       box-sizing: border-box;
       height: 40px;
       padding: 8px;
-      border: 1px solid #d4dbe9;
+      border: 1px solid var(--border-color);
       border-radius: 20px;
 
       @include flex-gap(8px, row);
@@ -322,7 +322,7 @@ const handleChatRoomItemOperation = async (command, room) => {
         margin: 0;
         margin-bottom: 3px;
         white-space: nowrap;
-        color: #000;
+        color: var(--text-normal-color);
         outline: none;
         font-size: 22px;
         font-weight: 700;
@@ -331,7 +331,7 @@ const handleChatRoomItemOperation = async (command, room) => {
 
       .logo-link {
         text-decoration: none;
-        color: #000;
+        color: var(--text-normal-color);
       }
     }
 
@@ -367,18 +367,18 @@ const handleChatRoomItemOperation = async (command, room) => {
       padding: 8px;
       cursor: pointer;
       transition: background-color 0.2s ease;
-      color: #000;
+      color: var(--text-normal-color);
       border-radius: 8px;
       outline: none;
 
       @include flex-gap(8px, row);
 
       &:hover {
-        background-color: #e4e4e7;
+        background-color: var(--bg-hover);
       }
 
       &.active {
-        background-color: #fff;
+        background-color: var(--bg-active);
       }
 
       .item-icon {
@@ -433,7 +433,7 @@ const handleChatRoomItemOperation = async (command, room) => {
       @include flex-gap(4px, column);
 
       .group-name-label {
-        color: #8c8c8c;
+        color: var(--text-dblight-color);
         font-size: 14px;
         font-weight: 400;
         font-style: normal;
@@ -449,7 +449,7 @@ const handleChatRoomItemOperation = async (command, room) => {
       user-select: none;
 
       .section-footer-label {
-        color: #595959;
+        color: var(--text-light-color);
         font-size: 12px;
         font-weight: 400;
         font-style: normal;

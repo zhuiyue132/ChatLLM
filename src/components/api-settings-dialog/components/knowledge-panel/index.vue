@@ -135,13 +135,13 @@ const handleSave = () => {
 
   .panel-title {
     margin-bottom: 8px;
-    color: #262626;
+    color: var(--text-normal-color);
     font-size: 18px;
     font-weight: 600;
   }
 
   .panel-desc {
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 14px;
   }
 }
@@ -155,7 +155,7 @@ const handleSave = () => {
 
     .el-form-item__label {
       padding-bottom: 6px;
-      color: #262626;
+      color: var(--text-normal-color);
       font-size: 14px;
       font-weight: 500;
       line-height: 22px;
@@ -171,7 +171,7 @@ const handleSave = () => {
 
   .form-item-tip {
     margin-top: 6px;
-    color: #8c8c8c;
+    color: var(--text-dblight-color);
     font-size: 12px;
     line-height: 18px;
   }
@@ -180,12 +180,12 @@ const handleSave = () => {
     cursor: pointer;
 
     .iconfont {
-      color: #8c8c8c;
+      color: var(--text-dblight-color);
       font-size: 16px;
       transition: color 0.2s;
 
       &:hover {
-        color: #595959;
+        color: var(--text-light-color);
       }
     }
   }
@@ -197,6 +197,6 @@ const handleSave = () => {
   justify-content: space-between;
   flex-shrink: 0;
   padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color-light);
 }
 </style>

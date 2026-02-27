@@ -2,17 +2,17 @@
 body {
   .el-radio {
     margin-right: 16px;
-    --el-radio-text-color: #000;
+    --el-radio-text-color: var(--text-normal-color);
 
     .el-radio__input .el-radio__inner {
-      border-color: #8c8c8c;
+      border-color: var(--text-dblight-color);
       outline: none;
       &:hover {
         border-color: var(--main-color);
       }
     }
     .el-radio__input.is-checked .el-radio__inner {
-      background-color: #fff;
+      background-color: var(--bg-app);
       border-color: var(--main-color);
       &::after {
         width: 9px;
@@ -30,7 +30,7 @@ body {
     }
     .el-radio__input.is-disabled .el-radio__inner {
       &:hover {
-        border-color: #8c8c8c;
+        border-color: var(--text-dblight-color);
       }
     }
     .el-radio__label {

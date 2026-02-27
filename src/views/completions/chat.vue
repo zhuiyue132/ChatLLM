@@ -252,7 +252,7 @@ onBeforeRouteLeave(async (to, from, next) => {
   z-index: 11;
 
   padding: 20px 0 48px;
-  background-color: #fff;
+  background-color: var(--bg-app);
 
   &-content {
     width: 1080px;
@@ -290,7 +290,7 @@ onBeforeRouteLeave(async (to, from, next) => {
   max-width: 100%;
   min-height: calc(100vh - 72px);
   padding: 32px 0 0; /* 增加底部padding，为固定定位的输入框留出空间 */
-  background-color: #fff;
+  background-color: var(--bg-app);
 }
 
 /* 聊天记录页样式 */

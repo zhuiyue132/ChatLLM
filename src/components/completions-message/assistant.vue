@@ -329,7 +329,7 @@ const regenerateMessage = () => {
 }
 
 .oversize-tips {
-  color: #8c8c8c;
+  color: var(--text-dblight-color);
   font-size: 13px;
   line-height: 26px;
 }
@@ -370,11 +370,11 @@ const regenerateMessage = () => {
         height: 100%;
         padding: 0 4px;
         border-radius: 2px;
-        background: #e3e3e3;
+        background: var(--bg-tag);
 
         span {
           white-space: nowrap;
-          color: #8c8c8c;
+          color: var(--text-dblight-color);
           font-size: 14px;
           font-weight: 400;
           line-height: 1.6;
@@ -396,7 +396,7 @@ const regenerateMessage = () => {
       cursor: pointer;
       user-select: none;
       border-radius: 2px;
-      background: #f5fbf4;
+      background: var(--bg-highlight);
 
       @include flex-gap(12px, row);
 
@@ -411,7 +411,7 @@ const regenerateMessage = () => {
         @include flex-gap(4px, row);
 
         .thinking-text {
-          color: #000;
+          color: var(--text-normal-color);
           font-size: 14px;
           font-weight: 400;
           line-height: 14px;
@@ -421,7 +421,7 @@ const regenerateMessage = () => {
       .arrow-icon {
         transition: transform 0.3s ease;
         // transform: rotate(-90deg);
-        color: #000;
+        color: var(--text-normal-color);
         font-size: 14px;
 
         &.arrow-up {
@@ -442,8 +442,8 @@ const regenerateMessage = () => {
         padding-left: 12px;
         white-space: pre-wrap;
         word-break: break-all;
-        color: #595959;
-        border-left: 1px #d9d9d9 solid;
+        color: var(--text-light-color);
+        border-left: 1px var(--border-color-strong) solid;
         font-size: 15px;
         font-weight: 400;
         line-height: 1.2;
@@ -472,7 +472,7 @@ const regenerateMessage = () => {
       flex: 1;
       width: 100%;
       text-align: justify;
-      color: #000;
+      color: var(--text-normal-color);
       font-weight: 400;
       // line-height: 1.6;
 
@@ -481,10 +481,10 @@ const regenerateMessage = () => {
         align-items: center;
         margin: 2px 0 8px !important;
         padding: 8px;
-        color: #ff4038;
-        border: 1px solid #ffd4cd;
+        color: var(--error-text);
+        border: 1px solid var(--error-border);
         border-radius: 4px;
-        background: #ffeeeb;
+        background: var(--error-bg);
         font-size: 14px;
         font-weight: 400;
         font-style: normal;
@@ -512,7 +512,7 @@ const regenerateMessage = () => {
       transition: all 0.2s ease;
 
       i {
-        color: #8c8c8c;
+        color: var(--text-dblight-color);
         font-size: 16px;
       }
 
@@ -524,7 +524,7 @@ const regenerateMessage = () => {
     .pagination-controls {
       display: flex;
       align-items: center;
-      color: #595959;
+      color: var(--text-light-color);
 
       .pagination-arrow {
         cursor: pointer;
@@ -543,14 +543,14 @@ const regenerateMessage = () => {
       .pagination-text {
         white-space: nowrap;
         letter-spacing: 0.96px;
-        color: #8c8c8c;
+        color: var(--text-dblight-color);
         font-size: 15px;
       }
     }
 
     .token-usage {
       white-space: nowrap;
-      color: #bfbfbf;
+      color: var(--text-tblight-color);
       font-size: 12px;
     }
   }

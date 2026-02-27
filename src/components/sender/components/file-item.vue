@@ -147,12 +147,12 @@ defineEmits(['remove'])
     box-sizing: border-box;
     width: 48px;
     height: 48px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--border-color-light);
     border-radius: 10px;
 
     &.readonly {
       border-color: transparent;
-      background-color: #f6f6f6;
+      background-color: var(--bg-muted);
     }
 
     .file-preview {
@@ -173,13 +173,13 @@ defineEmits(['remove'])
 
     /* height: fit-content; */
     padding: 0 8px;
-    border: 1px solid #d4dbe9;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: #fafafb;
+    background-color: var(--bg-subtle);
 
     &.readonly {
       border-color: transparent;
-      background-color: #f6f6f6;
+      background-color: var(--bg-muted);
     }
 
     @include flex-gap(8px, row);
@@ -210,14 +210,14 @@ defineEmits(['remove'])
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
-        color: #000;
+        color: var(--text-normal-color);
         font-family: 'Source Han Sans CN', sans-serif;
         font-size: 14px;
         font-weight: 500;
       }
 
       .file-size {
-        color: #8c8c8c;
+        color: var(--text-dblight-color);
         font-family: 'Source Han Sans CN', sans-serif;
         font-size: 12px;
         font-weight: 400;
@@ -250,12 +250,12 @@ defineEmits(['remove'])
       width: 14px;
       height: 14px;
       text-align: center;
-      border: 1px solid #22272214;
+      border: 1px solid var(--border-color-light);
       border-radius: 50%;
-      background-color: #6c756b;
+      background-color: var(--text-dblight-color);
 
       .icon-cancel {
-        color: #fff;
+        color: var(--text-white-color);
         font-size: 10px;
         line-height: 14px;
       }
