@@ -14,11 +14,7 @@
 
     <!-- 移动端遮罩层 -->
     <transition name="overlay-fade">
-      <div
-        v-if="isMobile && !isCollapsed"
-        class="sidebar-overlay"
-        @click="closeSidebar"
-      />
+      <div v-if="isMobile && !isCollapsed" class="sidebar-overlay" @click="closeSidebar" />
     </transition>
 
     <!-- 右侧内容区域 -->

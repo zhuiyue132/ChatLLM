@@ -16,11 +16,7 @@
 
     <el-form label-position="top" class="settings-form">
       <el-form-item>
-        <el-switch
-          v-model="knowledgeConfig.enabled"
-          active-text="启用知识库"
-          inactive-text=""
-        />
+        <el-switch v-model="knowledgeConfig.enabled" active-text="启用知识库" inactive-text="" />
       </el-form-item>
 
       <template v-if="knowledgeConfig.enabled">

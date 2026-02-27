@@ -24,12 +24,7 @@
           class="full-width"
           @update:model-value="handleUpdate('chat', $event)"
         >
-          <el-option
-            v-for="model in selectedModels"
-            :key="model"
-            :label="model"
-            :value="model"
-          >
+          <el-option v-for="model in selectedModels" :key="model" :label="model" :value="model">
             <div class="model-option">
               <ModelIcon :name="model" :size="18" />
               <span>{{ model }}</span>
@@ -48,12 +43,7 @@
           class="full-width"
           @update:model-value="handleUpdate('summary', $event)"
         >
-          <el-option
-            v-for="model in selectedModels"
-            :key="model"
-            :label="model"
-            :value="model"
-          >
+          <el-option v-for="model in selectedModels" :key="model" :label="model" :value="model">
             <div class="model-option">
               <ModelIcon :name="model" :size="18" />
               <span>{{ model }}</span>
@@ -72,12 +62,7 @@
           class="full-width"
           @update:model-value="handleUpdate('translate', $event)"
         >
-          <el-option
-            v-for="model in selectedModels"
-            :key="model"
-            :label="model"
-            :value="model"
-          >
+          <el-option v-for="model in selectedModels" :key="model" :label="model" :value="model">
             <div class="model-option">
               <ModelIcon :name="model" :size="18" />
               <span>{{ model }}</span>

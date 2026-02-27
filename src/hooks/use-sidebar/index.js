@@ -20,11 +20,15 @@ const widthSidebarCollapsed = ref(210)
 const widthSidebarExpanded = ref(280)
 
 // 进入移动端时自动收起侧边栏
-watch(isMobile, (mobile) => {
-  if (mobile) {
-    isCollapsed.value = true
-  }
-}, { immediate: true })
+watch(
+  isMobile,
+  mobile => {
+    if (mobile) {
+      isCollapsed.value = true
+    }
+  },
+  { immediate: true }
+)
 
 export const useSidebar = () => {
   const toggleSidebar = () => {

@@ -10,19 +10,17 @@
 <template>
   <div class="step-model-select">
     <!-- 搜索框 -->
-    <el-input
-      v-model="localKeyword"
-      placeholder="搜索模型..."
-      clearable
-      class="model-search"
-    >
+    <el-input v-model="localKeyword" placeholder="搜索模型..." clearable class="model-search">
       <template #prefix>
         <i class="iconfont icon-sousuo"></i>
       </template>
     </el-input>
 
     <div class="model-list">
-      <el-checkbox-group :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)">
+      <el-checkbox-group
+        :model-value="modelValue"
+        @update:model-value="$emit('update:modelValue', $event)"
+      >
         <div
           v-for="model in filteredModels"
           :key="model.id"
@@ -70,7 +68,12 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'update:searchKeyword', 'selectAll', 'clearSelection'])
+const emit = defineEmits([
+  'update:modelValue',
+  'update:searchKeyword',
+  'selectAll',
+  'clearSelection'
+])
 
 const localKeyword = ref(props.searchKeyword)
 

@@ -121,7 +121,14 @@ const {
 
 const chatRoomsStore = useChatRoomsStore()
 
-const { isCollapsed, widthSidebarCollapsed, widthSidebarExpanded, toggleSidebar, isMobile, closeSidebar } = useSidebar()
+const {
+  isCollapsed,
+  widthSidebarCollapsed,
+  widthSidebarExpanded,
+  toggleSidebar,
+  isMobile,
+  closeSidebar
+} = useSidebar()
 
 const activeRoomId = computed(() => {
   return route.query.roomId || null
