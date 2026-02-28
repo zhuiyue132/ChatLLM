@@ -26,8 +26,8 @@
           v-for="item in MENU_LIST"
           :key="item.key"
           class="sidebar-item"
-          :class="{ active: activeMenu === item.key }"
-          @click="activeMenu = item.key"
+          :class="{ active: activeMenu === item.key, disabled: isMenuDisabled(item.key) }"
+          @click="handleMenuClick(item.key)"
         >
           <i :class="item.icon"></i>
           <span>{{ item.label }}</span>
@@ -36,11 +36,7 @@
 
       <!-- 右侧内容区 - 动态组件 -->
       <div class="settings-content">
-        <component
-          :is="currentPanel"
-          :visible="dialogVisible && activeMenu === currentPanelKey"
-          @saved="handlePanelSaved"
-        />
+        <component :is="currentPanel" v-bind="currentPanelProps" @saved="handlePanelSaved" />
       </div>
     </div>
   </bi-dialog>
@@ -56,6 +52,7 @@ import KnowledgePanel from './components/knowledge-panel/index.vue'
 import BackupPanel from './components/backup-panel/index.vue'
 import WebdavPanel from './components/webdav-panel/index.vue'
 import { useSidebar } from '@/hooks/use-sidebar'
+import { useApiModelWizard } from './hooks/use-api-model-wizard'
 
 defineOptions({
   name: 'ApiSettingsDialog'
@@ -81,29 +78,83 @@ const dialogVisible = computed({
 
 // 面板组件映射（使用 markRaw 避免响应式开销）
 const panelComponents = {
-  'api-model': markRaw(ApiModelPanel),
+  'api-config': markRaw(ApiModelPanel),
+  'model-list': markRaw(ApiModelPanel),
+  'default-model': markRaw(ApiModelPanel),
   appearance: markRaw(AppearancePanel),
   knowledge: markRaw(KnowledgePanel),
   backup: markRaw(BackupPanel),
   webdav: markRaw(WebdavPanel)
 }
 
-const activeMenu = ref('api-model')
+const activeMenu = ref('api-config')
+const apiModelWizard = useApiModelWizard()
+const apiMenus = ['api-config', 'model-list', 'default-model']
 
 // 当前面板组件
 const currentPanel = computed(() => {
-  return panelComponents[activeMenu.value] || panelComponents['api-model']
+  return panelComponents[activeMenu.value] || panelComponents['api-config']
 })
 
 // 当前面板 key（用于 visible 判断）
 const currentPanelKey = computed(() => activeMenu.value)
 
+const isMenuDisabled = key => {
+  if (key === 'model-list') {
+    return !apiModelWizard.canAccessModelListTab.value
+  }
+  if (key === 'default-model') {
+    return !apiModelWizard.canAccessDefaultModelsTab.value
+  }
+  return false
+}
+
+const ensureValidActiveMenu = () => {
+  if (activeMenu.value === 'default-model' && !apiModelWizard.canAccessDefaultModelsTab.value) {
+    activeMenu.value = apiModelWizard.canAccessModelListTab.value ? 'model-list' : 'api-config'
+    return
+  }
+  if (activeMenu.value === 'model-list' && !apiModelWizard.canAccessModelListTab.value) {
+    activeMenu.value = 'api-config'
+  }
+}
+
+const handleMenuClick = key => {
+  if (isMenuDisabled(key)) return
+  activeMenu.value = key
+}
+
+const currentPanelProps = computed(() => {
+  if (apiMenus.includes(activeMenu.value)) {
+    return {
+      panelKey: activeMenu.value,
+      wizard: apiModelWizard
+    }
+  }
+  return {
+    visible: dialogVisible.value && activeMenu.value === currentPanelKey.value
+  }
+})
+
 // 弹窗打开时重置菜单
 watch(dialogVisible, visible => {
   if (visible) {
-    activeMenu.value = 'api-model'
+    apiModelWizard.loadFromStore()
+    apiModelWizard.reset()
+    activeMenu.value = 'api-config'
   }
 })
+
+watch(
+  () => [
+    apiModelWizard.canAccessModelListTab.value,
+    apiModelWizard.canAccessDefaultModelsTab.value,
+    activeMenu.value
+  ],
+  () => {
+    ensureValidActiveMenu()
+  }
+)
 
 // 面板保存完成回调
 const handlePanelSaved = () => {
@@ -153,6 +204,13 @@ const handlePanelSaved = () => {
       .iconfont {
         color: var(--main-color, #007e54);
       }
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      color: var(--text-dblight-color);
+      background-color: transparent;
     }
   }
 }

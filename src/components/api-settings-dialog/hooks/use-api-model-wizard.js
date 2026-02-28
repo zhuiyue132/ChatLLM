@@ -2,51 +2,71 @@
  * @Author       : zhuiyue132
  * @Date         : 2026-01-30
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-30
+ * @LastEditTime : 2026-02-28
  * @FilePath     : /ChatLLM/src/components/api-settings-dialog/hooks/use-api-model-wizard.js
- * @Description  : API与模型分步骤状态管理 hook
+ * @Description  : API与模型配置状态管理 hook
  */
 
 import { ref, reactive, computed } from 'vue'
-import { ElMessage } from 'element-plus'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { getModelListWithConfig } from '@/api/completions'
+
+const buildConfigSignature = (baseURL, apiKey) => {
+  return `${(baseURL || '').trim()}::${(apiKey || '').trim()}`
+}
+
+const normalizeModelList = models => {
+  return Array.from(new Set((models || []).filter(Boolean)))
+}
 
 export const useApiModelWizard = () => {
   const apiSettingsStore = useApiSettingsStore()
 
-  // 当前步骤（0: API配置, 1: 模型选择, 2: 默认模型）
-  const currentStep = ref(0)
-
-  // 步骤1：API 配置
+  // Tab1：API 配置
   const apiConfig = reactive({
     baseURL: '',
     apiKey: ''
   })
-
-  // API 状态
   const showApiKey = ref(false)
   const fetchingModels = ref(false)
   const fetchError = ref('')
   const availableModels = ref([])
-
-  // 步骤2：选中的模型
-  const selectedModels = ref([])
   const modelSearchKeyword = ref('')
+  const fetchedConfigSignature = ref('')
 
-  // 步骤3：默认模型
+  // Tab2：模型列表
+  const selectedModels = ref([])
+
+  // Tab3：默认模型
   const defaultModels = reactive({
     chat: '',
     summary: '',
     translate: ''
   })
 
-  // 计算属性：是否可以获取模型列表
+  // 基础校验：是否可以发起“获取模型列表”
   const canFetchModels = computed(() => {
     return apiConfig.baseURL && apiConfig.apiKey && /^https?:\/\/.+/.test(apiConfig.baseURL)
   })
 
-  // 计算属性：过滤后的模型列表
+  // API Tab 合规：已获取模型，且模型列表对应当前 API 配置
+  const isApiTabValid = computed(() => {
+    return (
+      canFetchModels.value &&
+      availableModels.value.length > 0 &&
+      fetchedConfigSignature.value === buildConfigSignature(apiConfig.baseURL, apiConfig.apiKey)
+    )
+  })
+
+  // 模型列表 Tab 合规：API 合规 + 至少选一个模型
+  const isModelListTabValid = computed(() => {
+    return isApiTabValid.value && selectedModels.value.length > 0
+  })
+
+  // 依赖关系：后一个 Tab 必须依赖前一个 Tab 合规
+  const canAccessModelListTab = computed(() => isApiTabValid.value)
+  const canAccessDefaultModelsTab = computed(() => isModelListTabValid.value)
+
   const filteredModels = computed(() => {
     if (!modelSearchKeyword.value) {
       return availableModels.value
@@ -55,35 +75,98 @@ export const useApiModelWizard = () => {
     return availableModels.value.filter(model => model.id.toLowerCase().includes(keyword))
   })
 
-  // 计算属性：是否可以进入下一步
-  const canGoNext = computed(() => {
-    if (currentStep.value === 0) {
-      return availableModels.value.length > 0
+  const persistApiConfig = () => {
+    apiSettingsStore.updateApiConfig({
+      baseURL: apiConfig.baseURL,
+      apiKey: apiConfig.apiKey
+    })
+  }
+
+  const persistSelectedModels = () => {
+    apiSettingsStore.updateSelectedModels([...selectedModels.value])
+  }
+
+  const persistDefaultModels = () => {
+    apiSettingsStore.updateDefaultModels({
+      chat: defaultModels.chat,
+      summary: defaultModels.summary,
+      translate: defaultModels.translate
+    })
+  }
+
+  const sanitizeDefaultModels = () => {
+    const selectedSet = new Set(selectedModels.value)
+    if (defaultModels.chat && !selectedSet.has(defaultModels.chat)) {
+      defaultModels.chat = ''
     }
-    if (currentStep.value === 1) {
-      return selectedModels.value.length > 0
+    if (defaultModels.summary && !selectedSet.has(defaultModels.summary)) {
+      defaultModels.summary = ''
     }
-    return true
-  })
+    if (defaultModels.translate && !selectedSet.has(defaultModels.translate)) {
+      defaultModels.translate = ''
+    }
+  }
+
+  const invalidateFetchedModels = () => {
+    fetchedConfigSignature.value = ''
+    fetchError.value = ''
+    modelSearchKeyword.value = ''
+    availableModels.value = []
+  }
+
+  const toggleShowApiKey = () => {
+    showApiKey.value = !showApiKey.value
+  }
+
+  const setModelSearchKeyword = keyword => {
+    modelSearchKeyword.value = keyword || ''
+  }
+
+  const updateApiConfig = config => {
+    const nextBaseURL = config.baseURL ?? ''
+    const nextApiKey = config.apiKey ?? ''
+    const hasChanged = nextBaseURL !== apiConfig.baseURL || nextApiKey !== apiConfig.apiKey
+
+    apiConfig.baseURL = nextBaseURL
+    apiConfig.apiKey = nextApiKey
+    persistApiConfig()
+
+    if (hasChanged) {
+      invalidateFetchedModels()
+    }
+  }
+
+  const updateSelectedModels = models => {
+    selectedModels.value = normalizeModelList(models)
+    sanitizeDefaultModels()
+    persistSelectedModels()
+    persistDefaultModels()
+  }
+
+  const updateDefaultModels = models => {
+    defaultModels.chat = models.chat || ''
+    defaultModels.summary = models.summary || ''
+    defaultModels.translate = models.translate || ''
+    sanitizeDefaultModels()
+    persistDefaultModels()
+  }
 
   // 从 store 加载配置
   const loadFromStore = () => {
     apiConfig.baseURL = apiSettingsStore.baseURL
     apiConfig.apiKey = apiSettingsStore.apiKey
-    selectedModels.value = [...apiSettingsStore.selectedModels]
+    selectedModels.value = normalizeModelList(apiSettingsStore.selectedModels)
     defaultModels.chat = apiSettingsStore.defaultChatModel || ''
     defaultModels.summary = apiSettingsStore.defaultSummaryModel || ''
     defaultModels.translate = apiSettingsStore.defaultTranslateModel || ''
+    sanitizeDefaultModels()
   }
 
-  // 重置状态
+  // 重置仅作用于弹窗过程状态，不覆盖 store 已保存配置
   const reset = () => {
-    currentStep.value = 0
     showApiKey.value = false
     fetchingModels.value = false
-    fetchError.value = ''
-    availableModels.value = []
-    modelSearchKeyword.value = ''
+    invalidateFetchedModels()
   }
 
   // 获取模型列表
@@ -96,12 +179,21 @@ export const useApiModelWizard = () => {
     try {
       const res = await getModelListWithConfig(apiConfig.baseURL, apiConfig.apiKey)
       if (res?.data && Array.isArray(res.data)) {
-        availableModels.value = res.data.sort((a, b) => a.id.localeCompare(b.id))
+        availableModels.value = res.data
+          .filter(item => item?.id)
+          .sort((a, b) => a.id.localeCompare(b.id))
+        fetchedConfigSignature.value = buildConfigSignature(apiConfig.baseURL, apiConfig.apiKey)
+
+        const availableModelSet = new Set(availableModels.value.map(item => item.id))
+        const nextSelectedModels = selectedModels.value.filter(model =>
+          availableModelSet.has(model)
+        )
+        updateSelectedModels(nextSelectedModels)
+
         return true
-      } else {
-        fetchError.value = '获取模型列表失败：返回数据格式错误'
-        return false
       }
+      fetchError.value = '获取模型列表失败：返回数据格式错误'
+      return false
     } catch (e) {
       fetchError.value = `获取模型列表失败：${e.message || '网络错误'}`
       return false
@@ -110,87 +202,16 @@ export const useApiModelWizard = () => {
     }
   }
 
-  // 下一步
-  const nextStep = () => {
-    if (currentStep.value === 0 && availableModels.value.length === 0) {
-      ElMessage.warning('请先获取模型列表')
-      return false
-    }
-    if (currentStep.value === 1 && selectedModels.value.length === 0) {
-      ElMessage.warning('请至少选择一个模型')
-      return false
-    }
-    if (currentStep.value < 2) {
-      currentStep.value++
-      return true
-    }
-    return false
-  }
-
-  // 上一步
-  const prevStep = () => {
-    if (currentStep.value > 0) {
-      currentStep.value--
-      return true
-    }
-    return false
-  }
-
-  // 跳转到指定步骤（只能跳转到已完成的步骤）
-  const goToStep = step => {
-    // 步骤0总是可以返回
-    if (step === 0) {
-      currentStep.value = 0
-      return true
-    }
-    // 步骤1需要已获取模型列表
-    if (step === 1 && availableModels.value.length > 0) {
-      currentStep.value = 1
-      return true
-    }
-    // 步骤2需要已选择模型
-    if (step === 2 && selectedModels.value.length > 0) {
-      currentStep.value = 2
-      return true
-    }
-    return false
-  }
-
-  // 全选模型
   const selectAllModels = () => {
-    selectedModels.value = filteredModels.value.map(m => m.id)
+    updateSelectedModels(filteredModels.value.map(model => model.id))
   }
 
-  // 清空模型选择
   const clearModelSelection = () => {
-    selectedModels.value = []
-  }
-
-  // 保存所有设置
-  const saveAll = () => {
-    // 保存 API 配置
-    apiSettingsStore.updateApiConfig({
-      baseURL: apiConfig.baseURL,
-      apiKey: apiConfig.apiKey
-    })
-
-    // 保存选中的模型
-    apiSettingsStore.updateSelectedModels(selectedModels.value)
-
-    // 保存默认模型设置
-    apiSettingsStore.updateDefaultModels({
-      chat: defaultModels.chat,
-      summary: defaultModels.summary,
-      translate: defaultModels.translate
-    })
-
-    ElMessage.success('设置已保存')
-    return true
+    updateSelectedModels([])
   }
 
   return {
     // 状态
-    currentStep,
     apiConfig,
     showApiKey,
     fetchingModels,
@@ -202,18 +223,20 @@ export const useApiModelWizard = () => {
 
     // 计算属性
     canFetchModels,
+    canAccessModelListTab,
+    canAccessDefaultModelsTab,
     filteredModels,
-    canGoNext,
 
     // 方法
     loadFromStore,
     reset,
+    updateApiConfig,
+    updateSelectedModels,
+    updateDefaultModels,
+    toggleShowApiKey,
+    setModelSearchKeyword,
     fetchModels,
-    nextStep,
-    prevStep,
-    goToStep,
     selectAllModels,
-    clearModelSelection,
-    saveAll
+    clearModelSelection
   }
 }

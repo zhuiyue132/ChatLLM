@@ -39,6 +39,8 @@ declare module 'vue' {
     ElStep: typeof import('element-plus/es')['ElStep']
     ElSteps: typeof import('element-plus/es')['ElSteps']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
+    ElTabPane: typeof import('element-plus/es')['ElTabPane']
+    ElTabs: typeof import('element-plus/es')['ElTabs']
     Empty: typeof import('./src/components/empty/index.vue')['default']
     FileItem: typeof import('./src/components/sender/components/file-item.vue')['default']
     FileUpload: typeof import('./src/components/sender/components/file-upload.vue')['default']
