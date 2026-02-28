@@ -9,6 +9,7 @@
 
 // 左侧菜单配置
 export const MENU_LIST = [
+  { key: 'user-profile', label: '用户信息', icon: 'iconfont icon-yonghu' },
   { key: 'api-config', label: 'API设定', icon: 'iconfont icon-fuwu' },
   { key: 'model-list', label: '模型列表', icon: 'iconfont icon-moxing-lora' },
   { key: 'default-model', label: '默认模型', icon: 'iconfont icon-duihua' },

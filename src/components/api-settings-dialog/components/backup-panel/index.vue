@@ -72,6 +72,7 @@ import { useChatRoomsStore } from '@/stores/chat-rooms'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useBackupSettingsStore } from '@/stores/backup-settings'
 import { useThemeStore } from '@/stores/theme'
+import { useUserProfileStore } from '@/stores/user-profile'
 import { resolveWebdavBackupPath } from '@/utils/webdav'
 import {
   selectJsonFile,
@@ -92,6 +93,7 @@ const chatRoomsStore = useChatRoomsStore()
 const apiSettingsStore = useApiSettingsStore()
 const backupSettingsStore = useBackupSettingsStore()
 const themeStore = useThemeStore()
+const userProfileStore = useUserProfileStore()
 
 const importing = ref(false)
 
@@ -122,10 +124,15 @@ const buildBackupSettingsSnapshot = () => {
   return backupSnapshot
 }
 
+const buildUserProfileSnapshot = () => ({
+  username: userProfileStore.username,
+  avatarBase64: userProfileStore.avatarBase64
+})
+
 const applyAppSettings = appSettings => {
   if (!appSettings) return
 
-  const { apiSettings, backupSettings, themeSettings } = appSettings
+  const { apiSettings, backupSettings, themeSettings, userProfileSettings } = appSettings
 
   if (apiSettings) {
     apiSettingsStore.updateApiConfig({
@@ -164,6 +171,13 @@ const applyAppSettings = appSettings => {
   if (themeSettings?.themeMode) {
     themeStore.setThemeMode(themeSettings.themeMode)
   }
+
+  if (userProfileSettings) {
+    userProfileStore.updateProfile({
+      username: userProfileSettings.username,
+      avatarBase64: userProfileSettings.avatarBase64
+    })
+  }
 }
 
 const handleExportChat = () => {
@@ -180,6 +194,7 @@ const handleExportFull = () => {
     themeSettings: {
       themeMode: themeStore.themeMode
     },
+    userProfileSettings: buildUserProfileSnapshot(),
     rooms: chatRoomsStore.rooms,
     messages: chatRoomsStore.messages
   })

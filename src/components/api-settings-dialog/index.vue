@@ -46,6 +46,7 @@
 import { ref, computed, watch, markRaw } from 'vue'
 import BiDialog from '@/components/dialog/index.vue'
 import { MENU_LIST } from './config'
+import UserProfilePanel from './components/user-profile-panel/index.vue'
 import ApiModelPanel from './components/api-model-panel/index.vue'
 import AppearancePanel from './components/appearance-panel/index.vue'
 import KnowledgePanel from './components/knowledge-panel/index.vue'
@@ -78,6 +79,7 @@ const dialogVisible = computed({
 
 // 面板组件映射（使用 markRaw 避免响应式开销）
 const panelComponents = {
+  'user-profile': markRaw(UserProfilePanel),
   'api-config': markRaw(ApiModelPanel),
   'model-list': markRaw(ApiModelPanel),
   'default-model': markRaw(ApiModelPanel),
@@ -87,13 +89,13 @@ const panelComponents = {
   webdav: markRaw(WebdavPanel)
 }
 
-const activeMenu = ref('api-config')
+const activeMenu = ref('user-profile')
 const apiModelWizard = useApiModelWizard()
 const apiMenus = ['api-config', 'model-list', 'default-model']
 
 // 当前面板组件
 const currentPanel = computed(() => {
-  return panelComponents[activeMenu.value] || panelComponents['api-config']
+  return panelComponents[activeMenu.value] || panelComponents['user-profile']
 })
 
 // 当前面板 key（用于 visible 判断）
@@ -141,7 +143,7 @@ watch(dialogVisible, visible => {
   if (visible) {
     apiModelWizard.loadFromStore()
     apiModelWizard.reset()
-    activeMenu.value = 'api-config'
+    activeMenu.value = 'user-profile'
   }
 })
 

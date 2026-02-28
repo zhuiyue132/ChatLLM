@@ -35,14 +35,26 @@
         @command="handleUserCommand"
         @visible-change="handleUserDropdownVisibleChange"
       >
-        <el-avatar :size="40" style="cursor: pointer; border: 1px solid rgb(34 39 34 / 8%)" />
+        <div class="user-trigger">
+          <el-avatar
+            :size="40"
+            :src="avatarSrc"
+            style="cursor: pointer; border: 1px solid rgb(34 39 34 / 8%)"
+          >
+            {{ avatarFallbackText }}
+          </el-avatar>
+          <span class="user-trigger-name">{{ displayName }}</span>
+          <i class="iconfont icon-arrowDown"></i>
+        </div>
         <template #dropdown>
           <xs-dropdown-menu class="user-dropdown-menu">
             <!-- 用户信息区域 -->
             <div class="user-info-section">
-              <!-- <el-avatar :src="headUrl" :size="40" style="border: 1px solid rgb(34 39 34 / 8%)" /> -->
+              <el-avatar :src="avatarSrc" :size="40" style="border: 1px solid rgb(34 39 34 / 8%)">
+                {{ avatarFallbackText }}
+              </el-avatar>
               <div class="user-details">
-                <div class="user-item user-name">User</div>
+                <div class="user-item user-name">{{ displayName }}</div>
               </div>
             </div>
 
@@ -76,17 +88,17 @@
 </template>
 
 <script setup>
-import { computed, watch, ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 // import { useEventBus } from '@vueuse/core'
 import { setPopperPosition } from '@/utils'
 // import { AGENT_OPERATION_COMMAND } from '@/config/symbol'
 import { useSidebar } from '@/hooks/use-sidebar'
+import { useUserProfileStore } from '@/stores/user-profile'
 import { XsDropdown, XsDropdownMenu, XsDropdownItem } from '../xs-dropdown'
 import { useDebounceFn } from '@vueuse/core'
 import ApiSettingsDialog from '@/components/api-settings-dialog/index.vue'
 
-// const route = useRoute()
 const router = useRouter()
 // const eventBus = useEventBus(AGENT_OPERATION_COMMAND)
 
@@ -102,6 +114,14 @@ defineProps({
 })
 
 const { isCollapsed, isMobile, toggleSidebar } = useSidebar()
+const userProfileStore = useUserProfileStore()
+
+const displayName = computed(() => userProfileStore.displayName)
+const avatarSrc = computed(() => userProfileStore.avatarBase64 || '')
+const avatarFallbackText = computed(() => {
+  const name = `${displayName.value || ''}`.trim()
+  return (name || 'U').slice(0, 1).toUpperCase()
+})
 
 // API 配置弹窗显示状态
 const apiSettingsVisible = ref(false)
@@ -115,13 +135,12 @@ const menuList = ref([
 ])
 
 const handleUserCommand = useDebounceFn(command => {
-  console.log('handleUserCommand', command)
   if (command === 'api-settings') {
     apiSettingsVisible.value = true
   }
 }, 200)
 
-const handleUserDropdownVisibleChange = visible => {}
+const handleUserDropdownVisibleChange = () => {}
 
 const handleBackClick = () => {
   router.replace({
@@ -330,6 +349,37 @@ const handleBackClick = () => {
       i {
         margin: 0;
         padding: 0;
+      }
+    }
+
+    .user-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      max-width: 220px;
+      padding: 4px 2px 4px 8px;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 999px;
+      transition: background-color 0.2s ease;
+
+      .user-trigger-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-normal-color);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .iconfont {
+        color: var(--text-dblight-color);
+        font-size: 12px;
+      }
+
+      &:hover {
+        background-color: var(--bg-hover);
       }
     }
   }
