@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-07-22
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-29
+ * @LastEditTime : 2026-02-28
  * @FilePath     : /ChatLLM/src/components/completions-message/user.vue
  * @Description  : 用户消息组件
  * 
@@ -401,7 +401,7 @@ const handleNextPage = () => {
   justify-content: flex-end;
   width: 100%;
 
-    .message-content {
+  .message-content {
     display: flex;
     align-items: center;
     padding: 8px 12px;
