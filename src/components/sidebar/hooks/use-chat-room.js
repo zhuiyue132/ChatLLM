@@ -14,6 +14,9 @@ import { ElMessageBox } from 'element-plus'
 import { useInfiniteScroll } from '@vueuse/core'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
 import dayjs from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+
+dayjs.extend(isSameOrAfter)
 
 /**
  * 将 store 中的房间格式转换为 sidebar 列表所需的格式
