@@ -41,14 +41,19 @@ pinia.use(
 
 dayjs.locale('zh-cn')
 
-const app = createApp(App)
-app.use(pinia)
-app.use(vTitle)
-app.use(vXsLoading)
-app.use(vOverflowTitle)
-app.use(processPolyfill)
-app.use(router)
-app.mount('#app')
+const bootstrap = async () => {
+  const app = createApp(App)
+  app.use(pinia)
+  app.use(vTitle)
+  app.use(vXsLoading)
+  app.use(vOverflowTitle)
+  app.use(processPolyfill)
+  app.use(router)
+  await router.isReady()
+  app.mount('#app')
+}
+
+bootstrap()
 
 if (window.history.scrollRestoration) {
   window.history.scrollRestoration = 'manual'
