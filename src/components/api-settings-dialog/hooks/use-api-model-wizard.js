@@ -10,6 +10,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useApiSettingsStore, MODEL_CAPABILITY_KEYS } from '@/stores/api-settings'
 import { getModelListWithConfig } from '@/api/completions'
+import { buildInitialModelCapabilitiesMap } from '@/config/model-capability-defaults'
 
 const normalizeModelList = models => {
   return Array.from(new Set((models || []).filter(Boolean)))
@@ -37,9 +38,7 @@ const normalizeModelCapabilities = capabilityMap => {
         )
       )
     )
-    if (normalizedCapabilities.length > 0) {
-      normalizedMap[modelId] = normalizedCapabilities
-    }
+    normalizedMap[modelId] = normalizedCapabilities
   }
   return normalizedMap
 }
@@ -186,11 +185,7 @@ export const useApiModelWizard = () => {
     const nextMap = {
       ...(modelCapabilities.value || {})
     }
-    if (normalizedMap[modelId]?.length) {
-      nextMap[modelId] = normalizedMap[modelId]
-    } else {
-      delete nextMap[modelId]
-    }
+    nextMap[modelId] = normalizedMap[modelId] || []
     modelCapabilities.value = nextMap
     persistModelCapabilities()
   }
@@ -209,6 +204,14 @@ export const useApiModelWizard = () => {
   const getModelCapabilities = modelId => {
     if (!modelId) return []
     return modelCapabilities.value[modelId] || []
+  }
+
+  const inferAndPersistModelCapabilities = models => {
+    const normalizedCurrentMap = normalizeModelCapabilities(modelCapabilities.value)
+    const nextMap = buildInitialModelCapabilitiesMap(models, normalizedCurrentMap)
+
+    modelCapabilities.value = normalizeModelCapabilities(nextMap)
+    persistModelCapabilities()
   }
 
   // 从 store 加载配置
@@ -257,6 +260,7 @@ export const useApiModelWizard = () => {
         }
         apiSettingsStore.setApiValidationPassed(true)
         apiSettingsStore.updateAvailableModels(models.map(item => item.id))
+        inferAndPersistModelCapabilities(models)
 
         const availableModelSet = new Set(availableModels.value.map(item => item.id))
         const nextSelectedModels = selectedModels.value.filter(model =>

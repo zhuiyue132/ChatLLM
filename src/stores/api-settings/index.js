@@ -27,9 +27,7 @@ const normalizeModelCapabilities = capabilityMap => {
         )
       )
     )
-    if (normalizedCapabilities.length > 0) {
-      normalizedMap[modelId] = normalizedCapabilities
-    }
+    normalizedMap[modelId] = normalizedCapabilities
   }
   return normalizedMap
 }
@@ -172,11 +170,7 @@ export const useApiSettingsStore = defineStore(
       const nextMap = {
         ...(modelCapabilities.value || {})
       }
-      if (normalizedMap[modelId]?.length) {
-        nextMap[modelId] = normalizedMap[modelId]
-      } else {
-        delete nextMap[modelId]
-      }
+      nextMap[modelId] = normalizedMap[modelId] || []
       modelCapabilities.value = nextMap
     }
 
