@@ -25,9 +25,12 @@ export const useApiSettingsStore = defineStore(
     // API 配置（使用环境变量作为默认值）
     const baseURL = ref(defaultConfig.baseURL)
     const apiKey = ref(defaultConfig.apiKey)
+    const apiValidationPassed = ref(false)
 
     // 用户选择的模型列表（可用模型）
     const selectedModels = ref([])
+    // 最近一次拉取到的完整模型列表（含未选中）
+    const availableModels = ref([])
 
     // 默认模型设置
     const defaultChatModel = ref('') // 默认对话模型
@@ -54,10 +57,12 @@ export const useApiSettingsStore = defineStore(
     const settings = computed(() => ({
       baseURL: baseURL.value,
       apiKey: apiKey.value,
+      apiValidationPassed: apiValidationPassed.value,
       defaultModel: defaultChatModel.value,
       defaultChatModel: defaultChatModel.value,
       defaultSummaryModel: defaultSummaryModel.value,
-      defaultTranslateModel: defaultTranslateModel.value
+      defaultTranslateModel: defaultTranslateModel.value,
+      availableModels: availableModels.value
     }))
 
     // 是否已配置
@@ -78,8 +83,26 @@ export const useApiSettingsStore = defineStore(
 
     // 更新 API 配置
     const updateApiConfig = ({ baseURL: url, apiKey: key }) => {
+      let hasSensitiveChanged = false
+
+      if (url !== undefined && url !== baseURL.value) {
+        hasSensitiveChanged = true
+      }
+      if (key !== undefined && key !== apiKey.value) {
+        hasSensitiveChanged = true
+      }
+
       if (url !== undefined) baseURL.value = url
       if (key !== undefined) apiKey.value = key
+
+      if (hasSensitiveChanged) {
+        apiValidationPassed.value = false
+        availableModels.value = []
+      }
+    }
+
+    const setApiValidationPassed = passed => {
+      apiValidationPassed.value = !!passed
     }
 
     // 更新默认模型设置
@@ -101,6 +124,11 @@ export const useApiSettingsStore = defineStore(
       selectedModels.value = models || []
     }
 
+    // 更新完整模型列表
+    const updateAvailableModels = models => {
+      availableModels.value = models || []
+    }
+
     // 更新知识库设置
     const updateKnowledgeBase = config => {
       if (config) {
@@ -117,6 +145,8 @@ export const useApiSettingsStore = defineStore(
       defaultSummaryModel.value = ''
       defaultTranslateModel.value = ''
       selectedModels.value = []
+      availableModels.value = []
+      apiValidationPassed.value = false
       knowledgeBase.value = {
         enabled: false,
         apiUrl: '',
@@ -129,11 +159,13 @@ export const useApiSettingsStore = defineStore(
       // 状态
       baseURL,
       apiKey,
+      apiValidationPassed,
       defaultModel,
       defaultChatModel,
       defaultSummaryModel,
       defaultTranslateModel,
       selectedModels,
+      availableModels,
       knowledgeBase,
       // 计算属性
       settings,
@@ -142,9 +174,11 @@ export const useApiSettingsStore = defineStore(
       effectiveDefaultChatModel,
       // 方法
       updateApiConfig,
+      setApiValidationPassed,
       updateDefaultModels,
       updateSettings,
       updateSelectedModels,
+      updateAvailableModels,
       updateKnowledgeBase,
       resetSettings
     }

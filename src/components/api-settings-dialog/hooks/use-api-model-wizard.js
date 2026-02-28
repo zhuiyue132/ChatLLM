@@ -11,10 +11,6 @@ import { ref, reactive, computed } from 'vue'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { getModelListWithConfig } from '@/api/completions'
 
-const buildConfigSignature = (baseURL, apiKey) => {
-  return `${(baseURL || '').trim()}::${(apiKey || '').trim()}`
-}
-
 const normalizeModelList = models => {
   return Array.from(new Set((models || []).filter(Boolean)))
 }
@@ -32,7 +28,6 @@ export const useApiModelWizard = () => {
   const fetchError = ref('')
   const availableModels = ref([])
   const modelSearchKeyword = ref('')
-  const fetchedConfigSignature = ref('')
 
   // Tab2：模型列表
   const selectedModels = ref([])
@@ -51,11 +46,7 @@ export const useApiModelWizard = () => {
 
   // API Tab 合规：已获取模型，且模型列表对应当前 API 配置
   const isApiTabValid = computed(() => {
-    return (
-      canFetchModels.value &&
-      availableModels.value.length > 0 &&
-      fetchedConfigSignature.value === buildConfigSignature(apiConfig.baseURL, apiConfig.apiKey)
-    )
+    return canFetchModels.value && apiSettingsStore.apiValidationPassed
   })
 
   // 模型列表 Tab 合规：API 合规 + 至少选一个模型
@@ -108,7 +99,6 @@ export const useApiModelWizard = () => {
   }
 
   const invalidateFetchedModels = () => {
-    fetchedConfigSignature.value = ''
     fetchError.value = ''
     modelSearchKeyword.value = ''
     availableModels.value = []
@@ -167,6 +157,12 @@ export const useApiModelWizard = () => {
     showApiKey.value = false
     fetchingModels.value = false
     invalidateFetchedModels()
+    if (apiSettingsStore.apiValidationPassed) {
+      const cachedModels = normalizeModelList(apiSettingsStore.availableModels)
+      const fallbackModels = selectedModels.value
+      const modelSource = cachedModels.length ? cachedModels : fallbackModels
+      availableModels.value = modelSource.map(model => ({ id: model }))
+    }
   }
 
   // 获取模型列表
@@ -179,10 +175,17 @@ export const useApiModelWizard = () => {
     try {
       const res = await getModelListWithConfig(apiConfig.baseURL, apiConfig.apiKey)
       if (res?.data && Array.isArray(res.data)) {
-        availableModels.value = res.data
-          .filter(item => item?.id)
-          .sort((a, b) => a.id.localeCompare(b.id))
-        fetchedConfigSignature.value = buildConfigSignature(apiConfig.baseURL, apiConfig.apiKey)
+        const models = res.data.filter(item => item?.id).sort((a, b) => a.id.localeCompare(b.id))
+        availableModels.value = models
+
+        if (!models.length) {
+          apiSettingsStore.setApiValidationPassed(false)
+          apiSettingsStore.updateAvailableModels([])
+          fetchError.value = '获取模型列表成功，但未返回可用模型'
+          return false
+        }
+        apiSettingsStore.setApiValidationPassed(true)
+        apiSettingsStore.updateAvailableModels(models.map(item => item.id))
 
         const availableModelSet = new Set(availableModels.value.map(item => item.id))
         const nextSelectedModels = selectedModels.value.filter(model =>
@@ -192,9 +195,11 @@ export const useApiModelWizard = () => {
 
         return true
       }
+      apiSettingsStore.setApiValidationPassed(false)
       fetchError.value = '获取模型列表失败：返回数据格式错误'
       return false
     } catch (e) {
+      apiSettingsStore.setApiValidationPassed(false)
       fetchError.value = `获取模型列表失败：${e.message || '网络错误'}`
       return false
     } finally {

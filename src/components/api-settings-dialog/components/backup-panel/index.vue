@@ -99,7 +99,9 @@ const buildApiSettingsSnapshot = () => {
   return {
     baseURL: apiSettingsStore.baseURL,
     apiKey: apiSettingsStore.apiKey,
+    apiValidationPassed: apiSettingsStore.apiValidationPassed,
     selectedModels: [...(apiSettingsStore.selectedModels || [])],
+    availableModels: [...(apiSettingsStore.availableModels || [])],
     defaultModel: apiSettingsStore.defaultChatModel,
     defaultChatModel: apiSettingsStore.defaultChatModel,
     defaultSummaryModel: apiSettingsStore.defaultSummaryModel,
@@ -138,9 +140,13 @@ const applyAppSettings = appSettings => {
     if (apiSettings.selectedModels !== undefined) {
       apiSettingsStore.updateSelectedModels(apiSettings.selectedModels || [])
     }
+    if (apiSettings.availableModels !== undefined) {
+      apiSettingsStore.updateAvailableModels(apiSettings.availableModels || [])
+    }
     if (apiSettings.knowledgeBase !== undefined) {
       apiSettingsStore.updateKnowledgeBase(apiSettings.knowledgeBase || {})
     }
+    apiSettingsStore.setApiValidationPassed(true)
   }
 
   if (backupSettings) {
