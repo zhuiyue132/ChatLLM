@@ -118,11 +118,6 @@
         </el-form>
       </div>
     </div>
-
-    <div class="panel-footer">
-      <div></div>
-      <el-button type="primary" @click="handleSave">保存配置</el-button>
-    </div>
   </div>
 </template>
 
@@ -223,6 +218,18 @@ const applyFormToStore = () => {
   })
 }
 
+const persistFormToStore = () => {
+  backupSettingsStore.updateSettings({
+    webdavEnabled: webdavForm.webdavEnabled,
+    autoBackupEnabled: webdavForm.autoBackupEnabled,
+    intervalMinutes: webdavForm.intervalMinutes,
+    baseUrl: webdavForm.baseUrl,
+    username: webdavForm.username,
+    password: webdavForm.password,
+    backupPath: webdavForm.backupPath
+  })
+}
+
 watch(
   () => props.visible,
   visible => {
@@ -234,10 +241,7 @@ watch(
   { immediate: true }
 )
 
-const handleSave = () => {
-  applyFormToStore()
-  ElMessage.success('WebDAV 配置已保存')
-}
+watch(webdavForm, persistFormToStore, { deep: true })
 
 const handleWebdavBackup = async () => {
   try {
@@ -374,16 +378,5 @@ const handleTest = async () => {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 12px;
-}
-
-.panel-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color-light);
-  gap: 12px;
 }
 </style>

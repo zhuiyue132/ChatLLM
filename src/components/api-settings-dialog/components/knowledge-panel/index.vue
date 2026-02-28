@@ -53,17 +53,11 @@
         </el-form-item>
       </template>
     </el-form>
-
-    <div class="panel-footer">
-      <div></div>
-      <el-button type="primary" @click="handleSave">保存</el-button>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, watch } from 'vue'
-import { ElMessage } from 'element-plus'
 import { useApiSettingsStore } from '@/stores/api-settings'
 
 defineOptions({
@@ -109,16 +103,16 @@ watch(
   { immediate: true }
 )
 
-// 保存知识库配置
-const handleSave = () => {
+const persistKnowledgeConfig = () => {
   apiSettingsStore.updateKnowledgeBase({
     enabled: knowledgeConfig.enabled,
     apiUrl: knowledgeConfig.apiUrl,
     apiKey: knowledgeConfig.apiKey,
     defaultCollection: knowledgeConfig.defaultCollection
   })
-  ElMessage.success('知识库设置已保存')
 }
+
+watch(knowledgeConfig, persistKnowledgeConfig, { deep: true })
 </script>
 
 <style lang="scss" scoped>
@@ -189,14 +183,5 @@ const handleSave = () => {
       }
     }
   }
-}
-
-.panel-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color-light);
 }
 </style>

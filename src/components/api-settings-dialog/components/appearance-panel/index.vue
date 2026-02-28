@@ -29,17 +29,11 @@
         <div class="setting-tip">主题修改后会自动保存并立即生效。</div>
       </div>
     </div>
-
-    <div class="panel-footer">
-      <div></div>
-      <el-button type="primary" @click="handleSave">保存</el-button>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { ElMessage } from 'element-plus'
 import { useThemeStore } from '@/stores/theme'
 
 defineOptions({
@@ -53,7 +47,6 @@ defineProps({
   }
 })
 
-const emit = defineEmits(['saved'])
 const themeStore = useThemeStore()
 
 const themeMode = computed({
@@ -64,11 +57,6 @@ const themeMode = computed({
 const resolvedLabel = computed(() => {
   return themeStore.resolvedTheme === 'dark' ? '深色' : '浅色'
 })
-
-const handleSave = () => {
-  ElMessage.success('主题设置已保存')
-  emit('saved')
-}
 </script>
 
 <style lang="scss" scoped>
@@ -129,15 +117,5 @@ const handleSave = () => {
   :deep(.el-radio-button__inner) {
     padding: 8px 16px;
   }
-}
-
-.panel-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color-light);
 }
 </style>
