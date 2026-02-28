@@ -11,6 +11,7 @@ import { ref, watch, onBeforeUnmount } from 'vue'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
 import { useBackupSettingsStore } from '@/stores/backup-settings'
+import { useThemeStore } from '@/stores/theme'
 import { exportAppBackup, importAppBackup } from '@/utils/data-backup'
 import {
   uploadWebdavJson,
@@ -42,6 +43,7 @@ export const useWebdavBackup = ({ autoStart = false } = {}) => {
   const apiSettingsStore = useApiSettingsStore()
   const chatRoomsStore = useChatRoomsStore()
   const backupSettingsStore = useBackupSettingsStore()
+  const themeStore = useThemeStore()
   const ownsAuto = autoStart && !autoWatchStarted
 
   const buildBackupPayload = () => {
@@ -49,9 +51,7 @@ export const useWebdavBackup = ({ autoStart = false } = {}) => {
       ...(backupSettingsStore.exportableSettings || {})
     }
     if (backupSettingsSnapshot.backupPath) {
-      backupSettingsSnapshot.backupPath = resolveWebdavBackupPath(
-        backupSettingsSnapshot.backupPath
-      )
+      backupSettingsSnapshot.backupPath = resolveWebdavBackupPath(backupSettingsSnapshot.backupPath)
     }
 
     return exportAppBackup({
@@ -68,6 +68,9 @@ export const useWebdavBackup = ({ autoStart = false } = {}) => {
         }
       },
       backupSettings: backupSettingsSnapshot,
+      themeSettings: {
+        themeMode: themeStore.themeMode
+      },
       rooms: chatRoomsStore.rooms,
       messages: chatRoomsStore.messages
     })
@@ -75,7 +78,7 @@ export const useWebdavBackup = ({ autoStart = false } = {}) => {
 
   const applySettings = appSettings => {
     if (!appSettings) return
-    const { apiSettings, backupSettings } = appSettings
+    const { apiSettings, backupSettings, themeSettings } = appSettings
 
     if (apiSettings) {
       apiSettingsStore.updateApiConfig({
@@ -105,6 +108,10 @@ export const useWebdavBackup = ({ autoStart = false } = {}) => {
         password: backupSettings.password,
         backupPath: backupSettings.backupPath
       })
+    }
+
+    if (themeSettings?.themeMode) {
+      themeStore.setThemeMode(themeSettings.themeMode)
     }
   }
 
@@ -227,9 +234,12 @@ export const useWebdavBackup = ({ autoStart = false } = {}) => {
     if (!lastTimestamp || Date.now() - lastTimestamp >= interval * 60 * 1000) {
       backupToWebdav({ silent: true, source: 'auto' })
     }
-    autoTimer = setInterval(() => {
-      backupToWebdav({ silent: true, source: 'auto' })
-    }, interval * 60 * 1000)
+    autoTimer = setInterval(
+      () => {
+        backupToWebdav({ silent: true, source: 'auto' })
+      },
+      interval * 60 * 1000
+    )
   }
 
   if (ownsAuto) {

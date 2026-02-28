@@ -64,6 +64,7 @@ declare module 'vue' {
     StepDefaultModels: typeof import('./src/components/api-settings-dialog/components/api-model-panel/step-default-models.vue')['default']
     StepModelSelect: typeof import('./src/components/api-settings-dialog/components/api-model-panel/step-model-select.vue')['default']
     User: typeof import('./src/components/completions-message/user.vue')['default']
+    WebdavPanel: typeof import('./src/components/api-settings-dialog/components/webdav-panel/index.vue')['default']
     XMarkdown: typeof import('./src/components/x-markdown/index.vue')['default']
     XsDropdown: typeof import('./src/components/xs-dropdown/xs-dropdown.vue')['default']
     XsDropdownItem: typeof import('./src/components/xs-dropdown/xs-dropdown-item.vue')['default']

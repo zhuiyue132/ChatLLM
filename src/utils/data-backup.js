@@ -250,18 +250,26 @@ export const convertCherryStudioData = cherryData => {
  * @param {Object} options - 备份选项
  * @param {Object} options.apiSettings - API 设置快照
  * @param {Object} options.backupSettings - 备份设置快照
+ * @param {Object} options.themeSettings - 主题设置快照
  * @param {Array} options.rooms - 房间列表
  * @param {Object} options.messages - 消息数据
  * @returns {Object}
  */
-export const exportAppBackup = ({ apiSettings, backupSettings, rooms, messages }) => {
+export const exportAppBackup = ({
+  apiSettings,
+  backupSettings,
+  themeSettings,
+  rooms,
+  messages
+}) => {
   const chatData = exportChatData(rooms, messages)
   return {
     version: '2.0',
     exportedAt: new Date().toISOString(),
     appSettings: {
       apiSettings: apiSettings || {},
-      backupSettings: backupSettings || {}
+      backupSettings: backupSettings || {},
+      themeSettings: themeSettings || {}
     },
     chatData
   }

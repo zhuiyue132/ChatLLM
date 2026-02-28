@@ -12,7 +12,8 @@ export const MENU_LIST = [
   { key: 'api-model', label: 'API与模型', icon: 'iconfont icon-api' },
   { key: 'appearance', label: '外观', icon: 'iconfont icon-zhengyan' },
   { key: 'knowledge', label: '知识库', icon: 'iconfont icon-zhishiku' },
-  { key: 'backup', label: '数据备份', icon: 'iconfont icon-download' }
+  { key: 'backup', label: '数据备份', icon: 'iconfont icon-download' },
+  { key: 'webdav', label: 'WebDAV备份', icon: 'iconfont icon-export' }
 ]
 
 // API与模型 分步骤配置

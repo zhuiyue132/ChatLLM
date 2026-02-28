@@ -54,6 +54,7 @@ import ApiModelPanel from './components/api-model-panel/index.vue'
 import AppearancePanel from './components/appearance-panel/index.vue'
 import KnowledgePanel from './components/knowledge-panel/index.vue'
 import BackupPanel from './components/backup-panel/index.vue'
+import WebdavPanel from './components/webdav-panel/index.vue'
 import { useSidebar } from '@/hooks/use-sidebar'
 
 defineOptions({
@@ -83,7 +84,8 @@ const panelComponents = {
   'api-model': markRaw(ApiModelPanel),
   appearance: markRaw(AppearancePanel),
   knowledge: markRaw(KnowledgePanel),
-  backup: markRaw(BackupPanel)
+  backup: markRaw(BackupPanel),
+  webdav: markRaw(WebdavPanel)
 }
 
 const activeMenu = ref('api-model')
