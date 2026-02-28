@@ -88,21 +88,23 @@
             :class="{ selected: wizard.selectedModels.value.includes(model.id) }"
           >
             <el-checkbox :value="model.id">
-              <div class="model-info">
-                <ModelIcon :name="model.id" :size="18" />
-                <div class="model-name">{{ model.id }}</div>
-              </div>
-              <div class="model-capabilities" @click.stop>
-                <button
-                  v-for="capability in wizard.modelCapabilityOptions"
-                  :key="`${model.id}-${capability.value}`"
-                  type="button"
-                  class="capability-tag"
-                  :class="{ active: isModelCapabilityEnabled(model.id, capability.value) }"
-                  @click.stop="handleToggleModelCapability(model.id, capability.value)"
-                >
-                  {{ capability.label }}
-                </button>
+              <div class="model-content">
+                <div class="model-info">
+                  <ModelIcon :name="model.id" :size="18" />
+                  <div class="model-name">{{ model.id }}</div>
+                </div>
+                <div class="model-capabilities" @click.stop>
+                  <button
+                    v-for="capability in wizard.modelCapabilityOptions"
+                    :key="`${model.id}-${capability.value}`"
+                    type="button"
+                    class="capability-tag"
+                    :class="{ active: isModelCapabilityEnabled(model.id, capability.value) }"
+                    @click.stop="handleToggleModelCapability(model.id, capability.value)"
+                  >
+                    {{ capability.label }}
+                  </button>
+                </div>
               </div>
             </el-checkbox>
           </div>
@@ -136,7 +138,12 @@
               :key="model"
               :label="model"
               :value="model"
-            />
+            >
+              <div class="model-option">
+                <ModelIcon :name="model" :size="16" />
+                <span>{{ model }}</span>
+              </div>
+            </el-option>
           </el-select>
           <div class="form-item-tip">新建对话时默认使用的模型</div>
         </el-form-item>
@@ -155,7 +162,12 @@
               :key="model"
               :label="model"
               :value="model"
-            />
+            >
+              <div class="model-option">
+                <ModelIcon :name="model" :size="16" />
+                <span>{{ model }}</span>
+              </div>
+            </el-option>
           </el-select>
           <div class="form-item-tip">用于自动生成对话标题的模型</div>
         </el-form-item>
@@ -174,7 +186,12 @@
               :key="model"
               :label="model"
               :value="model"
-            />
+            >
+              <div class="model-option">
+                <ModelIcon :name="model" :size="16" />
+                <span>{{ model }}</span>
+              </div>
+            </el-option>
           </el-select>
           <div class="form-item-tip">用于文本翻译功能的模型</div>
         </el-form-item>
@@ -401,7 +418,11 @@ const handleToggleModelCapability = (modelId, capability) => {
     :deep(.el-checkbox) {
       width: 100%;
       height: auto;
-      align-items: flex-start;
+      align-items: center;
+
+      .el-checkbox__input {
+        align-self: center;
+      }
 
       .el-checkbox__label {
         display: block;
@@ -416,6 +437,7 @@ const handleToggleModelCapability = (modelId, capability) => {
     align-items: center;
     gap: 8px;
     min-width: 0;
+    flex: 1;
 
     .model-name {
       overflow: hidden;
@@ -430,7 +452,16 @@ const handleToggleModelCapability = (modelId, capability) => {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 8px;
+    justify-content: flex-end;
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
+
+  .model-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
   }
 
   .capability-tag {
@@ -476,6 +507,19 @@ const handleToggleModelCapability = (modelId, capability) => {
     margin-left: auto;
     color: var(--main-color, #007e54);
     font-size: 13px;
+  }
+}
+
+:deep(.model-option) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 </style>

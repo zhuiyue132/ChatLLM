@@ -143,6 +143,11 @@ const filteredModels = computed(() => {
     :deep(.el-checkbox) {
       width: 100%;
       height: auto;
+      align-items: center;
+
+      .el-checkbox__input {
+        align-self: center;
+      }
 
       .el-checkbox__label {
         flex: 1;
