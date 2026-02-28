@@ -10,6 +10,30 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+export const MODEL_CAPABILITY_KEYS = ['vision', 'tool_call', 'rerank', 'embedding']
+
+const normalizeModelCapabilities = capabilityMap => {
+  if (!capabilityMap || typeof capabilityMap !== 'object') {
+    return {}
+  }
+
+  const normalizedMap = {}
+  for (const [modelId, capabilities] of Object.entries(capabilityMap)) {
+    if (!modelId) continue
+    const normalizedCapabilities = Array.from(
+      new Set(
+        (Array.isArray(capabilities) ? capabilities : []).filter(capability =>
+          MODEL_CAPABILITY_KEYS.includes(capability)
+        )
+      )
+    )
+    if (normalizedCapabilities.length > 0) {
+      normalizedMap[modelId] = normalizedCapabilities
+    }
+  }
+  return normalizedMap
+}
+
 // 从环境变量获取默认值
 const getDefaultApiConfig = () => ({
   baseURL: import.meta.env.VITE_APP_API_BASE_URL || '',
@@ -31,6 +55,8 @@ export const useApiSettingsStore = defineStore(
     const selectedModels = ref([])
     // 最近一次拉取到的完整模型列表（含未选中）
     const availableModels = ref([])
+    // 模型能力映射：{ [modelId]: ['vision', 'tool_call'] }
+    const modelCapabilities = ref({})
 
     // 默认模型设置
     const defaultChatModel = ref('') // 默认对话模型
@@ -62,7 +88,8 @@ export const useApiSettingsStore = defineStore(
       defaultChatModel: defaultChatModel.value,
       defaultSummaryModel: defaultSummaryModel.value,
       defaultTranslateModel: defaultTranslateModel.value,
-      availableModels: availableModels.value
+      availableModels: availableModels.value,
+      modelCapabilities: modelCapabilities.value
     }))
 
     // 是否已配置
@@ -129,6 +156,50 @@ export const useApiSettingsStore = defineStore(
       availableModels.value = models || []
     }
 
+    // 更新完整模型能力映射
+    const updateModelCapabilitiesMap = capabilityMap => {
+      modelCapabilities.value = normalizeModelCapabilities(capabilityMap)
+    }
+
+    // 更新单个模型的能力列表
+    const updateModelCapabilities = (modelId, capabilities) => {
+      if (!modelId) return
+
+      const normalizedMap = normalizeModelCapabilities({
+        [modelId]: capabilities
+      })
+
+      const nextMap = {
+        ...(modelCapabilities.value || {})
+      }
+      if (normalizedMap[modelId]?.length) {
+        nextMap[modelId] = normalizedMap[modelId]
+      } else {
+        delete nextMap[modelId]
+      }
+      modelCapabilities.value = nextMap
+    }
+
+    const toggleModelCapability = (modelId, capability) => {
+      if (!modelId || !MODEL_CAPABILITY_KEYS.includes(capability)) return
+      const currentCapabilities = modelCapabilities.value[modelId] || []
+      const hasCapability = currentCapabilities.includes(capability)
+      const nextCapabilities = hasCapability
+        ? currentCapabilities.filter(item => item !== capability)
+        : [...currentCapabilities, capability]
+
+      updateModelCapabilities(modelId, nextCapabilities)
+    }
+
+    const getModelCapabilities = modelId => {
+      if (!modelId) return []
+      return modelCapabilities.value[modelId] || []
+    }
+
+    const modelSupportsCapability = (modelId, capability) => {
+      return getModelCapabilities(modelId).includes(capability)
+    }
+
     // 更新知识库设置
     const updateKnowledgeBase = config => {
       if (config) {
@@ -146,6 +217,7 @@ export const useApiSettingsStore = defineStore(
       defaultTranslateModel.value = ''
       selectedModels.value = []
       availableModels.value = []
+      modelCapabilities.value = {}
       apiValidationPassed.value = false
       knowledgeBase.value = {
         enabled: false,
@@ -166,6 +238,7 @@ export const useApiSettingsStore = defineStore(
       defaultTranslateModel,
       selectedModels,
       availableModels,
+      modelCapabilities,
       knowledgeBase,
       // 计算属性
       settings,
@@ -179,6 +252,11 @@ export const useApiSettingsStore = defineStore(
       updateSettings,
       updateSelectedModels,
       updateAvailableModels,
+      updateModelCapabilitiesMap,
+      updateModelCapabilities,
+      toggleModelCapability,
+      getModelCapabilities,
+      modelSupportsCapability,
       updateKnowledgeBase,
       resetSettings
     }

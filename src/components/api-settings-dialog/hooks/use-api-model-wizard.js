@@ -8,11 +8,40 @@
  */
 
 import { ref, reactive, computed } from 'vue'
-import { useApiSettingsStore } from '@/stores/api-settings'
+import { useApiSettingsStore, MODEL_CAPABILITY_KEYS } from '@/stores/api-settings'
 import { getModelListWithConfig } from '@/api/completions'
 
 const normalizeModelList = models => {
   return Array.from(new Set((models || []).filter(Boolean)))
+}
+
+const MODEL_CAPABILITY_OPTIONS = [
+  { value: 'vision', label: '视觉' },
+  { value: 'tool_call', label: '工具调用' },
+  { value: 'rerank', label: '重排序' },
+  { value: 'embedding', label: '嵌入' }
+]
+
+const normalizeModelCapabilities = capabilityMap => {
+  if (!capabilityMap || typeof capabilityMap !== 'object') {
+    return {}
+  }
+
+  const normalizedMap = {}
+  for (const [modelId, capabilities] of Object.entries(capabilityMap)) {
+    if (!modelId) continue
+    const normalizedCapabilities = Array.from(
+      new Set(
+        (Array.isArray(capabilities) ? capabilities : []).filter(capability =>
+          MODEL_CAPABILITY_KEYS.includes(capability)
+        )
+      )
+    )
+    if (normalizedCapabilities.length > 0) {
+      normalizedMap[modelId] = normalizedCapabilities
+    }
+  }
+  return normalizedMap
 }
 
 export const useApiModelWizard = () => {
@@ -31,6 +60,7 @@ export const useApiModelWizard = () => {
 
   // Tab2：模型列表
   const selectedModels = ref([])
+  const modelCapabilities = ref({})
 
   // Tab3：默认模型
   const defaultModels = reactive({
@@ -75,6 +105,12 @@ export const useApiModelWizard = () => {
 
   const persistSelectedModels = () => {
     apiSettingsStore.updateSelectedModels([...selectedModels.value])
+  }
+
+  const persistModelCapabilities = () => {
+    apiSettingsStore.updateModelCapabilitiesMap({
+      ...(modelCapabilities.value || {})
+    })
   }
 
   const persistDefaultModels = () => {
@@ -141,11 +177,46 @@ export const useApiModelWizard = () => {
     persistDefaultModels()
   }
 
+  const updateModelCapabilities = (modelId, capabilities) => {
+    if (!modelId) return
+
+    const normalizedMap = normalizeModelCapabilities({
+      [modelId]: capabilities
+    })
+    const nextMap = {
+      ...(modelCapabilities.value || {})
+    }
+    if (normalizedMap[modelId]?.length) {
+      nextMap[modelId] = normalizedMap[modelId]
+    } else {
+      delete nextMap[modelId]
+    }
+    modelCapabilities.value = nextMap
+    persistModelCapabilities()
+  }
+
+  const toggleModelCapability = (modelId, capability) => {
+    if (!modelId || !MODEL_CAPABILITY_KEYS.includes(capability)) return
+
+    const currentCapabilities = modelCapabilities.value[modelId] || []
+    const hasCapability = currentCapabilities.includes(capability)
+    const nextCapabilities = hasCapability
+      ? currentCapabilities.filter(item => item !== capability)
+      : [...currentCapabilities, capability]
+    updateModelCapabilities(modelId, nextCapabilities)
+  }
+
+  const getModelCapabilities = modelId => {
+    if (!modelId) return []
+    return modelCapabilities.value[modelId] || []
+  }
+
   // 从 store 加载配置
   const loadFromStore = () => {
     apiConfig.baseURL = apiSettingsStore.baseURL
     apiConfig.apiKey = apiSettingsStore.apiKey
     selectedModels.value = normalizeModelList(apiSettingsStore.selectedModels)
+    modelCapabilities.value = normalizeModelCapabilities(apiSettingsStore.modelCapabilities)
     defaultModels.chat = apiSettingsStore.defaultChatModel || ''
     defaultModels.summary = apiSettingsStore.defaultSummaryModel || ''
     defaultModels.translate = apiSettingsStore.defaultTranslateModel || ''
@@ -223,6 +294,7 @@ export const useApiModelWizard = () => {
     fetchError,
     availableModels,
     selectedModels,
+    modelCapabilities,
     modelSearchKeyword,
     defaultModels,
 
@@ -231,6 +303,7 @@ export const useApiModelWizard = () => {
     canAccessModelListTab,
     canAccessDefaultModelsTab,
     filteredModels,
+    modelCapabilityOptions: MODEL_CAPABILITY_OPTIONS,
 
     // 方法
     loadFromStore,
@@ -238,6 +311,9 @@ export const useApiModelWizard = () => {
     updateApiConfig,
     updateSelectedModels,
     updateDefaultModels,
+    updateModelCapabilities,
+    toggleModelCapability,
+    getModelCapabilities,
     toggleShowApiKey,
     setModelSearchKeyword,
     fetchModels,

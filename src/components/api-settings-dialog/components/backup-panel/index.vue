@@ -104,6 +104,9 @@ const buildApiSettingsSnapshot = () => {
     apiValidationPassed: apiSettingsStore.apiValidationPassed,
     selectedModels: [...(apiSettingsStore.selectedModels || [])],
     availableModels: [...(apiSettingsStore.availableModels || [])],
+    modelCapabilities: {
+      ...(apiSettingsStore.modelCapabilities || {})
+    },
     defaultModel: apiSettingsStore.defaultChatModel,
     defaultChatModel: apiSettingsStore.defaultChatModel,
     defaultSummaryModel: apiSettingsStore.defaultSummaryModel,
@@ -149,6 +152,9 @@ const applyAppSettings = appSettings => {
     }
     if (apiSettings.availableModels !== undefined) {
       apiSettingsStore.updateAvailableModels(apiSettings.availableModels || [])
+    }
+    if (apiSettings.modelCapabilities !== undefined) {
+      apiSettingsStore.updateModelCapabilitiesMap(apiSettings.modelCapabilities || {})
     }
     if (apiSettings.knowledgeBase !== undefined) {
       apiSettingsStore.updateKnowledgeBase(apiSettings.knowledgeBase || {})

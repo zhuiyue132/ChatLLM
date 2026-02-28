@@ -88,7 +88,22 @@
             :class="{ selected: wizard.selectedModels.value.includes(model.id) }"
           >
             <el-checkbox :value="model.id">
-              <div class="model-name">{{ model.id }}</div>
+              <div class="model-info">
+                <ModelIcon :name="model.id" :size="18" />
+                <div class="model-name">{{ model.id }}</div>
+              </div>
+              <div class="model-capabilities" @click.stop>
+                <button
+                  v-for="capability in wizard.modelCapabilityOptions"
+                  :key="`${model.id}-${capability.value}`"
+                  type="button"
+                  class="capability-tag"
+                  :class="{ active: isModelCapabilityEnabled(model.id, capability.value) }"
+                  @click.stop="handleToggleModelCapability(model.id, capability.value)"
+                >
+                  {{ capability.label }}
+                </button>
+              </div>
             </el-checkbox>
           </div>
         </el-checkbox-group>
@@ -170,6 +185,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import ModelIcon from '@/components/model-icon/index.vue'
 
 defineOptions({
   name: 'ApiModelPanel'
@@ -193,7 +209,7 @@ const PANEL_META = {
   },
   'model-list': {
     title: '模型列表',
-    desc: '选择在应用中可用的模型'
+    desc: '选择可用模型，并标记模型能力以支持后续功能开发'
   },
   'default-model': {
     title: '默认模型',
@@ -219,6 +235,14 @@ const handleDefaultModelChange = (key, value) => {
 
 const handleFetchModels = async () => {
   await props.wizard.fetchModels()
+}
+
+const isModelCapabilityEnabled = (modelId, capability) => {
+  return props.wizard.getModelCapabilities(modelId).includes(capability)
+}
+
+const handleToggleModelCapability = (modelId, capability) => {
+  props.wizard.toggleModelCapability(modelId, capability)
 }
 </script>
 
@@ -377,20 +401,59 @@ const handleFetchModels = async () => {
     :deep(.el-checkbox) {
       width: 100%;
       height: auto;
+      align-items: flex-start;
 
       .el-checkbox__label {
+        display: block;
         flex: 1;
         overflow: hidden;
       }
     }
   }
 
-  .model-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 14px;
-    color: var(--text-normal-color);
+  .model-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+
+    .model-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      color: var(--text-normal-color);
+    }
+  }
+
+  .model-capabilities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .capability-tag {
+    border: 1px solid var(--border-color-muted);
+    border-radius: 999px;
+    background: var(--bg-panel);
+    color: var(--text-dblight-color);
+    font-size: 12px;
+    line-height: 1.2;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: var(--main-color, #007e54);
+      color: var(--main-color, #007e54);
+    }
+
+    &.active {
+      border-color: var(--main-color, #007e54);
+      background: rgb(0 126 84 / 8%);
+      color: var(--main-color, #007e54);
+    }
   }
 }
 
