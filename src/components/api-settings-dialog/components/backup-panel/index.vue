@@ -96,6 +96,11 @@ const themeStore = useThemeStore()
 const userProfileStore = useUserProfileStore()
 
 const importing = ref(false)
+const reloadAfterImport = () => {
+  window.setTimeout(() => {
+    window.location.reload()
+  }, 1000)
+}
 
 const buildApiSettingsSnapshot = () => {
   return {
@@ -251,10 +256,11 @@ const handleImportFull = async () => {
 
     if (appSettings) {
       applyAppSettings(appSettings)
-      ElMessage.success(`成功导入 ${importedCount} 个对话，并恢复应用设置`)
+      ElMessage.success(`成功导入 ${importedCount} 个对话，并恢复应用设置，即将刷新页面`)
     } else {
-      ElMessage.success(`成功导入 ${importedCount} 个对话`)
+      ElMessage.success(`成功导入 ${importedCount} 个对话，即将刷新页面`)
     }
+    reloadAfterImport()
   } catch (e) {
     ElMessage.error(`导入失败: ${e.message}`)
   } finally {

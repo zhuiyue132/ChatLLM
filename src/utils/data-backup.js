@@ -251,6 +251,7 @@ export const convertCherryStudioData = cherryData => {
  * @param {Object} options.apiSettings - API 设置快照
  * @param {Object} options.backupSettings - 备份设置快照
  * @param {Object} options.themeSettings - 主题设置快照
+ * @param {Object} options.userProfileSettings - 用户信息快照
  * @param {Array} options.rooms - 房间列表
  * @param {Object} options.messages - 消息数据
  * @returns {Object}
@@ -259,6 +260,7 @@ export const exportAppBackup = ({
   apiSettings,
   backupSettings,
   themeSettings,
+  userProfileSettings,
   rooms,
   messages
 }) => {
@@ -269,7 +271,8 @@ export const exportAppBackup = ({
     appSettings: {
       apiSettings: apiSettings || {},
       backupSettings: backupSettings || {},
-      themeSettings: themeSettings || {}
+      themeSettings: themeSettings || {},
+      userProfileSettings: userProfileSettings || {}
     },
     chatData
   }
@@ -286,6 +289,22 @@ export const importAppBackup = jsonData => {
   }
 
   const hasAppSettings = !!jsonData.appSettings
+  const appSettings = hasAppSettings
+    ? {
+        ...jsonData.appSettings
+      }
+    : null
+
+  if (appSettings) {
+    // 兼容历史字段名，统一为 userProfileSettings
+    appSettings.userProfileSettings =
+      appSettings.userProfileSettings ||
+      appSettings.userProfile ||
+      appSettings.userInfo ||
+      jsonData.userProfileSettings ||
+      null
+  }
+
   let chatPayload = null
 
   if (jsonData.chatData?.data?.rooms && jsonData.chatData?.data?.messages) {
@@ -301,7 +320,7 @@ export const importAppBackup = jsonData => {
   const { rooms, messages } = importNativeData(chatPayload)
 
   return {
-    appSettings: hasAppSettings ? jsonData.appSettings : null,
+    appSettings,
     rooms,
     messages
   }
