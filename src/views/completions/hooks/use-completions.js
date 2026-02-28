@@ -150,40 +150,45 @@ export function useCompletions({ roomId }) {
       })
 
       const id = getRoomId()
-      if (id && receivingMessageId.value) {
-        chatRoomsStore.updateMessage(id, receivingMessageId.value, {
+      const doneMessageId = receivingMessageId.value
+
+      if (id && doneMessageId) {
+        chatRoomsStore.updateMessage(id, doneMessageId, {
           finished: true,
           error: false,
           reasoningTime: reasoning_duration || 0,
           usage: usage || null
         })
-
-        // 如果房间还没有标题，自动生成一个
-        const room = chatRoomsStore.rooms.find(r => r.id === id)
-        if (room) {
-          try {
-            // 获取对话历史用于生成标题
-            const messages = chatRoomsStore.getMessages(id)
-            if (messages.length > 0 && messages.length <= 2) {
-              chatRoomsStore.updateRoomIsTitleLoading(id, true)
-              const title = await generateTitleSync(messages)
-              if (title && title.trim()) {
-                // 更新房间标题
-                chatRoomsStore.updateRoomTitle(id, title.trim())
-              }
-            }
-          } catch (error) {
-            console.warn('[OpenAI SSE] 生成标题失败:', error)
-            // 生成标题失败不影响正常对话
-          } finally {
-            chatRoomsStore.updateRoomIsTitleLoading(id, false)
-          }
-        }
       }
 
+      // 优先恢复交互状态，避免被标题生成请求阻塞
       loading.value = false
       isReceiving.value = false
       receivingMessageId.value = null
+
+      if (!id) return
+
+      // 房间标题后台异步生成，不阻塞输入框按钮状态切换
+      const room = chatRoomsStore.rooms.find(r => r.id === id)
+      if (!room) return
+
+      try {
+        // 获取对话历史用于生成标题
+        const messages = chatRoomsStore.getMessages(id)
+        if (messages.length > 0 && messages.length <= 2) {
+          chatRoomsStore.updateRoomIsTitleLoading(id, true)
+          const title = await generateTitleSync(messages)
+          if (title && title.trim()) {
+            // 更新房间标题
+            chatRoomsStore.updateRoomTitle(id, title.trim())
+          }
+        }
+      } catch (error) {
+        console.warn('[OpenAI SSE] 生成标题失败:', error)
+        // 生成标题失败不影响正常对话
+      } finally {
+        chatRoomsStore.updateRoomIsTitleLoading(id, false)
+      }
     },
     onError: ({ error }) => {
       console.error('[OpenAI SSE] 请求错误:', error)
