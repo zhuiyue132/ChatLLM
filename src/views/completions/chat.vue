@@ -1,70 +1,114 @@
 <template>
-  <div ref="chatContainerRef" class="chat-page" :style="{ paddingBottom: pagePaddingBottom }">
-    <!-- 聊天记录内容 -->
-    <div
-      ref="chatHistoryContainerRef"
-      v-xs-loading="chatHistoryLoading"
-      class="chat-history-container"
-    >
-      <div v-if="!chatHistoryLoading" class="chat-messages">
-        <div
-          v-for="msg in chatHistory"
-          :id="`message-${msg.id}`"
-          :key="msg.id || roomId"
-          class="message-wrapper"
-        >
-          <!-- 用户消息 -->
-          <CompletionsUserMessage
-            v-if="msg.role.toLowerCase() === 'user'"
-            :key="`${msg.id || roomId}`"
-            :current-page="msg.pageIndex + 1"
-            :total-pages="msg.siblingCount || 1"
-            :message="msg.content"
-            :file-list="msg.fileList || []"
-            :edit-mode="editingMessageId === msg.id"
-            :loading="loading || isReceiving"
-            @edit="handleEditUserMessage(msg.id)"
-            @cancel-edit="handleCancelEditUserMessage"
-            @send-edit="
-              handleSendEditedUserMessage({
-                messageId: msg.id,
-                editedContent: $event
-              })
-            "
-            @prev="handleUserPrevPage(msg.id)"
-            @next="handleUserNextPage(msg.id)"
-          />
+  <div
+    ref="chatContainerRef"
+    class="chat-page"
+    :class="{ 'is-preview-visible': previewVisible }"
+    :style="{ paddingBottom: pagePaddingBottom }"
+  >
+    <div ref="chatMainRef" class="chat-main">
+      <!-- 聊天记录内容 -->
+      <div
+        ref="chatHistoryContainerRef"
+        v-xs-loading="chatHistoryLoading"
+        class="chat-history-container"
+      >
+        <div v-if="!chatHistoryLoading" class="chat-messages">
+          <div
+            v-for="msg in chatHistory"
+            :id="`message-${msg.id}`"
+            :key="msg.id || roomId"
+            class="message-wrapper"
+          >
+            <!-- 用户消息 -->
+            <CompletionsUserMessage
+              v-if="msg.role.toLowerCase() === 'user'"
+              :key="`${msg.id || roomId}`"
+              :current-page="msg.pageIndex + 1"
+              :total-pages="msg.siblingCount || 1"
+              :message="msg.content"
+              :file-list="msg.fileList || []"
+              :edit-mode="editingMessageId === msg.id"
+              :loading="loading || isReceiving"
+              @edit="handleEditUserMessage(msg.id)"
+              @cancel-edit="handleCancelEditUserMessage"
+              @send-edit="
+                handleSendEditedUserMessage({
+                  messageId: msg.id,
+                  editedContent: $event
+                })
+              "
+              @prev="handleUserPrevPage(msg.id)"
+              @next="handleUserNextPage(msg.id)"
+            />
 
-          <!-- 助手消息 -->
-          <CompletionsAssistantMessage
-            v-else-if="msg.role.toLowerCase() === 'assistant'"
-            :key="`assistant-${msg.id || roomId}`"
-            :message="msg.content"
-            :finished="msg.finished"
-            :loading="loading && chatHistory.indexOf(msg) === chatHistory.length - 1"
-            :message-id="msg.id"
-            :parent-id="msg.parentId"
-            :model="msg.model"
-            :error="msg.error"
-            :receiving="isReceiving"
-            :thinking-content="msg.reasoningContent"
-            :thinking-duration="msg.reasoningTime"
-            :current-page="msg.pageIndex + 1"
-            :total-pages="msg.siblingCount || 1"
-            :usage="msg.usage"
-            @regenerate="handleRegenerateAnswer"
-            @prev="handleAssistantPrevPage(msg.parentId)"
-            @next="handleAssistantNextPage(msg.parentId)"
-          />
+            <!-- 助手消息 -->
+            <CompletionsAssistantMessage
+              v-else-if="msg.role.toLowerCase() === 'assistant'"
+              :key="`assistant-${msg.id || roomId}`"
+              :message="msg.content"
+              :finished="msg.finished"
+              :loading="loading && chatHistory.indexOf(msg) === chatHistory.length - 1"
+              :message-id="msg.id"
+              :parent-id="msg.parentId"
+              :model="msg.model"
+              :error="msg.error"
+              :receiving="isReceiving"
+              :thinking-content="msg.reasoningContent"
+              :thinking-duration="msg.reasoningTime"
+              :current-page="msg.pageIndex + 1"
+              :total-pages="msg.siblingCount || 1"
+              :usage="msg.usage"
+              @regenerate="handleRegenerateAnswer"
+              @prev="handleAssistantPrevPage(msg.parentId)"
+              @next="handleAssistantNextPage(msg.parentId)"
+            />
+          </div>
         </div>
       </div>
     </div>
 
-    <div
-      ref="inputContainerRef"
-      class="input-container"
-      :style="{ transform: `translateX(${agentPositionX})` }"
+    <aside
+      ref="codePreviewPanelRef"
+      class="code-preview-panel"
+      :class="{ 'is-open': previewVisible }"
     >
+      <div v-if="previewVisible" class="code-preview-inner">
+        <div class="code-preview-header">
+          <div class="code-preview-title">
+            <span class="title-text">{{ previewState.title || '代码预览' }}</span>
+            <span v-if="previewState.language" class="title-language">
+              {{ previewState.language }}
+            </span>
+          </div>
+          <div class="code-preview-actions">
+            <button type="button" class="preview-action-btn" @click="handleRefreshPreview">
+              刷新
+            </button>
+            <button type="button" class="preview-action-btn" @click="handleTogglePreviewFullscreen">
+              {{ isPreviewFullscreen ? '退出全屏' : '全屏' }}
+            </button>
+            <button type="button" class="preview-action-btn" @click="handleClosePreview">
+              关闭
+            </button>
+          </div>
+        </div>
+
+        <div class="code-preview-body">
+          <iframe
+            v-if="previewVisible"
+            :key="iframeRenderKey"
+            ref="previewIframeRef"
+            class="code-preview-iframe"
+            :style="previewIframeStyle"
+            :srcdoc="previewSrcDoc"
+            sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads allow-pointer-lock allow-presentation allow-top-navigation-by-user-activation"
+            title="代码预览"
+          />
+        </div>
+      </div>
+    </aside>
+
+    <div ref="inputContainerRef" class="input-container" :style="inputContainerStyle">
       <div class="input-container-content">
         <AgentSender
           ref="senderRef"
@@ -89,18 +133,23 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onBeforeUnmount, nextTick, watch } from 'vue'
 import AgentSender from '@/components/sender/index.vue'
 import CompletionsUserMessage from '@/components/completions-message/user.vue'
 import CompletionsAssistantMessage from '@/components/completions-message/assistant.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { FETCH_CHAR_HISTORY } from '@/config/symbol'
 import { useApiSettingsStore } from '@/stores/api-settings'
+import { useThemeStore } from '@/stores/theme'
 import { useRoute, onBeforeRouteLeave, useRouter } from 'vue-router'
+import { useCodePreview } from '@/hooks/use-code-preview'
+import { useSidebar } from '@/hooks/use-sidebar'
 import {
   tryOnMounted,
   useElementSize,
+  useElementBounding,
   useWindowScroll,
+  useWindowSize,
   useEventListener,
   useEventBus
 } from '@vueuse/core'
@@ -111,7 +160,13 @@ defineOptions({
   name: 'CompletionsChatPage'
 })
 
+const PREVIEW_HEIGHT_EVENT_KEY = '__CHATLLM_PREVIEW_HEIGHT__'
+const PREVIEW_MIN_IFRAME_HEIGHT = 420
+const PREVIEW_MAX_IFRAME_HEIGHT = 8000
+const SCRIPT_CLOSE_TAG = '</scr' + 'ipt>'
+
 const { x: windowScrollX } = useWindowScroll()
+const { width: windowWidth } = useWindowSize()
 const agentPositionX = computed(() => {
   if (windowScrollX.value) {
     return `${-windowScrollX.value}px`
@@ -122,29 +177,255 @@ const agentPositionX = computed(() => {
 const route = useRoute()
 const router = useRouter()
 const apiSettingsStore = useApiSettingsStore()
+const themeStore = useThemeStore()
+const { closeSidebar } = useSidebar()
+
 const roomId = computed(() => route.query.roomId)
 const senderRef = ref(null)
 const chatContainerRef = ref(null)
+const chatMainRef = ref(null)
 
 const chatHistoryContainerRef = ref(null)
 const inputContainerRef = ref(null)
+const codePreviewPanelRef = ref(null)
+const previewIframeRef = ref(null)
+
+const previewFrameHeight = ref(0)
+const isPreviewFullscreen = ref(false)
 
 const { height: inputContainerHeight } = useElementSize(inputContainerRef)
 const { height: chatHistoryContainerHeight } = useElementSize(chatHistoryContainerRef)
+const { left: chatMainLeft, width: chatMainWidth } = useElementBounding(chatMainRef)
+
+const { previewVisible, previewState, previewVersion, closePreview, refreshPreview, resetPreview } =
+  useCodePreview()
 
 const floatButtonEnable = computed(() => {
   return chatHistoryContainerHeight.value > window.innerHeight
 })
 
-// 最后一条消息是否有错误
-const lastMessageHasError = computed(() => {
-  if (chatHistory.value.length === 0) return false
-  const lastMessage = chatHistory.value[chatHistory.value.length - 1]
-  return !!lastMessage?.error
+const inputContainerStyle = computed(() => {
+  const hasMainWidth = chatMainWidth.value > 0
+  const safeLeft = hasMainWidth ? Math.max(chatMainLeft.value, 0) : 0
+  const safeWidth = hasMainWidth ? chatMainWidth.value : windowWidth.value
+
+  return {
+    left: `${safeLeft}px`,
+    width: `${safeWidth}px`,
+    transform: `translateX(${agentPositionX.value})`
+  }
 })
 
-// 输入框高度 + 垂直padding：68 + 80：最后一条消息到输入框的距离
-const pagePaddingBottom = computed(() => `${inputContainerHeight.value + 68 + 80}px`)
+const resolveThemeBridge = () => {
+  const rootStyle = window.getComputedStyle(document.documentElement)
+  const fallbackBg = themeStore.isDark ? '#0f1115' : '#ffffff'
+  const fallbackText = themeStore.isDark ? '#f5f7fa' : '#000000'
+  const fallbackLink = themeStore.isDark ? '#4ea1ff' : '#0969da'
+
+  return {
+    background: rootStyle.getPropertyValue('--bg-app').trim() || fallbackBg,
+    text: rootStyle.getPropertyValue('--text-normal-color').trim() || fallbackText,
+    link: fallbackLink,
+    colorScheme: themeStore.isDark ? 'dark' : 'light'
+  }
+}
+
+const ensurePreviewHtmlStructure = source => {
+  let content = source
+
+  if (!/<html[\s>]/i.test(content)) {
+    if (/<head[\s>]/i.test(content) || /<body[\s>]/i.test(content)) {
+      content = `<html>${content}</html>`
+    } else {
+      content = `<html><head></head><body>${content}</body></html>`
+    }
+  }
+
+  if (!/<head[\s>]/i.test(content)) {
+    content = content.replace(/<html[^>]*>/i, match => `${match}<head></head>`)
+  }
+
+  if (!/<body[\s>]/i.test(content)) {
+    if (/<\/head>/i.test(content)) {
+      content = content.replace(/<\/head>/i, '</head><body></body>')
+    } else {
+      content = content.replace(/<html[^>]*>/i, match => `${match}<body></body>`)
+    }
+  }
+
+  if (!/<\/html>/i.test(content)) {
+    content = `${content}</html>`
+  }
+
+  if (!/<!doctype\s+html>/i.test(content)) {
+    content = `<!doctype html>\n${content}`
+  }
+
+  return content
+}
+
+const buildPreviewBridgeScript = () => {
+  return `<script>
+(function () {
+  const EVENT_KEY = '${PREVIEW_HEIGHT_EVENT_KEY}'
+  const postHeight = () => {
+    const doc = document.documentElement
+    const body = document.body
+    const nextHeight = Math.max(
+      doc ? doc.scrollHeight : 0,
+      doc ? doc.offsetHeight : 0,
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0
+    )
+    window.parent.postMessage({ event: EVENT_KEY, height: nextHeight }, '*')
+  }
+
+  if (typeof ResizeObserver === 'function') {
+    const observer = new ResizeObserver(postHeight)
+    if (document.documentElement) {
+      observer.observe(document.documentElement)
+    }
+  }
+
+  window.addEventListener('load', postHeight)
+  window.addEventListener('resize', postHeight)
+  setTimeout(postHeight, 0)
+  setTimeout(postHeight, 120)
+  setTimeout(postHeight, 300)
+})()
+${SCRIPT_CLOSE_TAG}`
+}
+
+const buildPreviewSrcDoc = rawSource => {
+  const source = `${rawSource || ''}`.trim()
+  if (!source) {
+    return ''
+  }
+
+  const theme = resolveThemeBridge()
+  const themeStyle = `<style id="chatllm-preview-theme">
+:root {
+  color-scheme: ${theme.colorScheme};
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: ${theme.background};
+  color: ${theme.text};
+}
+
+a {
+  color: ${theme.link};
+}
+</style>`
+
+  const bridgeScript = buildPreviewBridgeScript()
+  let withStructure = ensurePreviewHtmlStructure(source)
+
+  withStructure = withStructure.replace(/<head[^>]*>/i, match => `${match}\n${themeStyle}\n`)
+
+  if (/<\/body>/i.test(withStructure)) {
+    withStructure = withStructure.replace(/<\/body>/i, `${bridgeScript}\n</body>`)
+  } else {
+    withStructure = `${withStructure}\n${bridgeScript}`
+  }
+
+  return withStructure
+}
+
+const previewSrcDoc = computed(() => {
+  if (!previewVisible.value) {
+    return ''
+  }
+  return buildPreviewSrcDoc(previewState.value.source)
+})
+
+const iframeRenderKey = computed(() => {
+  const themeKey = themeStore.isDark ? 'dark' : 'light'
+  return `${previewVersion.value}-${previewState.value.openedAt}-${themeKey}`
+})
+
+const previewIframeStyle = computed(() => {
+  if (!previewFrameHeight.value) {
+    return {}
+  }
+
+  return {
+    height: `${previewFrameHeight.value}px`
+  }
+})
+
+const teardownPreviewFullscreen = async () => {
+  if (document.fullscreenElement === codePreviewPanelRef.value) {
+    try {
+      await document.exitFullscreen()
+    } catch (error) {
+      console.warn('[Completions] 退出代码预览全屏失败', error)
+    }
+  }
+}
+
+const handleClosePreview = () => {
+  closePreview()
+}
+
+const handleRefreshPreview = () => {
+  refreshPreview()
+}
+
+const handleTogglePreviewFullscreen = async () => {
+  const panelElement = codePreviewPanelRef.value
+  if (!panelElement) {
+    return
+  }
+
+  try {
+    if (document.fullscreenElement === panelElement) {
+      await document.exitFullscreen()
+    } else {
+      await panelElement.requestFullscreen()
+    }
+  } catch (error) {
+    console.warn('[Completions] 切换代码预览全屏失败', error)
+  }
+}
+
+const handlePreviewMessage = event => {
+  if (event.source !== previewIframeRef.value?.contentWindow) {
+    return
+  }
+
+  const payload = event.data
+  if (!payload || payload.event !== PREVIEW_HEIGHT_EVENT_KEY) {
+    return
+  }
+
+  const nextHeight = Number(payload.height)
+  if (!Number.isFinite(nextHeight) || nextHeight <= 0) {
+    return
+  }
+
+  previewFrameHeight.value = Math.min(
+    PREVIEW_MAX_IFRAME_HEIGHT,
+    Math.max(PREVIEW_MIN_IFRAME_HEIGHT, Math.ceil(nextHeight))
+  )
+}
+
+watch(previewVisible, async visible => {
+  if (visible) {
+    closeSidebar()
+    return
+  }
+
+  previewFrameHeight.value = 0
+  await teardownPreviewFullscreen()
+})
+
+watch(previewVersion, () => {
+  previewFrameHeight.value = 0
+})
 
 const {
   models,
@@ -171,6 +452,17 @@ const {
 } = useCompletions({
   roomId
 })
+
+// 最后一条消息是否有错误
+const lastMessageHasError = computed(() => {
+  if (chatHistory.value.length === 0) return false
+  const lastMessage = chatHistory.value[chatHistory.value.length - 1]
+  return !!lastMessage?.error
+})
+
+// 输入框高度 + 垂直padding：68 + 80：最后一条消息到输入框的距离
+const pagePaddingBottom = computed(() => `${inputContainerHeight.value + 68 + 80}px`)
+
 const isCurrentModelSupportsVision = computed(() => {
   return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'vision')
 })
@@ -203,7 +495,6 @@ tryOnMounted(async () => {
 
     nextTick(() => {
       // 如果聊天记录为空，则跳转至首页
-      console.log('chatHistory', chatHistory.value)
       if (chatHistory.value.length === 0) {
         router.replace({
           name: 'Completions'
@@ -244,10 +535,10 @@ const handleManualStop = async () => {
   }
 }
 
-// 组件卸载前停止对话
-onBeforeUnmount(async () => {
-  loading.value = false
-  await handleManualStop()
+useEventListener(window, 'message', handlePreviewMessage)
+
+useEventListener(document, 'fullscreenchange', () => {
+  isPreviewFullscreen.value = document.fullscreenElement === codePreviewPanelRef.value
 })
 
 useEventListener(window, 'beforeunload', async () => {
@@ -255,60 +546,55 @@ useEventListener(window, 'beforeunload', async () => {
   await handleManualStop()
 })
 
-// 路由离开前停止对话
-onBeforeRouteLeave(async (to, from, next) => {
+// 组件卸载前停止对话
+onBeforeUnmount(async () => {
   loading.value = false
   await handleManualStop()
+  await teardownPreviewFullscreen()
+  resetPreview()
+})
+
+// 路由离开前停止对话
+onBeforeRouteLeave(async (_to, _from, next) => {
+  loading.value = false
+  await handleManualStop()
+  await teardownPreviewFullscreen()
+  resetPreview()
   next()
 })
 </script>
 
 <style lang="scss" scoped>
-.input-container {
-  position: fixed;
-  bottom: 0;
-  z-index: 11;
-
-  padding: 20px 0 48px;
-  background-color: var(--bg-app);
-
-  &-content {
-    width: 1080px;
-    margin: 0 auto;
-
-    @media screen and (width <= 1440px) {
-      width: 960px;
-    }
-
-    @media screen and (width > 1440px) and (width < 1920px) {
-      width: 960px;
-    }
-
-    @media screen and (width >= 1920px) {
-      width: 1080px;
-    }
-  }
-}
-
-.float-button-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
 .chat-page {
   display: flex;
   overflow: hidden auto;
-  align-items: center;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: flex-start;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
   min-height: calc(100vh - 72px);
-  padding: 32px 0 0; /* 增加底部padding，为固定定位的输入框留出空间 */
+  padding: 32px 16px 0;
   background-color: var(--bg-app);
+}
+
+.chat-main {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+  transition: transform 0.32s ease;
+}
+
+.chat-page.is-preview-visible {
+  .chat-main {
+    transition: transform 0.32s ease;
+    transform: translateX(-8px);
+  }
+
+  .chat-messages {
+    transition: transform 0.32s ease;
+    transform: translateX(-4px);
+  }
 }
 
 /* 聊天记录页样式 */
@@ -318,20 +604,9 @@ onBeforeRouteLeave(async (to, from, next) => {
   overflow-y: visible;
   flex: 1;
   flex-direction: column;
-  width: 1080px;
+  width: 100%;
+  max-width: 1080px;
   min-height: 100%;
-
-  @media screen and (width <= 1440px) {
-    width: 960px;
-  }
-
-  @media screen and (width > 1440px) and (width < 1920px) {
-    width: 960px;
-  }
-
-  @media screen and (width >= 1920px) {
-    width: 1080px;
-  }
 }
 
 .chat-messages {
@@ -340,6 +615,7 @@ onBeforeRouteLeave(async (to, from, next) => {
   width: 100%;
   padding: 0;
   padding-bottom: 180px;
+  transition: transform 0.32s ease;
 
   .message-wrapper {
     margin-bottom: 24px;
@@ -350,30 +626,230 @@ onBeforeRouteLeave(async (to, from, next) => {
   }
 }
 
+.code-preview-panel {
+  position: relative;
+  flex: 0 0 auto;
+  width: 0;
+  margin-left: 0;
+  transition:
+    width 0.34s cubic-bezier(0.2, 0.65, 0.2, 1),
+    margin-left 0.34s cubic-bezier(0.2, 0.65, 0.2, 1);
+
+  &.is-open {
+    width: min(800px, 52vw);
+    margin-left: 16px;
+  }
+}
+
+.code-preview-inner {
+  position: fixed;
+  top: 88px;
+  right: 16px;
+  z-index: 30;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  width: min(800px, 52vw);
+  height: calc(100vh - 104px);
+  transition:
+    opacity 0.26s ease,
+    transform 0.34s cubic-bezier(0.2, 0.65, 0.2, 1);
+  transform: translateX(36px);
+  pointer-events: none;
+  opacity: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-elevated);
+}
+
+.code-preview-panel.is-open .code-preview-inner {
+  transform: translateX(0);
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.code-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-subtle);
+
+  @include flex-gap(12px, row);
+}
+
+.code-preview-title {
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+
+  @include flex-gap(8px, row);
+
+  .title-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-normal-color);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .title-language {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    color: var(--text-dblight-color);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-app);
+    font-size: 12px;
+    line-height: 18px;
+  }
+}
+
+.code-preview-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+
+  @include flex-gap(8px, row);
+}
+
+.preview-action-btn {
+  height: 28px;
+  padding: 0 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-normal-color);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-app);
+  font-size: 12px;
+  line-height: 26px;
+
+  &:hover {
+    color: var(--main-color);
+    border-color: var(--main-color-light-5);
+  }
+}
+
+.code-preview-body {
+  overflow: auto;
+  flex: 1;
+  padding: 0;
+  background: var(--bg-app);
+}
+
+.code-preview-iframe {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.code-preview-panel:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  transform: none;
+  opacity: 1;
+  background: var(--bg-app);
+}
+
+.code-preview-panel:fullscreen .code-preview-inner {
+  position: static;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.input-container {
+  position: fixed;
+  bottom: 0;
+  z-index: 11;
+  padding: 20px 0 48px;
+  transition:
+    left 0.32s cubic-bezier(0.2, 0.65, 0.2, 1),
+    width 0.32s cubic-bezier(0.2, 0.65, 0.2, 1),
+    transform 0.18s ease;
+  background-color: var(--bg-app);
+
+  &-content {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+}
+
+.float-button-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 @include mobile {
   .chat-page {
-    padding-top: 16px;
     min-height: calc(100vh - 56px);
+    padding: 16px 0 0;
+  }
+
+  .chat-page.is-preview-visible {
+    .chat-main,
+    .chat-messages {
+      transform: none;
+    }
   }
 
   .chat-history-container {
-    width: 100% !important;
-    padding: 0 12px;
     box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    padding: 0 12px;
+  }
+
+  .code-preview-panel {
+    position: fixed;
+    top: 56px;
+    right: 0;
+    bottom: 0;
+    z-index: 21;
+    width: 0;
+    margin: 0;
+
+    &.is-open {
+      width: 100vw;
+      margin: 0;
+    }
+  }
+
+  .code-preview-inner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
   }
 
   .input-container {
-    left: 0;
     right: 0;
-    width: 100%;
+    left: 0 !important;
+    width: 100% !important;
     padding: 12px 0 0;
 
     @include safe-area-padding(bottom);
 
     &-content {
-      width: 100% !important;
-      padding: 0 12px;
       box-sizing: border-box;
+      width: 100%;
+      max-width: none;
+      padding: 0 12px;
     }
   }
 }
