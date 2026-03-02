@@ -53,7 +53,7 @@
 
       <!-- 消息正文内容 -->
       <div v-if="!imageList.length" class="message-content">
-        <div ref="mdContainer" class="message-text markdown-body">
+        <div class="message-text markdown-body">
           <div v-if="error" class="error-content">内容生成时出现错误，请稍后重试！</div>
           <MarkdownRenderer v-else :content="message" />
         </div>
@@ -61,7 +61,7 @@
       <!-- 图片内容 -->
       <template v-else>
         <div class="message-content">
-          <div ref="mdContainer" class="message-text markdown-body">
+          <div class="message-text markdown-body">
             {{
               imageList?.some?.(item => item.loading)
                 ? '图片创建中...'
@@ -216,7 +216,6 @@ const LoadingComponent = computed(() => {
   return ChatMessageItemLoading
 })
 
-const mdContainer = ref(null)
 // 默认收起思考过程
 const showThinking = ref(false)
 
@@ -263,7 +262,7 @@ const toggleThinking = () => {
 
 // 复制消息
 const copyMessage = async () => {
-  await onCopy(mdContainer.value?.innerText)
+  await onCopy(props.message || '')
 }
 
 // 分页相关计算属性
