@@ -71,9 +71,18 @@
               v-model="model"
               :model-list="modelList"
             />
+            <!-- MCP 选择 -->
+            <McpSelector
+              v-if="showMcpSelector"
+              v-model="selectedMcpServerIds"
+              v-model:session-enabled="mcpSessionEnabled"
+              :global-enabled="mcpGlobalEnabled"
+              :server-list="mcpServerList"
+              :disabled="loading"
+            />
             <!-- 没有模型时显示配置按钮 -->
             <el-button
-              v-else-if="showModelSelect && modelList.length === 0"
+              v-if="showModelSelect && modelList.length === 0"
               type="primary"
               size="small"
               @click="handleOpenSettings"
@@ -115,11 +124,12 @@
 
 <script setup>
 import MentionSender from '../mention-sender/index.vue'
-import { ref, computed, useSlots, nextTick } from 'vue'
+import { ref, computed, useSlots, nextTick, watch } from 'vue'
 import Loading from '../mention-sender/components/loading-button/index.vue'
 import { showMessage } from '@/hooks'
 import FloatButton from '../float-button/index.vue'
 import ModelSelector from './components/model-select.vue'
+import McpSelector from './components/mcp-selector.vue'
 import ModelIcon from '@/components/model-icon/index.vue'
 import FileItem from './components/file-item.vue'
 import ImageUploadButton from './components/image-upload.vue'
@@ -310,6 +320,27 @@ const props = defineProps({
   showMentionModel: {
     type: Boolean,
     default: false
+  },
+
+  // 是否显示 MCP 选择器
+  showMcpSelector: {
+    type: Boolean,
+    default: false
+  },
+  // MCP 全局开关（仅用于提示）
+  mcpGlobalEnabled: {
+    type: Boolean,
+    default: false
+  },
+  // 当前会话 MCP 开关
+  mcpSessionEnabled: {
+    type: Boolean,
+    default: false
+  },
+  // MCP 服务列表
+  mcpServerList: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -328,6 +359,7 @@ const emits = defineEmits([
   'update:createImage',
   'update:createImageCount',
   'update:customTemplateId',
+  'update:mcpSessionEnabled',
   'template-setting-confirmed'
 ])
 
@@ -349,6 +381,18 @@ const radioValue = useVModel(props, 'radioValue', emits)
 // 公共模板ID
 const customTemplateId = useVModel(props, 'customTemplateId', emits)
 
+// 会话 MCP 开关
+const mcpSessionEnabled = useVModel(props, 'mcpSessionEnabled', emits)
+
+// 本条消息启用的 MCP 服务列表
+const selectedMcpServerIds = ref([])
+
+const mcpAvailableServerIds = computed(() => {
+  return (props.mcpServerList || [])
+    .filter(server => server?.id && server?.enabled !== false)
+    .map(server => server.id)
+})
+
 // 几个按钮的loading状态控制
 const loadingMap = ref({
   file: false,
@@ -369,7 +413,8 @@ const footerEnable = computed(() => {
     props.showRadioBtn ||
     props.showPriceBtn ||
     props.showSelectionBtn ||
-    props.showTemplateSettingBtn
+    props.showTemplateSettingBtn ||
+    props.showMcpSelector
   )
 })
 
@@ -481,6 +526,7 @@ const handleSendClick = (extraData = {}) => {
     emits('submit', {
       fileList: [...filesUploaded.value],
       message: inputValue.value,
+      mcpServerIds: mcpSessionEnabled.value ? [...selectedMcpServerIds.value] : [],
       priceRangeTemplateId: priceRangeTemplateId.value,
       selectionTemplateId: selectionTemplateId.value,
       customTemplateId: customTemplateId.value,
@@ -496,6 +542,7 @@ const handleSendClick = (extraData = {}) => {
     }
     emits('submit', {
       message: inputValue.value,
+      mcpServerIds: mcpSessionEnabled.value ? [...selectedMcpServerIds.value] : [],
       priceRangeTemplateId: priceRangeTemplateId.value,
       selectionTemplateId: selectionTemplateId.value,
       customTemplateId: customTemplateId.value,
@@ -506,6 +553,8 @@ const handleSendClick = (extraData = {}) => {
 
     filesUploaded.value = []
   }
+
+  selectedMcpServerIds.value = []
 }
 
 const handleStopClick = () => {
@@ -536,6 +585,23 @@ defineExpose({
   cancel: () => mentionSenderRef.value?.cancel(),
   filesUploaded
 })
+
+watch(
+  () => mcpSessionEnabled.value,
+  enabled => {
+    if (!enabled) {
+      selectedMcpServerIds.value = []
+    }
+  }
+)
+
+watch(
+  () => mcpAvailableServerIds.value.join(','),
+  value => {
+    const availableSet = new Set((value || '').split(',').filter(Boolean))
+    selectedMcpServerIds.value = selectedMcpServerIds.value.filter(id => availableSet.has(id))
+  }
+)
 </script>
 <style lang="scss">
 .agents-sender-wrapper {

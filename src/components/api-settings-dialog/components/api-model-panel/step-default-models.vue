@@ -114,13 +114,13 @@ const handleUpdate = (key, value) => {
 .optional-tip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
   margin-bottom: 20px;
+  padding: 12px 16px;
   color: var(--text-dblight-color);
-  font-size: 13px;
-  background: var(--bg-panel);
   border-radius: 6px;
+  background: var(--bg-panel);
+  font-size: 13px;
+  gap: 8px;
 
   .iconfont {
     color: var(--warning-accent);
@@ -129,8 +129,8 @@ const handleUpdate = (key, value) => {
 }
 
 .settings-form {
-  flex: 1;
   overflow-y: auto;
+  flex: 1;
 
   :deep(.el-form-item) {
     margin-bottom: 20px;

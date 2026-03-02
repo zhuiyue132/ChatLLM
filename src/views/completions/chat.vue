@@ -58,6 +58,7 @@
               :current-page="msg.pageIndex + 1"
               :total-pages="msg.siblingCount || 1"
               :usage="msg.usage"
+              :mcp-logs="msg.mcpLogs || []"
               @regenerate="handleRegenerateAnswer"
               @prev="handleAssistantPrevPage(msg.parentId)"
               @next="handleAssistantNextPage(msg.parentId)"
@@ -114,7 +115,10 @@
           ref="senderRef"
           v-model="message"
           v-model:model="currentModelValue"
+          v-model:mcp-session-enabled="mcpSessionEnabled"
           :model-list="models"
+          :mcp-server-list="availableMcpServers"
+          :mcp-global-enabled="mcpSettingsStore.globalEnabled"
           :float-button-enable="floatButtonEnable && !loading && !isReceiving"
           :loading="loading || isReceiving"
           :placeholder="PLACEHOLDER_MAP.DEFAULT"
@@ -123,6 +127,7 @@
           :hidden-input-when-files="false"
           :min-rows="2"
           :show-image-btn="isCurrentModelSupportsVision"
+          show-mcp-selector
           show-model-select
           show-mention-model
           @submit="handleSendMessage"
@@ -140,6 +145,8 @@ import CompletionsAssistantMessage from '@/components/completions-message/assist
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { FETCH_CHAR_HISTORY } from '@/config/symbol'
 import { useApiSettingsStore } from '@/stores/api-settings'
+import { useMcpSettingsStore } from '@/stores/mcp-settings'
+import { useChatRoomsStore } from '@/stores/chat-rooms'
 import { useThemeStore } from '@/stores/theme'
 import { useRoute, onBeforeRouteLeave, useRouter } from 'vue-router'
 import { useCodePreview } from '@/hooks/use-code-preview'
@@ -177,6 +184,8 @@ const agentPositionX = computed(() => {
 const route = useRoute()
 const router = useRouter()
 const apiSettingsStore = useApiSettingsStore()
+const mcpSettingsStore = useMcpSettingsStore()
+const chatRoomsStore = useChatRoomsStore()
 const themeStore = useThemeStore()
 const { closeSidebar } = useSidebar()
 
@@ -430,6 +439,7 @@ watch(previewVersion, () => {
 const {
   models,
   currentModelValue,
+  currentRoom,
   message,
   loading,
   chatHistory,
@@ -451,6 +461,23 @@ const {
   handleSendEditedUserMessage
 } = useCompletions({
   roomId
+})
+
+const mcpSessionEnabled = computed({
+  get: () => {
+    if (typeof currentRoom.value?.mcpEnabled === 'boolean') {
+      return currentRoom.value.mcpEnabled
+    }
+    return mcpSettingsStore.globalEnabled
+  },
+  set: value => {
+    if (!currentRoom.value?.id) return
+    chatRoomsStore.updateRoomMcpEnabled(currentRoom.value.id, value)
+  }
+})
+
+const availableMcpServers = computed(() => {
+  return mcpSettingsStore.servers.filter(server => server.enabled)
 })
 
 // 最后一条消息是否有错误

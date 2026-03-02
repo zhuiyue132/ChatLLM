@@ -163,7 +163,7 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-panel);
   border-radius: 4px;
+  background: var(--bg-panel);
 }
 </style>

@@ -141,8 +141,8 @@ watch(knowledgeConfig, persistKnowledgeConfig, { deep: true })
 }
 
 .settings-form {
-  flex: 1;
   overflow-y: auto;
+  flex: 1;
 
   :deep(.el-form-item) {
     margin-bottom: 20px;
@@ -174,9 +174,9 @@ watch(knowledgeConfig, persistKnowledgeConfig, { deep: true })
     cursor: pointer;
 
     .iconfont {
+      transition: color 0.2s;
       color: var(--text-dblight-color);
       font-size: 16px;
-      transition: color 0.2s;
 
       &:hover {
         color: var(--text-light-color);

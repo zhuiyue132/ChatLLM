@@ -30,6 +30,43 @@
         {{ Math.ceil(Number(filePercent) * 100) + '%' }}
       </div>
 
+      <div v-if="mcpLogs.length > 0" class="mcp-log-section">
+        <div class="mcp-log-header" @click="toggleMcpLogs">
+          <div class="mcp-log-title">
+            <i class="iconfont icon-fuwu"></i>
+            <span>MCP 调用日志（{{ mcpLogs.length }}）</span>
+          </div>
+          <i
+            class="iconfont icon-arrowRight"
+            :class="['arrow-icon', { 'arrow-up': showMcpLogs }]"
+          ></i>
+        </div>
+
+        <div v-show="showMcpLogs" class="mcp-log-list">
+          <div v-for="(log, index) in mcpLogs" :key="`${log.id || index}`" class="mcp-log-item">
+            <div class="mcp-log-meta">
+              <span class="mcp-status" :class="log.status === 'success' ? 'success' : 'error'">
+                {{ log.status === 'success' ? '成功' : '失败' }}
+              </span>
+              <span class="mcp-name">{{ log.serverName }} / {{ log.toolName }}</span>
+              <span class="mcp-duration">{{ formatDuration(log.durationMs) }}</span>
+            </div>
+
+            <div v-if="formatMcpArguments(log.arguments)" class="mcp-log-block">
+              <div class="mcp-log-block-title">参数</div>
+              <pre>{{ formatMcpArguments(log.arguments) }}</pre>
+            </div>
+
+            <div class="mcp-log-block">
+              <div class="mcp-log-block-title">
+                {{ log.status === 'success' ? '返回' : '错误' }}
+              </div>
+              <pre>{{ log.status === 'success' ? formatMcpResult(log.result) : log.error }}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 思考过程（如果有） -->
       <div v-if="thinkingContent" class="thinking-section">
         <div class="thinking-header" @click="toggleThinking">
@@ -207,6 +244,10 @@ const props = defineProps({
   usage: {
     type: Object,
     default: null
+  },
+  mcpLogs: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -218,6 +259,7 @@ const LoadingComponent = computed(() => {
 
 // 默认收起思考过程
 const showThinking = ref(false)
+const showMcpLogs = ref(false)
 
 // 监听思考内容变化：有新内容时展开
 watch(
@@ -228,6 +270,16 @@ watch(
       showThinking.value = true
     }
   }
+)
+
+watch(
+  () => props.mcpLogs,
+  logs => {
+    if (Array.isArray(logs) && logs.length > 0) {
+      showMcpLogs.value = true
+    }
+  },
+  { immediate: true, deep: true }
 )
 
 // 监听推理耗时：推理结束时收起思考
@@ -260,6 +312,10 @@ const toggleThinking = () => {
   showThinking.value = !showThinking.value
 }
 
+const toggleMcpLogs = () => {
+  showMcpLogs.value = !showMcpLogs.value
+}
+
 // 复制消息
 const copyMessage = async () => {
   await onCopy(props.message || '')
@@ -287,6 +343,36 @@ const tokenUsageText = computed(() => {
   }
   return ''
 })
+
+const formatDuration = durationMs => {
+  const safeDuration = Number(durationMs)
+  if (!Number.isFinite(safeDuration) || safeDuration < 0) {
+    return '--'
+  }
+  return `${Math.max(0, Math.round(safeDuration))}ms`
+}
+
+const formatMcpArguments = args => {
+  if (!args || (typeof args === 'object' && Object.keys(args).length === 0)) {
+    return ''
+  }
+  if (typeof args === 'string') return args
+  try {
+    return JSON.stringify(args, null, 2)
+  } catch {
+    return `${args}`
+  }
+}
+
+const formatMcpResult = result => {
+  if (typeof result === 'string') return result
+  if (result === undefined || result === null) return ''
+  try {
+    return JSON.stringify(result, null, 2)
+  } catch {
+    return `${result}`
+  }
+}
 
 // 处理上一页
 const handlePrevPage = () => {
@@ -321,6 +407,119 @@ const regenerateMessage = () => {
   padding-top: 8px;
 
   @include flex-gap(16px, both);
+}
+
+.mcp-log-section {
+  margin-top: 12px;
+  border: 1px solid var(--border-color-muted);
+  border-radius: 10px;
+  background: var(--bg-panel);
+
+  .mcp-log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    cursor: pointer;
+
+    .mcp-log-title {
+      display: flex;
+      align-items: center;
+      color: var(--text-normal-color);
+      font-size: 13px;
+      font-weight: 500;
+      gap: 6px;
+    }
+
+    .arrow-icon {
+      transition: transform 0.2s ease;
+      transform: rotate(0deg);
+      color: var(--text-dblight-color);
+      font-size: 12px;
+
+      &.arrow-up {
+        transform: rotate(90deg);
+      }
+    }
+  }
+
+  .mcp-log-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0 12px 12px;
+    gap: 10px;
+  }
+
+  .mcp-log-item {
+    padding: 10px;
+    border: 1px solid var(--border-color-muted);
+    border-radius: 8px;
+    background: var(--bg-app);
+  }
+
+  .mcp-log-meta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+
+    .mcp-status {
+      min-width: 32px;
+      text-align: center;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 20px;
+
+      &.success {
+        color: var(--success-text);
+        background: var(--success-bg);
+      }
+
+      &.error {
+        color: var(--error-text);
+        background: var(--error-bg);
+      }
+    }
+
+    .mcp-name {
+      flex: 1;
+      color: var(--text-normal-color);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .mcp-duration {
+      color: var(--text-dblight-color);
+      font-size: 12px;
+    }
+  }
+
+  .mcp-log-block {
+    &:not(:first-child) {
+      margin-top: 8px;
+    }
+
+    .mcp-log-block-title {
+      margin-bottom: 4px;
+      color: var(--text-dblight-color);
+      font-size: 12px;
+    }
+
+    pre {
+      overflow: auto;
+      max-height: 200px;
+      margin: 0;
+      padding: 8px;
+      white-space: pre-wrap;
+      color: var(--text-normal-color);
+      border-radius: 6px;
+      background: var(--bg-muted);
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+  }
 }
 
 .export-icon {
@@ -488,6 +687,7 @@ const regenerateMessage = () => {
         font-weight: 400;
         font-style: normal;
         line-height: 16px;
+
         /* 88.889% */
 
         @include flex-gap(8px, row);

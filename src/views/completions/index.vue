@@ -13,13 +13,17 @@
           ref="senderRef"
           v-model="inputMessage"
           v-model:model="currentModel"
+          v-model:mcp-session-enabled="sessionMcpEnabled"
           :model-list="modelList"
+          :mcp-server-list="availableMcpServers"
+          :mcp-global-enabled="mcpSettingsStore.globalEnabled"
           :float-button-enable="false"
           :min-rows="2"
           :hidden-input-when-files="false"
           :allow-empty-message="false"
           :show-image-btn="isCurrentModelSupportsVision"
           :placeholder="PLACEHOLDER_MAP.DEFAULT"
+          show-mcp-selector
           show-model-select
           show-mention-model
           @submit="handleMessageSubmit"
@@ -38,6 +42,7 @@ import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { useRouter } from 'vue-router'
 import { ref, computed, watch } from 'vue'
 import { useApiSettingsStore } from '@/stores/api-settings'
+import { useMcpSettingsStore } from '@/stores/mcp-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
 import { useEventBus } from '@vueuse/core'
 import { OPEN_SETTINGS_COMMAND } from '@/config/symbol'
@@ -45,6 +50,7 @@ import { setPendingCompletionsMessage } from './utils'
 
 const router = useRouter()
 const apiSettingsStore = useApiSettingsStore()
+const mcpSettingsStore = useMcpSettingsStore()
 const chatRoomsStore = useChatRoomsStore()
 
 const senderRef = ref(null)
@@ -60,6 +66,7 @@ eventBus.on(() => {
 
 // 输入框内容
 const inputMessage = ref('')
+const sessionMcpEnabled = ref(mcpSettingsStore.globalEnabled)
 
 // 当前选中的模型（支持用户手动切换）
 const currentModel = ref(apiSettingsStore.effectiveDefaultChatModel || '')
@@ -78,6 +85,13 @@ watch(
   { immediate: false }
 )
 
+watch(
+  () => mcpSettingsStore.globalEnabled,
+  enabled => {
+    sessionMcpEnabled.value = !!enabled
+  }
+)
+
 // 模型列表，转换为 ModelSelector 所需格式
 const modelList = computed(() => {
   return apiSettingsStore.selectedModels.map(model => ({
@@ -86,15 +100,20 @@ const modelList = computed(() => {
   }))
 })
 
+const availableMcpServers = computed(() => {
+  return mcpSettingsStore.servers.filter(server => server.enabled)
+})
+
 /**
  * 处理消息提交
  * @param {Object} payload - 提交的消息数据
  * @param {string} payload.message - 用户输入的消息
  */
 const handleMessageSubmit = (payload = {}) => {
-  const { message, fileList = [] } = payload
+  const { message, fileList = [], mcpServerIds = [] } = payload
   const safeMessage = typeof message === 'string' ? message : ''
   const model = currentModel.value || apiSettingsStore.effectiveDefaultChatModel
+  const safeMcpServerIds = Array.isArray(mcpServerIds) ? mcpServerIds : []
 
   if (!safeMessage.trim() && (!Array.isArray(fileList) || fileList.length === 0)) {
     return
@@ -108,20 +127,24 @@ const handleMessageSubmit = (payload = {}) => {
 
   // 1. 创建新房间，使用用户第一句话作为标题（截取前50个字符）
   const title = safeMessage.trim() ? safeMessage.trim().slice(0, 50) : '图片识别'
-  const roomId = chatRoomsStore.createRoom(model, title)
+  const roomId = chatRoomsStore.createRoom(model, title, {
+    mcpEnabled: !!sessionMcpEnabled.value
+  })
 
   // 2. 存储待发送的消息到 sessionStorage
   setPendingCompletionsMessage({
     message: safeMessage,
     model,
-    fileList
+    fileList,
+    mcpServerIds: safeMcpServerIds
   })
   try {
     window.sessionStorage.setItem(
       'COMPLETIONS_WILL_SEND_MESSAGE',
       JSON.stringify({
         message: safeMessage,
-        model
+        model,
+        mcpServerIds: safeMcpServerIds
       })
     )
   } catch (error) {
@@ -189,8 +212,8 @@ const handleMessageSubmit = (payload = {}) => {
 
 @include mobile {
   .chat-container {
-    padding: 0 16px 24px;
     height: calc(100vh - 56px);
+    padding: 0 16px 24px;
   }
 
   .chat-content {

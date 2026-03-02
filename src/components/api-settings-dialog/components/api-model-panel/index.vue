@@ -289,9 +289,9 @@ const handleToggleModelCapability = (modelId, capability) => {
 }
 
 .panel-body {
-  flex: 1;
-  overflow-y: auto;
   display: flex;
+  overflow-y: auto;
+  flex: 1;
   flex-direction: column;
 }
 
@@ -337,9 +337,9 @@ const handleToggleModelCapability = (modelId, capability) => {
   cursor: pointer;
 
   .iconfont {
+    transition: color 0.2s;
     color: var(--text-dblight-color);
     font-size: 16px;
-    transition: color 0.2s;
 
     &:hover {
       color: var(--text-light-color);
@@ -351,21 +351,21 @@ const handleToggleModelCapability = (modelId, capability) => {
   margin-top: 12px;
   padding: 10px 12px;
   color: var(--error-text);
-  font-size: 13px;
   border-radius: 6px;
   background-color: var(--error-bg);
+  font-size: 13px;
 }
 
 .fetch-success {
   display: flex;
   align-items: center;
-  gap: 6px;
   margin-top: 12px;
   padding: 10px 12px;
   color: var(--success-text);
-  font-size: 13px;
   border-radius: 6px;
   background-color: var(--success-bg);
+  font-size: 13px;
+  gap: 6px;
 
   .iconfont {
     font-size: 16px;
@@ -388,8 +388,8 @@ const handleToggleModelCapability = (modelId, capability) => {
 }
 
 .model-list {
-  flex: 1;
   overflow-y: auto;
+  flex: 1;
   margin-bottom: 12px;
   padding-right: 8px;
 
@@ -401,9 +401,9 @@ const handleToggleModelCapability = (modelId, capability) => {
 
   .model-item {
     padding: 10px 12px;
+    transition: all 0.2s;
     border: 1px solid var(--border-color-muted);
     border-radius: 6px;
-    transition: all 0.2s;
 
     &:hover {
       border-color: var(--main-color, #007e54);
@@ -416,9 +416,9 @@ const handleToggleModelCapability = (modelId, capability) => {
     }
 
     :deep(.el-checkbox) {
+      align-items: center;
       width: 100%;
       height: auto;
-      align-items: center;
 
       .el-checkbox__input {
         align-self: center;
@@ -426,8 +426,8 @@ const handleToggleModelCapability = (modelId, capability) => {
 
       .el-checkbox__label {
         display: block;
-        flex: 1;
         overflow: hidden;
+        flex: 1;
       }
     }
   }
@@ -435,26 +435,26 @@ const handleToggleModelCapability = (modelId, capability) => {
   .model-info {
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-width: 0;
     flex: 1;
+    min-width: 0;
+    gap: 8px;
 
     .model-name {
       overflow: hidden;
-      text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 14px;
+      text-overflow: ellipsis;
       color: var(--text-normal-color);
+      font-size: 14px;
     }
   }
 
   .model-capabilities {
     display: flex;
+    flex-shrink: 0;
     flex-wrap: wrap;
-    gap: 8px;
     justify-content: flex-end;
     margin-left: 12px;
-    flex-shrink: 0;
+    gap: 8px;
   }
 
   .model-content {
@@ -465,25 +465,25 @@ const handleToggleModelCapability = (modelId, capability) => {
   }
 
   .capability-tag {
-    border: 1px solid var(--border-color-muted);
-    border-radius: 999px;
-    background: var(--bg-panel);
-    color: var(--text-dblight-color);
-    font-size: 12px;
-    line-height: 1.2;
     padding: 4px 10px;
     cursor: pointer;
     transition: all 0.2s;
+    color: var(--text-dblight-color);
+    border: 1px solid var(--border-color-muted);
+    border-radius: 999px;
+    background: var(--bg-panel);
+    font-size: 12px;
+    line-height: 1.2;
 
     &:hover {
-      border-color: var(--main-color, #007e54);
       color: var(--main-color, #007e54);
+      border-color: var(--main-color, #007e54);
     }
 
     &.active {
+      color: var(--main-color, #007e54);
       border-color: var(--main-color, #007e54);
       background: rgb(0 126 84 / 8%);
-      color: var(--main-color, #007e54);
     }
   }
 }
@@ -492,9 +492,9 @@ const handleToggleModelCapability = (modelId, capability) => {
   margin-top: 12px;
   padding: 10px 12px;
   color: var(--text-dblight-color);
-  font-size: 13px;
   border-radius: 6px;
   background: var(--bg-panel);
+  font-size: 13px;
 }
 
 .model-actions {
@@ -518,8 +518,8 @@ const handleToggleModelCapability = (modelId, capability) => {
 
   span {
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+    text-overflow: ellipsis;
   }
 }
 </style>

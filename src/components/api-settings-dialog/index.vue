@@ -50,6 +50,7 @@ import UserProfilePanel from './components/user-profile-panel/index.vue'
 import ApiModelPanel from './components/api-model-panel/index.vue'
 import AppearancePanel from './components/appearance-panel/index.vue'
 import KnowledgePanel from './components/knowledge-panel/index.vue'
+import McpPanel from './components/mcp-panel/index.vue'
 import BackupPanel from './components/backup-panel/index.vue'
 import WebdavPanel from './components/webdav-panel/index.vue'
 import { useSidebar } from '@/hooks/use-sidebar'
@@ -85,6 +86,7 @@ const panelComponents = {
   'default-model': markRaw(ApiModelPanel),
   appearance: markRaw(AppearancePanel),
   knowledge: markRaw(KnowledgePanel),
+  mcp: markRaw(McpPanel),
   backup: markRaw(BackupPanel),
   webdav: markRaw(WebdavPanel)
 }
@@ -179,15 +181,15 @@ const handlePanelSaved = () => {
   .sidebar-item {
     display: flex;
     align-items: center;
-    gap: 10px;
     height: 44px;
-    padding: 0 20px;
     margin: 4px 8px;
-    color: var(--text-light-color);
-    font-size: 14px;
-    border-radius: 6px;
+    padding: 0 20px;
     cursor: pointer;
     transition: all 0.2s;
+    color: var(--text-light-color);
+    border-radius: 6px;
+    font-size: 14px;
+    gap: 10px;
 
     .iconfont {
       font-size: 18px;
@@ -200,8 +202,8 @@ const handlePanelSaved = () => {
 
     &.active {
       color: var(--main-color, #007e54);
-      font-weight: 500;
       background-color: rgb(0 126 84 / 12%);
+      font-weight: 500;
 
       .iconfont {
         color: var(--main-color, #007e54);
@@ -218,42 +220,42 @@ const handlePanelSaved = () => {
 }
 
 .settings-content {
-  flex: 1;
   display: flex;
-  flex-direction: column;
   overflow: hidden;
+  flex: 1;
+  flex-direction: column;
   max-height: 720px;
 }
 
 @include mobile {
   .settings-container {
     flex-direction: column;
-    min-height: auto;
     height: 100%;
+    min-height: auto;
   }
 
   .settings-sidebar {
-    flex: 0 0 auto;
     display: flex;
-    flex-direction: row;
     overflow-x: auto;
+    flex: 0 0 auto;
+    flex-direction: row;
     padding: 8px 0;
     border-right: none;
     border-bottom: 1px solid var(--border-color-light);
 
     .sidebar-item {
       flex: 0 0 auto;
-      margin: 0 4px;
-      white-space: nowrap;
-      padding: 0 16px;
       height: 36px;
+      margin: 0 4px;
+      padding: 0 16px;
+      white-space: nowrap;
     }
   }
 
   .settings-content {
+    overflow-y: auto;
     flex: 1;
     max-height: none;
-    overflow-y: auto;
   }
 }
 </style>

@@ -75,7 +75,8 @@ export const useChatRoomsStore = defineStore(
      * @param {string} title - 房间标题
      * @returns {string} 房间 ID
      */
-    const createRoom = (model, title = '新对话') => {
+    const createRoom = (model, title = '新对话', options = {}) => {
+      const { mcpEnabled = false } = options
       const roomId = generateId('room-')
       const now = new Date().toISOString()
 
@@ -84,6 +85,7 @@ export const useChatRoomsStore = defineStore(
         title,
         isTitleLoading: false,
         model,
+        mcpEnabled: !!mcpEnabled,
         createdAt: now,
         updatedAt: now,
         topFlag: false,
@@ -157,6 +159,14 @@ export const useChatRoomsStore = defineStore(
       const room = rooms.value.find(r => r.id === roomId)
       if (room) {
         room.model = model
+        room.updatedAt = new Date().toISOString()
+      }
+    }
+
+    const updateRoomMcpEnabled = (roomId, enabled) => {
+      const room = rooms.value.find(r => r.id === roomId)
+      if (room) {
+        room.mcpEnabled = !!enabled
         room.updatedAt = new Date().toISOString()
       }
     }
@@ -488,6 +498,7 @@ export const useChatRoomsStore = defineStore(
       updateRoomTitle,
       updateRoomIsTitleLoading,
       updateRoomModel,
+      updateRoomMcpEnabled,
       pinRoom,
       unpinRoom,
       // 消息操作

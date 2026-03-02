@@ -113,8 +113,8 @@ const filteredModels = computed(() => {
 }
 
 .model-list {
-  flex: 1;
   overflow-y: auto;
+  flex: 1;
   margin-bottom: 12px;
   padding-right: 8px;
 
@@ -126,9 +126,9 @@ const filteredModels = computed(() => {
 
   .model-item {
     padding: 10px 12px;
+    transition: all 0.2s;
     border: 1px solid var(--border-color-muted);
     border-radius: 6px;
-    transition: all 0.2s;
 
     &:hover {
       border-color: var(--main-color, #007e54);
@@ -141,34 +141,34 @@ const filteredModels = computed(() => {
     }
 
     :deep(.el-checkbox) {
+      align-items: center;
       width: 100%;
       height: auto;
-      align-items: center;
 
       .el-checkbox__input {
         align-self: center;
       }
 
       .el-checkbox__label {
-        flex: 1;
         overflow: hidden;
+        flex: 1;
       }
     }
   }
 
   .model-info {
     display: flex;
+    overflow: hidden;
     align-items: center;
     gap: 8px;
-    overflow: hidden;
 
     .model-name {
-      flex: 1;
       overflow: hidden;
-      text-overflow: ellipsis;
+      flex: 1;
       white-space: nowrap;
-      font-size: 14px;
+      text-overflow: ellipsis;
       color: var(--text-normal-color);
+      font-size: 14px;
     }
   }
 }

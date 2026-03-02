@@ -85,8 +85,8 @@ const resolvedLabel = computed(() => {
 }
 
 .panel-body {
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 20px;
 }

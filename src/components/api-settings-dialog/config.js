@@ -15,6 +15,7 @@ export const MENU_LIST = [
   { key: 'default-model', label: '默认模型', icon: 'iconfont icon-duihua' },
   { key: 'appearance', label: '外观', icon: 'iconfont icon-zhengyan' },
   { key: 'knowledge', label: '知识库', icon: 'iconfont icon-brain' },
+  { key: 'mcp', label: 'MCP', icon: 'iconfont icon-fuwu' },
   { key: 'backup', label: '数据备份', icon: 'iconfont icon-download' },
   { key: 'webdav', label: 'WebDAV备份', icon: 'iconfont icon-export' }
 ]

@@ -467,8 +467,8 @@ const handleChatRoomItemOperation = async (command, room) => {
 
   .sidebar {
     width: #{280px};
-    transform: translateX(var(--sidebar-translate, 0));
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(var(--sidebar-translate, 0));
     will-change: transform;
   }
 

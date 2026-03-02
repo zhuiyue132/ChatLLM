@@ -60,18 +60,17 @@ watch(
 html,
 body {
   height: 100%;
-
+  color: var(--text-normal-color);
+  background-color: var(--bg-app);
   font-family: -apple-system, BlinkMacSystemFont, Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-app);
-  color: var(--text-normal-color);
 }
 
 #app {
   min-height: 100%;
-  background-color: var(--bg-app);
   color: var(--text-normal-color);
+  background-color: var(--bg-app);
 }
 
 /* 移动端适配样式 */

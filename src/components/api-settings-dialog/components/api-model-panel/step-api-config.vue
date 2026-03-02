@@ -150,9 +150,9 @@ defineExpose({ validate })
     cursor: pointer;
 
     .iconfont {
+      transition: color 0.2s;
       color: var(--text-dblight-color);
       font-size: 16px;
-      transition: color 0.2s;
 
       &:hover {
         color: var(--text-light-color);
@@ -171,21 +171,21 @@ defineExpose({ validate })
   margin-top: 12px;
   padding: 10px 12px;
   color: var(--error-text);
-  font-size: 13px;
   border-radius: 6px;
   background-color: var(--error-bg);
+  font-size: 13px;
 }
 
 .fetch-success {
   display: flex;
   align-items: center;
-  gap: 6px;
   margin-top: 12px;
   padding: 10px 12px;
   color: var(--success-text);
-  font-size: 13px;
   border-radius: 6px;
   background-color: var(--success-bg);
+  font-size: 13px;
+  gap: 6px;
 
   .iconfont {
     font-size: 16px;

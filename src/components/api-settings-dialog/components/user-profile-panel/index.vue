@@ -167,8 +167,8 @@ watch(profileForm, persistProfile, { deep: true })
 }
 
 .panel-body {
-  flex: 1;
   overflow-y: auto;
+  flex: 1;
 }
 
 .profile-card {
@@ -183,8 +183,8 @@ watch(profileForm, persistProfile, { deep: true })
 
 .avatar-section {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
+  flex-direction: column;
   gap: 12px;
 }
 

@@ -11,7 +11,9 @@ import { ref, computed, nextTick, toValue } from 'vue'
 import { useOpenAISSESingle } from '@/hooks/use-sse/use-openai-sse'
 import { useAutoScroll, showMessage, useTitleGenerator } from '@/hooks'
 import { useApiSettingsStore } from '@/stores/api-settings'
+import { useMcpSettingsStore } from '@/stores/mcp-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
+import { listMcpTools, callMcpTool, stringifyMcpToolResult } from '@/api/mcp'
 import { ILLEGAL_UNICODE_REG } from '../config'
 
 /**
@@ -21,6 +23,7 @@ import { ILLEGAL_UNICODE_REG } from '../config'
  */
 export function useCompletions({ roomId }) {
   const apiSettingsStore = useApiSettingsStore()
+  const mcpSettingsStore = useMcpSettingsStore()
   const chatRoomsStore = useChatRoomsStore()
 
   // 初始化标题生成器
@@ -41,6 +44,12 @@ export function useCompletions({ roomId }) {
 
   // 正在接收消息的 assistant 节点 ID
   const receivingMessageId = ref(null)
+
+  const markReceivingStarted = () => {
+    if (!receivingMessageId.value) return
+    loading.value = false
+    isReceiving.value = true
+  }
 
   // 对话内容 - 从 store 获取
   const chatHistoryLoading = ref(false)
@@ -119,6 +128,14 @@ export function useCompletions({ roomId }) {
       const id = getRoomId()
       if (!id || !receivingMessageId.value) return
 
+      const hasDisplayPayload =
+        (typeof content === 'string' && content.trim()) ||
+        (typeof reasoning_content === 'string' && reasoning_content.trim())
+
+      if (hasDisplayPayload) {
+        markReceivingStarted()
+      }
+
       // 更新 assistant 消息内容
       const updates = {}
       if (content) {
@@ -132,12 +149,6 @@ export function useCompletions({ roomId }) {
       }
 
       chatRoomsStore.updateMessage(id, receivingMessageId.value, updates)
-
-      // 收到有效回复后，结束 loading
-      if ((content && content.trim()) || (reasoning_content && reasoning_content.trim())) {
-        loading.value = false
-        isReceiving.value = true
-      }
 
       // 滚动到底部
       if (isViewingReceivingBranch.value) {
@@ -351,14 +362,341 @@ export function useCompletions({ roomId }) {
       }))
   }
 
+  const requestOpenAICompletion = async ({ model, messages, tools = [] } = {}) => {
+    if (!apiSettingsStore.baseURL || !apiSettingsStore.apiKey) {
+      throw new Error('API 配置不完整，无法调用 MCP 工具')
+    }
+
+    const body = {
+      model,
+      messages,
+      stream: false
+    }
+
+    if (Array.isArray(tools) && tools.length > 0) {
+      body.tools = tools
+      body.tool_choice = 'auto'
+    }
+
+    const response = await fetch(`${apiSettingsStore.baseURL}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiSettingsStore.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(
+        errorData.error?.message || `HTTP ${response.status}: ${response.statusText || '请求失败'}`
+      )
+    }
+
+    const data = await response.json()
+    return data?.choices?.[0]?.message || null
+  }
+
+  const formatServerNameForTool = name => {
+    return `${name || ''}`
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '_')
+      .slice(0, 16)
+  }
+
+  const formatToolNameForOpenAI = ({ server, tool }) => {
+    const rawToolName = `${tool?.name || ''}`
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '_')
+      .slice(0, 32)
+    const rawServerName = formatServerNameForTool(server?.name || server?.id)
+    const name = `mcp_${rawServerName}_${rawToolName}`.slice(0, 64)
+    return name || `mcp_${Date.now()}`
+  }
+
+  const resolveMcpEnabledByRoom = () => {
+    if (typeof currentRoom.value?.mcpEnabled === 'boolean') {
+      return currentRoom.value.mcpEnabled
+    }
+    return mcpSettingsStore.globalEnabled
+  }
+
+  const resolveActiveMcpServerIds = requestedServerIds => {
+    if (!resolveMcpEnabledByRoom()) {
+      return []
+    }
+
+    const safeRequestedIds = Array.isArray(requestedServerIds) ? requestedServerIds : []
+    if (!safeRequestedIds.length) {
+      return []
+    }
+
+    const enabledServerSet = new Set(
+      mcpSettingsStore.servers.filter(server => server.enabled).map(server => server.id)
+    )
+
+    return Array.from(new Set(safeRequestedIds)).filter(serverId => enabledServerSet.has(serverId))
+  }
+
+  const buildMcpToolContext = async serverIds => {
+    const availableServers = serverIds
+      .map(serverId => mcpSettingsStore.getServerById(serverId))
+      .filter(Boolean)
+    if (!availableServers.length) {
+      return { tools: [], mapping: {} }
+    }
+
+    const tools = []
+    const mapping = {}
+
+    for (const server of availableServers) {
+      try {
+        const toolList = await listMcpTools(server)
+        toolList.forEach(tool => {
+          if (!tool?.name) return
+          let openAIToolName = formatToolNameForOpenAI({
+            server,
+            tool
+          })
+          if (mapping[openAIToolName]) {
+            openAIToolName = `${openAIToolName}_${tools.length}`.slice(0, 64)
+          }
+
+          tools.push({
+            type: 'function',
+            function: {
+              name: openAIToolName,
+              description: `${server.name}: ${tool.description || tool.name}`.slice(0, 512),
+              parameters:
+                tool.inputSchema && typeof tool.inputSchema === 'object'
+                  ? tool.inputSchema
+                  : {
+                      type: 'object',
+                      properties: {}
+                    }
+            }
+          })
+
+          mapping[openAIToolName] = {
+            serverId: server.id,
+            serverName: server.name,
+            toolName: tool.name
+          }
+        })
+      } catch (error) {
+        console.warn(`[MCP] 获取工具列表失败（${server.name}）`, error)
+      }
+    }
+
+    return {
+      tools,
+      mapping
+    }
+  }
+
+  const parseToolArguments = rawArguments => {
+    if (!rawArguments) return {}
+    if (typeof rawArguments === 'object') {
+      return rawArguments
+    }
+    if (typeof rawArguments !== 'string') {
+      return {}
+    }
+
+    try {
+      const parsed = JSON.parse(rawArguments)
+      return parsed && typeof parsed === 'object' ? parsed : {}
+    } catch {
+      return {}
+    }
+  }
+
+  const runMcpToolCalls = async ({ assistantMessageId, model, openAIMessages, serverIds }) => {
+    const mcpLogs = []
+    const toolContext = await buildMcpToolContext(serverIds)
+    if (!toolContext.tools.length) {
+      return {
+        requestMessages: openAIMessages,
+        mcpLogs
+      }
+    }
+
+    const MAX_MCP_TOOL_ROUNDS = 6
+    let requestMessages = [...openAIMessages]
+
+    const syncMcpLogs = () => {
+      if (!mcpLogs.length) return
+      markReceivingStarted()
+      chatRoomsStore.updateMessage(getRoomId(), assistantMessageId, {
+        mcpLogs
+      })
+    }
+
+    for (let roundIndex = 0; roundIndex < MAX_MCP_TOOL_ROUNDS; roundIndex += 1) {
+      const responseMessage = await requestOpenAICompletion({
+        model,
+        messages: requestMessages,
+        tools: toolContext.tools
+      })
+      const toolCalls = Array.isArray(responseMessage?.tool_calls) ? responseMessage.tool_calls : []
+
+      if (!toolCalls.length) {
+        return {
+          requestMessages,
+          mcpLogs
+        }
+      }
+
+      const normalizedToolCalls = toolCalls.map((toolCall, index) => ({
+        ...(toolCall || {}),
+        id: toolCall?.id || `tool_call_${Date.now()}_${roundIndex}_${index}`
+      }))
+
+      const toolMessages = []
+      const assistantToolCallMessage = {
+        role: 'assistant',
+        content: responseMessage?.content || '',
+        tool_calls: normalizedToolCalls
+      }
+
+      for (const toolCall of normalizedToolCalls) {
+        const startedAt = Date.now()
+        const functionName = toolCall?.function?.name || ''
+        const mapping = toolContext.mapping[functionName]
+        const toolArguments = parseToolArguments(toolCall?.function?.arguments)
+        const baseLog = {
+          id: toolCall?.id || `${assistantMessageId}-tool-${startedAt}`,
+          serverId: mapping?.serverId || '',
+          serverName: mapping?.serverName || functionName,
+          toolName: mapping?.toolName || functionName,
+          arguments: toolArguments,
+          durationMs: 0
+        }
+
+        if (!mapping) {
+          mcpLogs.push({
+            ...baseLog,
+            status: 'error',
+            error: '未匹配到 MCP 工具'
+          })
+          continue
+        }
+
+        const server = mcpSettingsStore.getServerById(mapping.serverId)
+        if (!server || !server.enabled) {
+          mcpLogs.push({
+            ...baseLog,
+            status: 'error',
+            error: 'MCP 服务不可用'
+          })
+          continue
+        }
+
+        try {
+          const toolResult = await callMcpTool(server, {
+            name: mapping.toolName,
+            arguments: toolArguments
+          })
+          const durationMs = Date.now() - startedAt
+          const toolResultText = stringifyMcpToolResult(toolResult)
+          toolMessages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: toolResultText || ''
+          })
+          mcpLogs.push({
+            ...baseLog,
+            status: 'success',
+            durationMs,
+            result: toolResult
+          })
+        } catch (error) {
+          mcpLogs.push({
+            ...baseLog,
+            status: 'error',
+            durationMs: Date.now() - startedAt,
+            error: error?.message || '工具调用失败'
+          })
+        }
+      }
+
+      syncMcpLogs()
+
+      if (!toolMessages.length) {
+        return {
+          requestMessages,
+          mcpLogs
+        }
+      }
+
+      requestMessages = [...requestMessages, assistantToolCallMessage, ...toolMessages]
+    }
+
+    mcpLogs.push({
+      id: `${assistantMessageId}-tool-limit`,
+      serverId: '',
+      serverName: 'MCP',
+      toolName: 'tool_round_guard',
+      arguments: {},
+      durationMs: 0,
+      status: 'error',
+      error: `MCP 链式调用超过最大轮次限制（${MAX_MCP_TOOL_ROUNDS}）`
+    })
+    syncMcpLogs()
+
+    return {
+      requestMessages,
+      mcpLogs
+    }
+  }
+
+  const sendMessageWithMcp = async ({
+    assistantMessageId,
+    model,
+    openAIMessages,
+    mcpServerIds
+  }) => {
+    const activeServerIds = resolveActiveMcpServerIds(mcpServerIds)
+
+    if (!activeServerIds.length) {
+      sendSSE({
+        model,
+        messages: openAIMessages
+      })
+      return
+    }
+
+    try {
+      const { requestMessages } = await runMcpToolCalls({
+        assistantMessageId,
+        model,
+        openAIMessages,
+        serverIds: activeServerIds
+      })
+
+      sendSSE({
+        model,
+        messages: requestMessages
+      })
+    } catch (error) {
+      console.warn('[MCP] 调用流程失败，已降级为普通对话', error)
+      sendSSE({
+        model,
+        messages: openAIMessages
+      })
+    }
+  }
+
   /**
    * 发送消息
    * @param {Object} options - 发送选项
    */
-  const sendMessage = (payload = {}) => {
+  const sendMessage = async (payload = {}) => {
     const targetModel = payload.model || currentModelValue.value
     const sentMessage = typeof payload.message === 'string' ? payload.message : message.value
     const sentFileList = Array.isArray(payload.fileList) ? [...payload.fileList] : []
+    const sentMcpServerIds = Array.isArray(payload.mcpServerIds) ? [...payload.mcpServerIds] : []
     const storedFileList = sanitizeFileListForStorage(sentFileList)
 
     if (!sentMessage.trim() && sentFileList.length === 0) {
@@ -404,6 +742,7 @@ export function useCompletions({ roomId }) {
       role: 'user',
       content: sentMessage,
       fileList: storedFileList,
+      mcpServerIds: sentMcpServerIds,
       createdAt: new Date().toISOString(),
       children: [],
       currentIndex: 0
@@ -421,7 +760,8 @@ export function useCompletions({ roomId }) {
       parentId: userMessageId,
       children: [],
       currentIndex: 0,
-      model: targetModel
+      model: targetModel,
+      mcpLogs: []
     }
 
     // 添加消息到 store
@@ -445,10 +785,11 @@ export function useCompletions({ roomId }) {
       }
     })
 
-    // 发送 SSE 请求
-    sendSSE({
+    await sendMessageWithMcp({
+      assistantMessageId,
       model: targetModel,
-      messages: openAIMessages
+      openAIMessages,
+      mcpServerIds: sentMcpServerIds
     })
   }
 
@@ -498,13 +839,14 @@ export function useCompletions({ roomId }) {
       parentId: userMessageNode.id,
       children: [],
       currentIndex: 0,
-      model: currentModelValue.value
+      model: currentModelValue.value,
+      mcpLogs: []
     }
 
     // 添加到用户消息的 children 中
     chatRoomsStore.addMessage(id, newAssistantMessage, userMessageNode.id)
 
-    nextTick(() => {
+    nextTick(async () => {
       enableAutoScroll()
       scrollToBottom(true)
 
@@ -518,10 +860,13 @@ export function useCompletions({ roomId }) {
       const userMsgIndex = allMessages.findIndex(msg => msg.id === parentId)
       const openAIMessages = buildOpenAIMessages(allMessages.slice(0, userMsgIndex + 1))
 
-      // 发送 SSE 请求
-      sendSSE({
+      await sendMessageWithMcp({
+        assistantMessageId: newAssistantMessageId,
         model: currentModelValue.value,
-        messages: openAIMessages
+        openAIMessages,
+        mcpServerIds: Array.isArray(userMessageNode.mcpServerIds)
+          ? userMessageNode.mcpServerIds
+          : []
       })
     })
   }
@@ -696,6 +1041,9 @@ export function useCompletions({ roomId }) {
       fileList: Array.isArray(currentUserMessageNode.fileList)
         ? [...currentUserMessageNode.fileList]
         : [],
+      mcpServerIds: Array.isArray(currentUserMessageNode.mcpServerIds)
+        ? [...currentUserMessageNode.mcpServerIds]
+        : [],
       createdAt: new Date().toISOString(),
       parentId: parentNode === tree ? null : parentNode.id,
       children: [],
@@ -714,7 +1062,8 @@ export function useCompletions({ roomId }) {
       parentId: newUserMessageId,
       children: [],
       currentIndex: 0,
-      model: currentModelValue.value
+      model: currentModelValue.value,
+      mcpLogs: []
     }
 
     // 将新用户消息添加到父节点
@@ -729,7 +1078,7 @@ export function useCompletions({ roomId }) {
 
     editingMessageId.value = null
 
-    nextTick(() => {
+    nextTick(async () => {
       enableAutoScroll()
       scrollToBottom(true)
 
@@ -742,9 +1091,11 @@ export function useCompletions({ roomId }) {
       const userMsgIndex = allMessages.findIndex(msg => msg.id === newUserMessageId)
       const openAIMessages = buildOpenAIMessages(allMessages.slice(0, userMsgIndex + 1))
 
-      sendSSE({
+      await sendMessageWithMcp({
+        assistantMessageId: newAssistantMessageId,
         model: currentModelValue.value,
-        messages: openAIMessages
+        openAIMessages,
+        mcpServerIds: Array.isArray(newUserMessage.mcpServerIds) ? newUserMessage.mcpServerIds : []
       })
     })
   }

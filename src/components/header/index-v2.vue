@@ -356,18 +356,18 @@ const handleBackClick = () => {
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 8px;
       max-width: 220px;
       padding: 4px 2px 4px 8px;
       cursor: pointer;
       user-select: none;
-      border-radius: 999px;
       transition: background-color 0.2s ease;
+      border-radius: 999px;
+      gap: 8px;
 
       .user-trigger-name {
         overflow: hidden;
-        text-overflow: ellipsis;
         white-space: nowrap;
+        text-overflow: ellipsis;
         color: var(--text-normal-color);
         font-size: 14px;
         font-weight: 500;
@@ -391,12 +391,12 @@ const handleBackClick = () => {
     width: 44px;
     height: 44px;
     cursor: pointer;
-    border-radius: 8px;
     transition: background-color 0.2s ease;
+    border-radius: 8px;
 
     .iconfont {
-      font-size: 24px;
       color: var(--text-light-color);
+      font-size: 24px;
     }
 
     &:active {

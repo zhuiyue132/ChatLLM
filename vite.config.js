@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => {
   const isProd = mode === 'production'
   const env = loadEnv(mode, process.cwd(), '')
   const webdavProxyTarget = env.VITE_WEBDAV_PROXY_TARGET || 'https://webdav.123pan.cn/webdav'
+  const mcpProxyTarget = env.VITE_MCP_PROXY_TARGET || 'http://127.0.0.1:3845'
   return {
     base: BASE_URL,
     envDir: './env',
@@ -94,6 +95,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
           rewrite: path => path.replace(/^\/webdav/, '')
+        },
+        '/mcp': {
+          target: mcpProxyTarget,
+          changeOrigin: true,
+          secure: false
         }
       }
     },

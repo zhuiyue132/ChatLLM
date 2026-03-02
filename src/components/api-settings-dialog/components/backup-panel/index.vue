@@ -73,6 +73,7 @@ import { useApiSettingsStore } from '@/stores/api-settings'
 import { useBackupSettingsStore } from '@/stores/backup-settings'
 import { useThemeStore } from '@/stores/theme'
 import { useUserProfileStore } from '@/stores/user-profile'
+import { useMcpSettingsStore } from '@/stores/mcp-settings'
 import { resolveWebdavBackupPath } from '@/utils/webdav'
 import {
   selectJsonFile,
@@ -94,6 +95,7 @@ const apiSettingsStore = useApiSettingsStore()
 const backupSettingsStore = useBackupSettingsStore()
 const themeStore = useThemeStore()
 const userProfileStore = useUserProfileStore()
+const mcpSettingsStore = useMcpSettingsStore()
 
 const importing = ref(false)
 const reloadAfterImport = () => {
@@ -137,10 +139,16 @@ const buildUserProfileSnapshot = () => ({
   avatarBase64: userProfileStore.avatarBase64
 })
 
+const buildMcpSettingsSnapshot = () => ({
+  globalEnabled: mcpSettingsStore.globalEnabled,
+  servers: [...(mcpSettingsStore.servers || [])]
+})
+
 const applyAppSettings = appSettings => {
   if (!appSettings) return
 
-  const { apiSettings, backupSettings, themeSettings, userProfileSettings } = appSettings
+  const { apiSettings, backupSettings, themeSettings, userProfileSettings, mcpSettings } =
+    appSettings
 
   if (apiSettings) {
     apiSettingsStore.updateApiConfig({
@@ -189,6 +197,13 @@ const applyAppSettings = appSettings => {
       avatarBase64: userProfileSettings.avatarBase64
     })
   }
+
+  if (mcpSettings) {
+    mcpSettingsStore.replaceAllSettings({
+      globalEnabled: mcpSettings.globalEnabled,
+      servers: mcpSettings.servers || []
+    })
+  }
 }
 
 const handleExportChat = () => {
@@ -206,6 +221,7 @@ const handleExportFull = () => {
       themeMode: themeStore.themeMode
     },
     userProfileSettings: buildUserProfileSnapshot(),
+    mcpSettings: buildMcpSettingsSnapshot(),
     rooms: chatRoomsStore.rooms,
     messages: chatRoomsStore.messages
   })
@@ -312,12 +328,12 @@ const handleImportCherry = async () => {
 }
 
 .panel-body {
-  flex: 1;
-  overflow-y: auto;
   display: flex;
+  overflow-y: auto;
+  flex: 1;
   flex-direction: column;
-  gap: 20px;
   padding-right: 4px;
+  gap: 20px;
 }
 
 .backup-section {
@@ -336,15 +352,15 @@ const handleImportCherry = async () => {
 
   .backup-info {
     .backup-title {
+      margin-bottom: 4px;
+      color: var(--text-normal-color);
       font-size: 14px;
       font-weight: 500;
-      color: var(--text-normal-color);
-      margin-bottom: 4px;
     }
 
     .backup-desc {
-      font-size: 12px;
       color: var(--text-dblight-color);
+      font-size: 12px;
     }
   }
 }
@@ -352,12 +368,12 @@ const handleImportCherry = async () => {
 .backup-warning {
   display: flex;
   align-items: center;
-  gap: 8px;
   padding: 12px 16px;
-  font-size: 13px;
   color: var(--text-dblight-color);
-  background: var(--bg-panel);
   border-radius: 6px;
+  background: var(--bg-panel);
+  font-size: 13px;
+  gap: 8px;
 
   .iconfont {
     color: var(--warning-accent);

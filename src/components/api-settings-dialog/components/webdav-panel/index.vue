@@ -300,12 +300,12 @@ const handleTest = async () => {
 }
 
 .panel-body {
-  flex: 1;
-  overflow-y: auto;
   display: flex;
+  overflow-y: auto;
+  flex: 1;
   flex-direction: column;
-  gap: 20px;
   padding-right: 4px;
+  gap: 20px;
 }
 
 .webdav-section {
@@ -349,9 +349,9 @@ const handleTest = async () => {
     cursor: pointer;
 
     .iconfont {
+      transition: color 0.2s;
       color: var(--text-dblight-color);
       font-size: 16px;
-      transition: color 0.2s;
 
       &:hover {
         color: var(--text-light-color);
@@ -363,10 +363,10 @@ const handleTest = async () => {
 .webdav-meta {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-dblight-color);
   padding-top: 6px;
+  color: var(--text-dblight-color);
+  font-size: 12px;
+  gap: 6px;
 }
 
 .webdav-error {

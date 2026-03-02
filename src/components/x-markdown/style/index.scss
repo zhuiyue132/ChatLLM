@@ -56,10 +56,10 @@
 .elx-code-block {
   overflow: auto;
   padding: 16px;
-  border-radius: 6px;
-  background-color: var(--code-bg);
   color: var(--text-normal-color);
   border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--code-bg);
   font-size: 85%;
   line-height: 1.45;
 
@@ -69,9 +69,9 @@
     margin: 0;
     padding: 0;
     word-wrap: normal;
+    color: inherit;
     border: 0;
     background-color: transparent;
-    color: inherit;
     font-family:
       ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
       "Liberation Mono", monospace;

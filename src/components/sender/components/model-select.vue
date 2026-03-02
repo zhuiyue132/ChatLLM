@@ -95,15 +95,14 @@ const onCommand = model => {
 
 <style lang="scss" scoped>
 .trigger {
-  outline: none;
   border-radius: 6px;
+  outline: none;
 
   .sender-button {
-    font-family:
-      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-
     display: flex;
     align-items: center;
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 
     @include flex-gap(4px, row);
 
@@ -131,6 +130,7 @@ const onCommand = model => {
       color: var(--text-normal-color);
       border-color: var(--main-color);
       background-color: var(--bg-highlight);
+
       /* background-color: #e0f2e7; */
     }
   }
