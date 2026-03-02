@@ -10,8 +10,8 @@
 
 <template>
   <el-button
-    v-title="disabled ? null : uploadTips"
-    :disabled="disabled"
+    v-title="buttonDisabled ? null : uploadTips"
+    :disabled="buttonDisabled"
     class="sender-button"
     :loading="isUploading"
     @click="open"
@@ -22,10 +22,17 @@
 </template>
 <script setup>
 import { useFileDialog, useVModel } from '@vueuse/core'
-import { useUploadLimit } from '@/hooks/use-upload-limit'
 import { computed } from 'vue'
 import { showMessage } from '@/hooks/use-message'
-import { useImageUpload } from '../hooks/use-image-upload.js'
+
+const IMAGE_LIMIT_BY_AGENT = {
+  completions: {
+    fileFormat: 'jpg,jpeg,png,gif,webp,bmp',
+    maxCount: 4,
+    maxSize: 10,
+    multiple: true
+  }
+}
 
 const props = defineProps({
   count: {
@@ -39,20 +46,21 @@ const props = defineProps({
   agentCode: {
     type: String,
     default: ''
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
-const { LIMIT_OF_IMAGE } = useUploadLimit()
 const LIMIT_OF_AGENT = computed(() => {
-  return LIMIT_OF_IMAGE.value[props.agentCode] || LIMIT_OF_IMAGE.value.completions
+  return IMAGE_LIMIT_BY_AGENT[props.agentCode] || IMAGE_LIMIT_BY_AGENT.completions
 })
 
 const emit = defineEmits(['upload-success', 'update:loading'])
 
-const { uploadFiles } = useImageUpload()
-
-const disabled = computed(() => {
-  return props.count >= LIMIT_OF_AGENT.value.maxCount
+const buttonDisabled = computed(() => {
+  return props.disabled || props.count >= LIMIT_OF_AGENT.value.maxCount
 })
 
 const isUploading = useVModel(props, 'loading', emit)
@@ -60,7 +68,7 @@ const isUploading = useVModel(props, 'loading', emit)
 const { open, reset, onChange } = useFileDialog({
   accept: LIMIT_OF_AGENT.value.fileFormat
     .split(',')
-    .map(type => `image/${type}`)
+    .map(type => `.${type}`)
     .join(','),
   multiple: LIMIT_OF_AGENT.value.multiple
 })
@@ -74,12 +82,60 @@ const uploadTips = computed(() => {
   return `最多可上传${maxCount}个（${format}）。单个图片大小不超过${maxSize}M，点击即可上传。`
 })
 
+const readFileAsBase64 = file => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      resolve(typeof reader.result === 'string' ? reader.result : '')
+    }
+    reader.onerror = () => {
+      reject(new Error('文件读取失败'))
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+const createImagePreviewDataUrl = (base64, maxSide = 768, quality = 0.75) => {
+  if (!base64) return Promise.resolve('')
+
+  return new Promise(resolve => {
+    const img = new Image()
+    img.onload = () => {
+      try {
+        const { width, height } = img
+        const scale = Math.min(1, maxSide / Math.max(width, height))
+        const targetWidth = Math.max(1, Math.round(width * scale))
+        const targetHeight = Math.max(1, Math.round(height * scale))
+
+        const canvas = document.createElement('canvas')
+        canvas.width = targetWidth
+        canvas.height = targetHeight
+
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(base64)
+          return
+        }
+
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      } catch (error) {
+        resolve(base64)
+      }
+    }
+    img.onerror = () => {
+      resolve(base64)
+    }
+    img.src = base64
+  })
+}
+
 const validateFile = file => {
   const { maxSize, fileFormat } = LIMIT_OF_AGENT.value
 
   // 检查文件格式
   const allowedFormats = fileFormat.split(',')
-  const fileExtension = file.name.split('.').pop().toLowerCase()
+  const fileExtension = file.name.split('.').pop()?.toLowerCase() || ''
   if (!allowedFormats.includes(fileExtension)) {
     showMessage(`只允许上传 ${fileFormat} 格式的图片`, { type: 'error' })
     return false
@@ -119,28 +175,43 @@ const handleUpload = async selectedFiles => {
       .filter(validateFile)
 
     if (validFiles.length > 0) {
-      // 模拟上传延迟
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      const fileIds = await uploadFiles(validFiles)
-      if (!fileIds) return
+      const base64Images = await Promise.all(validFiles.map(file => readFileAsBase64(file)))
+      const previewImages = await Promise.all(
+        base64Images.map(base64 => createImagePreviewDataUrl(base64))
+      )
 
       // 生成预览URL
-      const uploads = validFiles.map((file, index) => ({
-        file,
-        url: URL.createObjectURL(file),
-        type: 'image',
-        name: file.name,
-        size: file.size,
-        fileId: fileIds[index],
-        belong: 'image',
-        extension: file.name.split('.').pop().toLowerCase()
-      }))
+      const uploads = validFiles
+        .map((file, index) => {
+          const extension = file.name.split('.').pop()?.toLowerCase() || ''
+          const base64 = base64Images[index]
+          const previewBase64 = previewImages[index]
+          if (!base64) return null
+
+          return {
+            file,
+            url: URL.createObjectURL(file),
+            type: 'image',
+            name: file.name,
+            size: file.size,
+            belong: 'image',
+            extension,
+            mimeType: file.type || `image/${extension}`,
+            base64,
+            previewBase64: previewBase64 || base64
+          }
+        })
+        .filter(Boolean)
+
+      if (!uploads.length) {
+        showMessage('图片读取失败，请重试', { type: 'error' })
+        return
+      }
 
       emit('upload-success', uploads)
     }
   } catch (error) {
-    showMessage('上传失败，请重试', { type: 'error' })
+    showMessage(error?.message || '上传失败，请重试', { type: 'error' })
     console.error('Upload error:', error)
   } finally {
     isUploading.value = false

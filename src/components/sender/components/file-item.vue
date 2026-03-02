@@ -11,8 +11,8 @@
   <div class="upload-file-item-wrapper" :class="{ readonly }">
     <div v-if="file.type === 'image'" :class="{ 'upload-file-item-image': true, readonly }">
       <el-image
-        v-if="file.url"
-        :src="file.url"
+        v-if="previewUrl"
+        :src="previewUrl"
         :preview-src-list="imageList"
         fit="cover"
         class="file-preview"
@@ -123,10 +123,25 @@ const fileName = computed(() => props.file.name || props.file.fileName)
 const fileSize = computed(() => props.file.size || props.file.fileSize)
 
 const imageList = computed(() =>
-  props.fileList.filter(item => item.type === 'image').map(item => item.url)
+  props.fileList
+    .filter(item => item.type === 'image')
+    .map(item => item.url)
+    .filter(Boolean)
 )
 const imageIndex = computed(() => {
-  return imageList.value.findIndex(item => item === props.file.url)
+  return imageList.value.findIndex(item => item === previewUrl.value)
+})
+
+const previewUrl = computed(() => {
+  const url = props.file?.url
+  if (typeof url !== 'string') return ''
+
+  // 历史消息中的 blob URL 刷新后会失效，回退到文件图标占位
+  if (props.readonly && url.startsWith('blob:')) {
+    return ''
+  }
+
+  return url
 })
 
 defineEmits(['remove'])

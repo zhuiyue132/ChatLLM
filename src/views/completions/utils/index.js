@@ -110,3 +110,16 @@ export const buildList = items => {
 
   return result
 }
+
+// 首屏发送临时缓存（仅内存，不落盘）
+let pendingCompletionsMessage = null
+
+export const setPendingCompletionsMessage = payload => {
+  pendingCompletionsMessage = payload || null
+}
+
+export const consumePendingCompletionsMessage = () => {
+  const payload = pendingCompletionsMessage
+  pendingCompletionsMessage = null
+  return payload
+}

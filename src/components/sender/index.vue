@@ -80,6 +80,15 @@
             >
               请先配置模型
             </el-button>
+            <!-- 图片上传 -->
+            <ImageUploadButton
+              v-if="showImageBtn"
+              v-model:loading="loadingMap.image"
+              :count="countOfType.image"
+              :agent-code="agentCode"
+              :disabled="loading"
+              @upload-success="handleUploadSuccess"
+            />
           </div>
 
           <div class="action-list-self-wrap-right">
@@ -114,6 +123,7 @@ import FloatButton from '../float-button/index.vue'
 import ModelSelector from './components/model-select.vue'
 import ModelIcon from '@/components/model-icon/index.vue'
 import FileItem from './components/file-item.vue'
+import ImageUploadButton from './components/image-upload.vue'
 import { useVModel, useEventBus } from '@vueuse/core'
 import { OPEN_SETTINGS_COMMAND } from '@/config/symbol'
 import './common.scss'
@@ -139,6 +149,11 @@ const props = defineProps({
   modelList: {
     type: Array,
     default: () => []
+  },
+  // 业务编码，用于区分上传限制策略
+  agentCode: {
+    type: String,
+    default: ''
   },
 
   // 是否加载中
@@ -503,6 +518,8 @@ const handleSendClick = (extraData = {}) => {
       fileList: [...filesUploaded.value],
       ...extraData
     })
+
+    filesUploaded.value = []
   }
 }
 

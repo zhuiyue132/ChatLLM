@@ -18,6 +18,7 @@
           :min-rows="2"
           :hidden-input-when-files="false"
           :allow-empty-message="false"
+          :show-image-btn="isCurrentModelSupportsVision"
           :placeholder="PLACEHOLDER_MAP.DEFAULT"
           show-model-select
           show-mention-model
@@ -41,6 +42,7 @@ import { useApiSettingsStore } from '@/stores/api-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
 import { useEventBus } from '@vueuse/core'
 import { OPEN_SETTINGS_COMMAND } from '@/config/symbol'
+import { setPendingCompletionsMessage } from './utils'
 
 const router = useRouter()
 const apiSettingsStore = useApiSettingsStore()
@@ -62,6 +64,9 @@ const inputMessage = ref('')
 
 // 当前选中的模型（支持用户手动切换）
 const currentModel = ref(apiSettingsStore.effectiveDefaultChatModel || '')
+const isCurrentModelSupportsVision = computed(() => {
+  return apiSettingsStore.modelSupportsCapability(currentModel.value, 'vision')
+})
 
 // 监听默认模型变化，如果当前模型是默认值且用户没有手动修改过，则更新
 watch(
@@ -88,10 +93,11 @@ const modelList = computed(() => {
  * @param {string} payload.message - 用户输入的消息
  */
 const handleMessageSubmit = (payload = {}) => {
-  const { message } = payload
+  const { message, fileList = [] } = payload
+  const safeMessage = typeof message === 'string' ? message : ''
   const model = currentModel.value || apiSettingsStore.effectiveDefaultChatModel
 
-  if (!message || !message.trim()) {
+  if (!safeMessage.trim() && (!Array.isArray(fileList) || fileList.length === 0)) {
     return
   }
 
@@ -102,17 +108,26 @@ const handleMessageSubmit = (payload = {}) => {
   }
 
   // 1. 创建新房间，使用用户第一句话作为标题（截取前50个字符）
-  const title = message.trim().slice(0, 50)
+  const title = safeMessage.trim() ? safeMessage.trim().slice(0, 50) : '图片识别'
   const roomId = chatRoomsStore.createRoom(model, title)
 
   // 2. 存储待发送的消息到 sessionStorage
-  window.sessionStorage.setItem(
-    'COMPLETIONS_WILL_SEND_MESSAGE',
-    JSON.stringify({
-      message,
-      model
-    })
-  )
+  setPendingCompletionsMessage({
+    message: safeMessage,
+    model,
+    fileList
+  })
+  try {
+    window.sessionStorage.setItem(
+      'COMPLETIONS_WILL_SEND_MESSAGE',
+      JSON.stringify({
+        message: safeMessage,
+        model
+      })
+    )
+  } catch (error) {
+    console.warn('[Completions] 存储待发送消息失败，将使用内存缓存', error)
+  }
 
   // 3. 跳转到对话页面
   router.push({

@@ -87,6 +87,9 @@ export function useCompletions({ roomId }) {
       name: model
     }))
   })
+  const currentModelSupportsVision = computed(() => {
+    return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'vision')
+  })
 
   // 判断当前显示的分支是否包含正在接收消息的节点
   const isViewingReceivingBranch = computed(() => {
@@ -226,13 +229,153 @@ export function useCompletions({ roomId }) {
     }
   })
 
+  const getImageFiles = fileList => {
+    if (!Array.isArray(fileList)) return []
+    return fileList.filter(file => file?.type === 'image' || file?.belong === 'image')
+  }
+
+  const getImageDataUrls = fileList => {
+    return getImageFiles(fileList)
+      .map(file => {
+        if (typeof file?.base64 === 'string' && file.base64.startsWith('data:image/')) {
+          return file.base64
+        }
+        if (
+          typeof file?.previewBase64 === 'string' &&
+          file.previewBase64.startsWith('data:image/')
+        ) {
+          return file.previewBase64
+        }
+        if (typeof file?.url === 'string' && file.url.startsWith('data:image/')) {
+          return file.url
+        }
+        return ''
+      })
+      .filter(Boolean)
+  }
+
+  const sanitizeFileListForStorage = fileList => {
+    if (!Array.isArray(fileList)) return []
+
+    return fileList
+      .map(file => {
+        if (!file || typeof file !== 'object') return null
+
+        const commonFields = {
+          type: file.type || (file.belong === 'image' ? 'image' : 'file'),
+          belong: file.belong || (file.type === 'image' ? 'image' : 'file'),
+          name: file.name || '',
+          size: file.size || 0,
+          extension: file.extension || '',
+          mimeType: file.mimeType || ''
+        }
+
+        if (commonFields.type === 'image' || commonFields.belong === 'image') {
+          const previewUrlCandidate = [file.previewBase64, file.url].find(
+            url => typeof url === 'string' && url.startsWith('data:image/')
+          )
+          const previewUrl =
+            typeof previewUrlCandidate === 'string' ? previewUrlCandidate.trim() : ''
+
+          return {
+            ...commonFields,
+            type: 'image',
+            belong: 'image',
+            url: previewUrl || null
+          }
+        }
+
+        return {
+          ...commonFields,
+          url: typeof file.url === 'string' ? file.url : null,
+          fileId: file.fileId || null,
+          tokens: file.tokens || 0
+        }
+      })
+      .filter(Boolean)
+  }
+
+  const buildOpenAIContent = (msg, options = {}) => {
+    const { overrideImageDataUrls = [] } = options
+    const textContent = typeof msg?.content === 'string' ? msg.content : ''
+
+    if (msg?.role !== 'user' || !currentModelSupportsVision.value) {
+      return textContent
+    }
+
+    const imageDataUrls = overrideImageDataUrls.length
+      ? overrideImageDataUrls
+      : getImageDataUrls(msg.fileList)
+    if (!imageDataUrls.length) {
+      return textContent
+    }
+
+    const content = []
+    if (textContent.trim()) {
+      content.push({
+        type: 'text',
+        text: textContent
+      })
+    }
+
+    imageDataUrls.forEach(url => {
+      content.push({
+        type: 'image_url',
+        image_url: {
+          url
+        }
+      })
+    })
+
+    return content
+  }
+
+  const buildOpenAIMessages = (messages = [], options = {}) => {
+    const { excludeAssistantId = '', overrideImageDataUrlsByMessageId = {} } = options
+
+    return messages
+      .filter(msg => {
+        if (!msg?.role) return false
+        if (excludeAssistantId && msg.id === excludeAssistantId && !msg.content) {
+          return false
+        }
+        return true
+      })
+      .map(msg => ({
+        role: msg.role,
+        content: buildOpenAIContent(msg, {
+          overrideImageDataUrls: Array.isArray(overrideImageDataUrlsByMessageId[msg.id])
+            ? overrideImageDataUrlsByMessageId[msg.id]
+            : []
+        })
+      }))
+  }
+
   /**
    * 发送消息
    * @param {Object} options - 发送选项
    */
-  const sendMessage = () => {
-    if (!message.value.trim()) {
+  const sendMessage = (payload = {}) => {
+    const targetModel = payload.model || currentModelValue.value
+    const sentMessage = typeof payload.message === 'string' ? payload.message : message.value
+    const sentFileList = Array.isArray(payload.fileList) ? [...payload.fileList] : []
+    const storedFileList = sanitizeFileListForStorage(sentFileList)
+
+    if (!sentMessage.trim() && sentFileList.length === 0) {
       showMessage('发送消息不可为空，请输入消息', { type: 'warning' })
+      return
+    }
+
+    if (!targetModel) {
+      showMessage('请先选择模型', { type: 'warning' })
+      return
+    }
+
+    if (
+      getImageFiles(sentFileList).length > 0 &&
+      !apiSettingsStore.modelSupportsCapability(targetModel, 'vision')
+    ) {
+      showMessage('当前模型不支持图片识别，请切换支持视觉能力的模型', { type: 'warning' })
       return
     }
 
@@ -246,7 +389,10 @@ export function useCompletions({ roomId }) {
       return
     }
 
-    const sentMessage = message.value
+    if (targetModel !== currentModelValue.value) {
+      currentModelValue.value = targetModel
+    }
+
     message.value = ''
 
     // 创建用户消息
@@ -257,6 +403,7 @@ export function useCompletions({ roomId }) {
       id: userMessageId,
       role: 'user',
       content: sentMessage,
+      fileList: storedFileList,
       createdAt: new Date().toISOString(),
       children: [],
       currentIndex: 0
@@ -274,7 +421,7 @@ export function useCompletions({ roomId }) {
       parentId: userMessageId,
       children: [],
       currentIndex: 0,
-      model: currentModelValue.value
+      model: targetModel
     }
 
     // 添加消息到 store
@@ -291,17 +438,16 @@ export function useCompletions({ roomId }) {
 
     // 获取完整的对话历史（包括刚添加的用户消息）
     const messages = chatRoomsStore.getMessages(id)
-    // 过滤掉最后一条空的 assistant 消息，构建请求消息
-    const openAIMessages = messages
-      .filter(msg => !(msg.id === assistantMessageId && !msg.content))
-      .map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
+    const openAIMessages = buildOpenAIMessages(messages, {
+      excludeAssistantId: assistantMessageId,
+      overrideImageDataUrlsByMessageId: {
+        [userMessageId]: getImageDataUrls(sentFileList)
+      }
+    })
 
     // 发送 SSE 请求
     sendSSE({
-      model: currentModelValue.value,
+      model: targetModel,
       messages: openAIMessages
     })
   }
@@ -370,10 +516,7 @@ export function useCompletions({ roomId }) {
       const allMessages = chatRoomsStore.getMessages(id)
       // 找到用户消息的位置，取其之前的消息 + 用户消息本身
       const userMsgIndex = allMessages.findIndex(msg => msg.id === parentId)
-      const openAIMessages = allMessages.slice(0, userMsgIndex + 1).map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
+      const openAIMessages = buildOpenAIMessages(allMessages.slice(0, userMsgIndex + 1))
 
       // 发送 SSE 请求
       sendSSE({
@@ -550,6 +693,9 @@ export function useCompletions({ roomId }) {
       id: newUserMessageId,
       role: 'user',
       content: editedContent,
+      fileList: Array.isArray(currentUserMessageNode.fileList)
+        ? [...currentUserMessageNode.fileList]
+        : [],
       createdAt: new Date().toISOString(),
       parentId: parentNode === tree ? null : parentNode.id,
       children: [],
@@ -594,10 +740,7 @@ export function useCompletions({ roomId }) {
       // 获取到新用户消息为止的对话历史
       const allMessages = chatRoomsStore.getMessages(id)
       const userMsgIndex = allMessages.findIndex(msg => msg.id === newUserMessageId)
-      const openAIMessages = allMessages.slice(0, userMsgIndex + 1).map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
+      const openAIMessages = buildOpenAIMessages(allMessages.slice(0, userMsgIndex + 1))
 
       sendSSE({
         model: currentModelValue.value,

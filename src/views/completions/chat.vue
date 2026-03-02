@@ -78,6 +78,7 @@
           :allow-empty-message="false"
           :hidden-input-when-files="false"
           :min-rows="2"
+          :show-image-btn="isCurrentModelSupportsVision"
           show-model-select
           show-mention-model
           agent-code="completions"
@@ -95,6 +96,7 @@ import CompletionsUserMessage from '@/components/completions-message/user.vue'
 import CompletionsAssistantMessage from '@/components/completions-message/assistant.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { FETCH_CHAR_HISTORY } from '@/config/symbol'
+import { useApiSettingsStore } from '@/stores/api-settings'
 import { useRoute, onBeforeRouteLeave, useRouter } from 'vue-router'
 import {
   tryOnMounted,
@@ -104,6 +106,7 @@ import {
   useEventBus
 } from '@vueuse/core'
 import { useCompletions } from './hooks/use-completions'
+import { consumePendingCompletionsMessage } from './utils'
 
 defineOptions({
   name: 'CompletionsChatPage'
@@ -119,6 +122,7 @@ const agentPositionX = computed(() => {
 
 const route = useRoute()
 const router = useRouter()
+const apiSettingsStore = useApiSettingsStore()
 const roomId = computed(() => route.query.roomId)
 const senderRef = ref(null)
 const chatContainerRef = ref(null)
@@ -168,13 +172,28 @@ const {
 } = useCompletions({
   roomId
 })
+const isCurrentModelSupportsVision = computed(() => {
+  return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'vision')
+})
 
 // 页面加载时获取数据
 tryOnMounted(async () => {
-  let willSendMessage = window.sessionStorage.getItem('COMPLETIONS_WILL_SEND_MESSAGE') || ''
-  if (willSendMessage) {
-    willSendMessage = JSON.parse(willSendMessage)
+  let willSendMessage = null
+  const willSendMessageRaw = window.sessionStorage.getItem('COMPLETIONS_WILL_SEND_MESSAGE') || ''
+  if (willSendMessageRaw) {
     window.sessionStorage.removeItem('COMPLETIONS_WILL_SEND_MESSAGE')
+    try {
+      willSendMessage = JSON.parse(willSendMessageRaw)
+    } catch (error) {
+      console.warn('[Completions] 解析待发送消息失败，已忽略', error)
+    }
+  }
+
+  const pendingMessage = consumePendingCompletionsMessage()
+  if (pendingMessage && Object.keys(pendingMessage).length > 0) {
+    message.value = pendingMessage.message || ''
+    sendMessage({ ...pendingMessage })
+    return
   }
 
   if (willSendMessage && Object.keys(willSendMessage).length > 0) {
