@@ -94,7 +94,6 @@ import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import FileItem from '../sender/components/file-item.vue'
 import { IGNORE_MESSAGE } from '@/config/app'
 import { onCopy } from '@/utils'
-import { convertImageToBase64 } from '@/utils/img/index.js'
 import { showMessage } from '@/hooks/use-message'
 
 defineOptions({

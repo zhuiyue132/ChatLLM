@@ -22,6 +22,7 @@ const MarkdownProvider = defineComponent({
       // 合并默认的 codeXRender 和用户提供的 codeXRender
       const mergedCodeXRender = {
         ...defaultCodeXRender,
+        // eslint-disable-next-line vue/no-undef-properties
         ...(props.codeXRender || {})
       }
 

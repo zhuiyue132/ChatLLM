@@ -25,13 +25,11 @@ import { useFileDialog, useVModel } from '@vueuse/core'
 import { computed } from 'vue'
 import { showMessage } from '@/hooks/use-message'
 
-const IMAGE_LIMIT_BY_AGENT = {
-  completions: {
-    fileFormat: 'jpg,jpeg,png,gif,webp,bmp',
-    maxCount: 4,
-    maxSize: 10,
-    multiple: true
-  }
+const IMAGE_UPLOAD_LIMIT = {
+  fileFormat: 'jpg,jpeg,png,gif,webp,bmp',
+  maxCount: 4,
+  maxSize: 10,
+  multiple: true
 }
 
 const props = defineProps({
@@ -43,38 +41,30 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  agentCode: {
-    type: String,
-    default: ''
-  },
   disabled: {
     type: Boolean,
     default: false
   }
 })
 
-const LIMIT_OF_AGENT = computed(() => {
-  return IMAGE_LIMIT_BY_AGENT[props.agentCode] || IMAGE_LIMIT_BY_AGENT.completions
-})
-
 const emit = defineEmits(['upload-success', 'update:loading'])
 
 const buttonDisabled = computed(() => {
-  return props.disabled || props.count >= LIMIT_OF_AGENT.value.maxCount
+  return props.disabled || props.count >= IMAGE_UPLOAD_LIMIT.maxCount
 })
 
 const isUploading = useVModel(props, 'loading', emit)
 
 const { open, reset, onChange } = useFileDialog({
-  accept: LIMIT_OF_AGENT.value.fileFormat
+  accept: IMAGE_UPLOAD_LIMIT.fileFormat
     .split(',')
     .map(type => `.${type}`)
     .join(','),
-  multiple: LIMIT_OF_AGENT.value.multiple
+  multiple: IMAGE_UPLOAD_LIMIT.multiple
 })
 
 const uploadTips = computed(() => {
-  const { fileFormat, maxCount, maxSize } = LIMIT_OF_AGENT.value
+  const { fileFormat, maxCount, maxSize } = IMAGE_UPLOAD_LIMIT
   const format = fileFormat
     .split(',')
     .map(item => item.toUpperCase())
@@ -131,7 +121,7 @@ const createImagePreviewDataUrl = (base64, maxSide = 768, quality = 0.75) => {
 }
 
 const validateFile = file => {
-  const { maxSize, fileFormat } = LIMIT_OF_AGENT.value
+  const { maxSize, fileFormat } = IMAGE_UPLOAD_LIMIT
 
   // 检查文件格式
   const allowedFormats = fileFormat.split(',')
@@ -154,7 +144,7 @@ const validateFile = file => {
 const handleUpload = async selectedFiles => {
   if (!selectedFiles || selectedFiles.length === 0) return
 
-  const { maxCount } = LIMIT_OF_AGENT.value
+  const { maxCount } = IMAGE_UPLOAD_LIMIT
   if (selectedFiles.length > maxCount) {
     showMessage(`最多只能上传 ${maxCount} 张图片`, { type: 'error' })
     reset()

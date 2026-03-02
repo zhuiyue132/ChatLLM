@@ -40,7 +40,6 @@ declare module 'vue' {
     ElUpload: typeof import('element-plus/es')['ElUpload']
     Empty: typeof import('./src/components/empty/index.vue')['default']
     FileItem: typeof import('./src/components/sender/components/file-item.vue')['default']
-    FileUpload: typeof import('./src/components/sender/components/file-upload.vue')['default']
     FloatButton: typeof import('./src/components/float-button/index.vue')['default']
     HistorySearchDialog: typeof import('./src/components/dialog/history-search-dialog.vue')['default']
     ImageItem: typeof import('./src/components/completions-message/image-item.vue')['default']

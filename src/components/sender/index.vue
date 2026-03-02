@@ -85,7 +85,6 @@
               v-if="showImageBtn"
               v-model:loading="loadingMap.image"
               :count="countOfType.image"
-              :agent-code="agentCode"
               :disabled="loading"
               @upload-success="handleUploadSuccess"
             />
@@ -150,12 +149,6 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-  // 业务编码，用于区分上传限制策略
-  agentCode: {
-    type: String,
-    default: ''
-  },
-
   // 是否加载中
   loading: {
     type: Boolean,
@@ -338,11 +331,6 @@ const emits = defineEmits([
   'template-setting-confirmed'
 ])
 
-// 创建图片值
-const enableCreateImage = useVModel(props, 'createImage', emits)
-
-const createImageCount = useVModel(props, 'createImageCount', emits)
-
 // 模型值
 const model = useVModel(props, 'model', emits)
 
@@ -357,9 +345,6 @@ const selectionTemplateId = useVModel(props, 'selectionTemplateId', emits)
 
 // 单选按钮值
 const radioValue = useVModel(props, 'radioValue', emits)
-
-// 深度思考值
-const deepThink = useVModel(props, 'deepThink', emits)
 
 // 公共模板ID
 const customTemplateId = useVModel(props, 'customTemplateId', emits)

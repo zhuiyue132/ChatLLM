@@ -81,7 +81,6 @@
           :show-image-btn="isCurrentModelSupportsVision"
           show-model-select
           show-mention-model
-          agent-code="completions"
           @submit="handleSendMessage"
           @stop="handleManualStop"
         />

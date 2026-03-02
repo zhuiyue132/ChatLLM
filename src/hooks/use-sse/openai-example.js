@@ -104,7 +104,7 @@ export const useMultiChat = (options = {}) => {
   // 对话列表 Map<chatId, { messages, currentReply, requestId }>
   const chats = ref(new Map())
 
-  const { send, stop, stopAll, hasActiveRequests, getRequest } = useOpenAISSE({
+  const { send, stop, stopAll, hasActiveRequests } = useOpenAISSE({
     baseURL,
     apiKey
   })
