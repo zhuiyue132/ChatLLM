@@ -9,7 +9,7 @@
 -->
 <template>
   <div :id="`assistant-${messageId}`" class="assistant-message">
-    <LoadingComponent v-if="loading" />
+    <LoadingComponent v-if="loading && !hasSegmentFlow" />
     <template v-else>
       <!-- 模型信息头部 -->
       <div class="model-header">
@@ -30,97 +30,153 @@
         {{ Math.ceil(Number(filePercent) * 100) + '%' }}
       </div>
 
-      <div v-if="mcpLogs.length > 0" class="mcp-log-section">
-        <div class="mcp-log-header" @click="toggleMcpLogs">
-          <div class="mcp-log-title">
-            <i class="icon-mcp-custom"></i>
-            <span>MCP 调用日志（{{ mcpLogs.length }}）</span>
+      <template v-if="hasSegmentFlow">
+        <div class="assistant-segments">
+          <div
+            v-for="(segment, index) in normalizedSegments"
+            :key="segment.id || index"
+            class="assistant-segment"
+            :class="{
+              'assistant-segment-text': segment.type !== 'mcp',
+              'assistant-segment-mcp': segment.type === 'mcp'
+            }"
+          >
+            <template v-if="segment.type === 'mcp'">
+              <div class="mcp-log-message">
+                <button
+                  type="button"
+                  class="mcp-log-toggle"
+                  @click="toggleMcpSegment(segment, index)"
+                >
+                  <div class="mcp-log-meta">
+                    <div class="mcp-log-title">
+                      <i class="icon-mcp-custom"></i>
+                      <span class="mcp-log-label">MCP 调用</span>
+                      <span class="mcp-log-title-separator">/</span>
+                      <span class="mcp-log-title-text">{{ getMcpDisplayName(segment) }}</span>
+                    </div>
+                    <span class="mcp-status" :class="getMcpStatus(segment.status)">
+                      {{ getMcpStatusText(segment.status) }}
+                    </span>
+                    <span class="mcp-duration">
+                      {{
+                        getMcpStatus(segment.status) === 'pending'
+                          ? '进行中'
+                          : formatDuration(segment.durationMs)
+                      }}
+                    </span>
+                  </div>
+                  <i
+                    class="iconfont icon-arrowDown toggle-icon"
+                    :class="{ expanded: isMcpSegmentExpanded(segment, index) }"
+                  ></i>
+                </button>
+
+                <div v-show="isMcpSegmentExpanded(segment, index)" class="mcp-log-detail">
+                  <div v-if="formatMcpArguments(segment.arguments)" class="mcp-log-block">
+                    <div class="mcp-log-block-title">参数</div>
+                    <pre>{{ formatMcpArguments(segment.arguments) }}</pre>
+                  </div>
+
+                  <div class="mcp-log-block">
+                    <div class="mcp-log-block-title">{{ getMcpOutputTitle(segment.status) }}</div>
+                    <pre>{{ getMcpOutputContent(segment) }}</pre>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <template v-else>
+              <div v-if="segment.reasoningContent" class="thinking-section">
+                <div class="thinking-header" @click="toggleSegmentThinking(segment, index)">
+                  <div class="thinking-status">
+                    <i class="iconfont icon-shendusikao"></i>
+                    <span class="thinking-text">
+                      {{ getThinkingText(segment.reasoningDuration) }}
+                    </span>
+                  </div>
+
+                  <i
+                    class="iconfont icon-arrowRight"
+                    :class="[
+                      'arrow-icon',
+                      { 'arrow-up': isSegmentThinkingVisible(segment, index) }
+                    ]"
+                  ></i>
+                </div>
+                <div v-show="isSegmentThinkingVisible(segment, index)" class="thinking-content">
+                  <div class="thinking-text-content">
+                    <MarkdownRenderer :content="segment.reasoningContent" />
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="segment.error || segment.content" class="message-content">
+                <div class="message-text markdown-body">
+                  <div v-if="segment.error" class="error-content">
+                    内容生成时出现错误，请稍后重试！
+                  </div>
+                  <MarkdownRenderer v-else :content="segment.content" />
+                </div>
+              </div>
+            </template>
           </div>
-          <i
-            class="iconfont icon-arrowRight"
-            :class="['arrow-icon', { 'arrow-up': showMcpLogs }]"
-          ></i>
         </div>
+      </template>
 
-        <div v-show="showMcpLogs" class="mcp-log-list">
-          <div v-for="(log, index) in mcpLogs" :key="`${log.id || index}`" class="mcp-log-item">
-            <div class="mcp-log-meta">
-              <span class="mcp-status" :class="getMcpStatus(log.status)">
-                {{ getMcpStatusText(log.status) }}
-              </span>
-              <span class="mcp-name">{{ log.serverName }} / {{ log.toolName }}</span>
-              <span class="mcp-duration">
-                {{
-                  getMcpStatus(log.status) === 'pending' ? '进行中' : formatDuration(log.durationMs)
-                }}
-              </span>
-            </div>
-
-            <div v-if="formatMcpArguments(log.arguments)" class="mcp-log-block">
-              <div class="mcp-log-block-title">参数</div>
-              <pre>{{ formatMcpArguments(log.arguments) }}</pre>
-            </div>
-
-            <div class="mcp-log-block">
-              <div class="mcp-log-block-title">{{ getMcpOutputTitle(log.status) }}</div>
-              <pre>{{ getMcpOutputContent(log) }}</pre>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 思考过程（如果有） -->
-      <div v-if="thinkingContent" class="thinking-section">
-        <div class="thinking-header" @click="toggleThinking">
-          <div class="thinking-status">
-            <i class="iconfont icon-shendusikao"></i>
-            <span class="thinking-text">{{ thinkingText }}</span>
-          </div>
-
-          <i
-            class="iconfont icon-arrowRight"
-            :class="['arrow-icon', { 'arrow-up': showThinking }]"
-          ></i>
-        </div>
-        <div v-show="showThinking" class="thinking-content">
-          <div class="thinking-text-content">
-            <!-- {{ thinkingContent }} -->
-            <MarkdownRenderer :content="thinkingContent" />
-          </div>
-        </div>
-      </div>
-
-      <!-- 消息正文内容 -->
-      <div v-if="!imageList.length" class="message-content">
-        <div class="message-text markdown-body">
-          <div v-if="error" class="error-content">内容生成时出现错误，请稍后重试！</div>
-          <MarkdownRenderer v-else :content="message" />
-        </div>
-      </div>
-      <!-- 图片内容 -->
       <template v-else>
-        <div class="message-content">
-          <div class="message-text markdown-body">
-            {{
-              imageList?.some?.(item => item.loading)
-                ? '图片创建中...'
-                : imageList?.every?.(item => item.error)
-                  ? '图片创建失败'
-                  : '图片已创建'
-            }}
+        <!-- 思考过程（如果有） -->
+        <div v-if="thinkingContent" class="thinking-section">
+          <div class="thinking-header" @click="toggleThinking">
+            <div class="thinking-status">
+              <i class="iconfont icon-shendusikao"></i>
+              <span class="thinking-text">{{ thinkingText }}</span>
+            </div>
+
+            <i
+              class="iconfont icon-arrowRight"
+              :class="['arrow-icon', { 'arrow-up': showThinking }]"
+            ></i>
+          </div>
+          <div v-show="showThinking" class="thinking-content">
+            <div class="thinking-text-content">
+              <MarkdownRenderer :content="thinkingContent" />
+            </div>
           </div>
         </div>
 
-        <div class="image-result-container">
-          <ImageItem
-            v-for="(item, index) in imageList || []"
-            :key="`${item.src}-${index}`"
-            :image-list="imageList || []"
-            :loading="item.loading"
-            :src="item.src"
-            :error="item.error"
-          />
+        <!-- 消息正文内容 -->
+        <div v-if="!imageList.length" class="message-content">
+          <div class="message-text markdown-body">
+            <div v-if="error" class="error-content">内容生成时出现错误，请稍后重试！</div>
+            <MarkdownRenderer v-else :content="normalizedMessageText" />
+          </div>
         </div>
+        <!-- 图片内容 -->
+        <template v-else>
+          <div class="message-content">
+            <div class="message-text markdown-body">
+              {{
+                imageList?.some?.(item => item.loading)
+                  ? '图片创建中...'
+                  : imageList?.every?.(item => item.error)
+                    ? '图片创建失败'
+                    : '图片已创建'
+              }}
+            </div>
+          </div>
+
+          <div class="image-result-container">
+            <ImageItem
+              v-for="(item, index) in imageList || []"
+              :key="`${item.src}-${index}`"
+              :image-list="imageList || []"
+              :loading="item.loading"
+              :src="item.src"
+              :error="item.error"
+            />
+          </div>
+        </template>
       </template>
 
       <!-- 操作按钮栏，只在消息完成时显示 -->
@@ -177,8 +233,12 @@ defineOptions({
 
 const props = defineProps({
   message: {
-    type: String,
+    type: [String, Array],
     default: ''
+  },
+  segments: {
+    type: Array,
+    default: () => []
   },
   // 是否正在加载, 即对话输出前的loading
   loading: {
@@ -261,7 +321,149 @@ const LoadingComponent = computed(() => {
 
 // 默认收起思考过程
 const showThinking = ref(false)
-const showMcpLogs = ref(false)
+const segmentThinkingVisibility = ref({})
+const mcpSegmentExpanded = ref({})
+
+const normalizeAssistantText = value => {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (!Array.isArray(value)) {
+    return ''
+  }
+
+  return value
+    .map(item => {
+      if (typeof item === 'string') return item
+      if (item && typeof item === 'object' && typeof item.content === 'string') {
+        return item.content
+      }
+      return ''
+    })
+    .filter(Boolean)
+    .join('\n')
+}
+
+const normalizeAssistantSegment = (segment, index, prefix = 'segment') => {
+  const fallbackId = `${prefix}-${index}`
+
+  if (typeof segment === 'string') {
+    return {
+      id: fallbackId,
+      type: 'assistant',
+      content: segment,
+      reasoningContent: '',
+      reasoningDuration: 0,
+      error: false
+    }
+  }
+
+  if (!segment || typeof segment !== 'object') {
+    return null
+  }
+
+  const segmentType = `${segment.type || segment.role || ''}`.toLowerCase()
+  if (segmentType === 'mcp' || segmentType === 'mcp-log') {
+    return {
+      id: segment.id || fallbackId,
+      type: 'mcp',
+      model: segment.model || '',
+      status: segment.status || 'pending',
+      serverName: segment.serverName || '',
+      toolName: segment.toolName || '',
+      durationMs: Number(segment.durationMs || 0),
+      arguments: segment.arguments ?? {},
+      result: segment.result ?? null,
+      toolError: segment.toolError || segment.error || ''
+    }
+  }
+
+  return {
+    id: segment.id || fallbackId,
+    type: 'assistant',
+    content: normalizeAssistantText(segment.content),
+    reasoningContent: normalizeAssistantText(segment.reasoningContent),
+    reasoningDuration: Number(segment.reasoningDuration || 0),
+    error: !!segment.error
+  }
+}
+
+const normalizedSegments = computed(() => {
+  const directSegments = Array.isArray(props.segments) ? props.segments : []
+  if (directSegments.length > 0) {
+    return directSegments
+      .map((segment, index) => normalizeAssistantSegment(segment, index, 'assistant'))
+      .filter(Boolean)
+  }
+
+  if (Array.isArray(props.message)) {
+    return props.message
+      .map((segment, index) => normalizeAssistantSegment(segment, index, 'message'))
+      .filter(Boolean)
+  }
+
+  if (Array.isArray(props.mcpLogs) && props.mcpLogs.length > 0) {
+    const legacySegments = []
+    const textSegment = normalizeAssistantSegment(
+      {
+        type: 'assistant',
+        content: props.message,
+        reasoningContent: props.thinkingContent,
+        reasoningDuration: props.thinkingDuration,
+        error: props.error
+      },
+      0,
+      'legacy-text'
+    )
+
+    if (textSegment && (textSegment.content || textSegment.reasoningContent || textSegment.error)) {
+      legacySegments.push(textSegment)
+    }
+
+    props.mcpLogs.forEach((logItem, index) => {
+      const mcpSegment = normalizeAssistantSegment(
+        {
+          ...logItem,
+          type: 'mcp'
+        },
+        index,
+        'legacy-mcp'
+      )
+      if (mcpSegment) {
+        legacySegments.push(mcpSegment)
+      }
+    })
+
+    return legacySegments
+  }
+
+  return []
+})
+
+const hasSegmentFlow = computed(() => normalizedSegments.value.length > 0)
+const normalizedMessageText = computed(() => normalizeAssistantText(props.message))
+
+const buildCopyableMessage = () => {
+  if (!hasSegmentFlow.value) {
+    return normalizedMessageText.value
+  }
+
+  const segmentText = normalizedSegments.value
+    .filter(segment => segment.type !== 'mcp')
+    .map(segment => segment.content)
+    .filter(Boolean)
+    .join('\n')
+
+  return segmentText || normalizedMessageText.value
+}
+
+const copyableMessage = computed(() => buildCopyableMessage())
+
+const getSegmentKey = (segment, index) => {
+  const segmentId = segment?.id || index
+  return `${segment?.type || 'assistant'}-${segmentId}`
+}
 
 // 监听思考内容变化：有新内容时展开
 watch(
@@ -275,13 +477,32 @@ watch(
 )
 
 watch(
-  () => props.mcpLogs,
-  logs => {
-    if (Array.isArray(logs) && logs.length > 0) {
-      showMcpLogs.value = true
-    }
+  normalizedSegments,
+  segments => {
+    const nextThinkingVisibility = { ...segmentThinkingVisibility.value }
+    const nextMcpExpanded = { ...mcpSegmentExpanded.value }
+
+    segments.forEach((segment, index) => {
+      const segmentKey = getSegmentKey(segment, index)
+      if (segment.type === 'mcp') {
+        if (nextMcpExpanded[segmentKey] === undefined) {
+          nextMcpExpanded[segmentKey] = true
+        }
+        return
+      }
+
+      if (segment.reasoningContent && nextThinkingVisibility[segmentKey] === undefined) {
+        nextThinkingVisibility[segmentKey] = Number(segment.reasoningDuration || 0) === 0
+      }
+    })
+
+    segmentThinkingVisibility.value = nextThinkingVisibility
+    mcpSegmentExpanded.value = nextMcpExpanded
   },
-  { immediate: true, deep: true }
+  {
+    immediate: true,
+    deep: true
+  }
 )
 
 // 监听推理耗时：推理结束时收起思考
@@ -301,12 +522,16 @@ const modelDisplayName = computed(() => {
   return props.model || 'AI'
 })
 
-// 思考状态文本
-const thinkingText = computed(() => {
-  if (props.thinkingDuration > 0) {
-    return `已深度思考（用时${Math.ceil(props.thinkingDuration / 1000)}秒）`
+const getThinkingText = duration => {
+  if (Number(duration || 0) > 0) {
+    return `已深度思考（用时${Math.ceil(Number(duration || 0) / 1000)}秒）`
   }
   return '深度思考中...'
+}
+
+// 思考状态文本
+const thinkingText = computed(() => {
+  return getThinkingText(props.thinkingDuration)
 })
 
 // 切换思考过程显示
@@ -314,13 +539,41 @@ const toggleThinking = () => {
   showThinking.value = !showThinking.value
 }
 
-const toggleMcpLogs = () => {
-  showMcpLogs.value = !showMcpLogs.value
+const isSegmentThinkingVisible = (segment, index) => {
+  const key = getSegmentKey(segment, index)
+  if (segmentThinkingVisibility.value[key] !== undefined) {
+    return segmentThinkingVisibility.value[key]
+  }
+  return true
+}
+
+const toggleSegmentThinking = (segment, index) => {
+  const key = getSegmentKey(segment, index)
+  segmentThinkingVisibility.value[key] = !isSegmentThinkingVisible(segment, index)
+}
+
+const isMcpSegmentExpanded = (segment, index) => {
+  const key = getSegmentKey(segment, index)
+  if (mcpSegmentExpanded.value[key] !== undefined) {
+    return mcpSegmentExpanded.value[key]
+  }
+  return true
+}
+
+const toggleMcpSegment = (segment, index) => {
+  const key = getSegmentKey(segment, index)
+  mcpSegmentExpanded.value[key] = !isMcpSegmentExpanded(segment, index)
+}
+
+const getMcpDisplayName = segment => {
+  const safeServerName = segment?.serverName || 'MCP'
+  const safeToolName = segment?.toolName || 'tool'
+  return `${safeServerName} / ${safeToolName}`
 }
 
 // 复制消息
 const copyMessage = async () => {
-  await onCopy(props.message || '')
+  await onCopy(copyableMessage.value || '')
 }
 
 // 分页相关计算属性
@@ -403,7 +656,7 @@ const getMcpOutputContent = log => {
     return formatMcpResult(log?.result)
   }
   if (normalizedStatus === 'error') {
-    return log?.error || '工具调用失败'
+    return log?.toolError || log?.error || '工具调用失败'
   }
   return '调用中...'
 }
@@ -443,95 +696,126 @@ const regenerateMessage = () => {
   @include flex-gap(16px, both);
 }
 
-.mcp-log-section {
-  margin-top: 12px;
+.assistant-segments {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 10px;
+
+  .assistant-segment {
+    width: 100%;
+  }
+}
+
+.mcp-log-message {
+  width: 100%;
+  padding: 12px;
   border: 1px solid var(--border-color-muted);
   border-radius: 10px;
   background: var(--bg-panel);
 
-  .mcp-log-header {
+  .mcp-log-toggle {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 24px;
+    padding: 0;
     cursor: pointer;
-
-    .mcp-log-title {
-      display: flex;
-      align-items: center;
-      color: var(--text-normal-color);
-      font-size: 13px;
-      font-weight: 500;
-      gap: 6px;
-    }
-
-    .arrow-icon {
-      transition: transform 0.2s ease;
-      transform: rotate(0deg);
-      color: var(--text-dblight-color);
-      font-size: 12px;
-
-      &.arrow-up {
-        transform: rotate(90deg);
-      }
-    }
-  }
-
-  .mcp-log-list {
-    display: flex;
-    flex-direction: column;
-    padding: 0 12px 12px;
-    gap: 10px;
-  }
-
-  .mcp-log-item {
-    padding: 10px;
-    border: 1px solid var(--border-color-muted);
-    border-radius: 8px;
-    background: var(--bg-app);
+    border: 0;
+    background: transparent;
   }
 
   .mcp-log-meta {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    flex: 1;
+    min-width: 0;
     gap: 8px;
+  }
 
-    .mcp-status {
-      min-width: 32px;
-      text-align: center;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 20px;
+  .toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    color: var(--text-dblight-color);
+    font-size: 12px;
 
-      &.success {
-        color: var(--success-text);
-        background: var(--success-bg);
-      }
+    &.expanded {
+      transform: rotate(180deg);
+    }
+  }
 
-      &.error {
-        color: var(--error-text);
-        background: var(--error-bg);
-      }
+  .mcp-log-detail {
+    margin-top: 8px;
+  }
 
-      &.pending {
-        color: var(--text-dblight-color);
-        background: var(--bg-muted);
-      }
+  .mcp-log-title {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    color: var(--text-normal-color);
+    font-size: 13px;
+    font-weight: 500;
+    gap: 6px;
+
+    .icon-mcp-custom {
+      flex: 0 0 auto;
+    }
+  }
+
+  .mcp-log-title-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .mcp-log-label,
+  .mcp-log-title-separator {
+    flex: 0 0 auto;
+  }
+
+  .mcp-status {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    justify-content: center;
+    min-width: 42px;
+    height: 20px;
+    text-align: center;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 20px;
+
+    &.success {
+      color: var(--success-text);
+      background: var(--success-bg);
     }
 
-    .mcp-name {
-      flex: 1;
-      color: var(--text-normal-color);
-      font-size: 12px;
-      font-weight: 500;
+    &.error {
+      color: var(--error-text);
+      background: var(--error-bg);
     }
 
-    .mcp-duration {
+    &.pending {
       color: var(--text-dblight-color);
-      font-size: 12px;
+      background: var(--bg-muted);
     }
+  }
+
+  .mcp-duration {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    margin-right: 8px;
+    color: var(--text-dblight-color);
+    font-size: 12px;
+    line-height: 20px;
   }
 
   .mcp-log-block {

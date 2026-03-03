@@ -919,6 +919,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     let mergedDisplayReasoningContent = ''
     let mergedDisplayReasoningDuration = 0
     const assistantTimeline = []
+    const assistantMcpLogs = []
 
     const normalizeTimelineItem = item => ({
       content: typeof item?.content === 'string' ? item.content : '',
@@ -932,6 +933,34 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       if (!roomId || !activeAssistantMessageId) return
       chatRoomsStore.updateMessage(roomId, activeAssistantMessageId, {
         mcpTimeline: timeline.map(normalizeTimelineItem)
+      })
+    }
+
+    const normalizeMcpLogItem = item => {
+      return {
+        id: item?.id || `mcp-log-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        model: item?.model || model || null,
+        status: item?.status || 'pending',
+        serverId: item?.serverId || '',
+        serverName: item?.serverName || 'MCP',
+        toolName: item?.toolName || 'tool',
+        arguments: item?.arguments ?? {},
+        durationMs: Number(item?.durationMs || 0),
+        result: item?.result ?? null,
+        toolError: item?.toolError || '',
+        createdAt: item?.createdAt || new Date().toISOString(),
+        finished: true,
+        error: false
+      }
+    }
+
+    const syncAssistantMcpLogs = () => {
+      const roomId = getRoomId()
+      if (!roomId || !activeAssistantMessageId) return
+      chatRoomsStore.updateMessage(roomId, activeAssistantMessageId, {
+        mcpLogs: assistantMcpLogs.map(log => ({
+          ...log
+        }))
       })
     }
 
@@ -954,25 +983,21 @@ export function useCompletions({ roomId, scrollContainer = null }) {
 
       const messageId =
         baseLog.id || `mcp-log-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      const pendingLog = normalizeMcpLogItem({
+        id: messageId,
+        ...baseLog,
+        status: 'pending',
+        durationMs: 0,
+        result: null,
+        toolError: ''
+      })
       const addedMessage = chatRoomsStore.addMessage(
         roomId,
         {
-          id: messageId,
+          ...pendingLog,
           role: 'mcp',
           messageType: 'mcp-log',
-          content: '',
-          model: baseLog.model || model || null,
-          status: 'pending',
-          serverId: baseLog.serverId || '',
-          serverName: baseLog.serverName || 'MCP',
-          toolName: baseLog.toolName || 'tool',
-          arguments: baseLog.arguments || {},
-          durationMs: 0,
-          result: null,
-          toolError: '',
-          createdAt: new Date().toISOString(),
-          finished: true,
-          error: false
+          content: ''
         },
         resolvedParentId
       )
@@ -980,6 +1005,17 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       if (!chatRoomsStore.findNodeById(tree, messageId)) {
         return null
       }
+
+      const existingLogIndex = assistantMcpLogs.findIndex(log => log.id === messageId)
+      if (existingLogIndex >= 0) {
+        assistantMcpLogs[existingLogIndex] = {
+          ...assistantMcpLogs[existingLogIndex],
+          ...pendingLog
+        }
+      } else {
+        assistantMcpLogs.push(pendingLog)
+      }
+      syncAssistantMcpLogs()
 
       if (isViewingReceivingBranch.value) {
         scrollToBottom()
@@ -992,6 +1028,23 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       const roomId = getRoomId()
       if (!roomId) return
       chatRoomsStore.updateMessage(roomId, messageId, patch)
+
+      const existingLogIndex = assistantMcpLogs.findIndex(log => log.id === messageId)
+      if (existingLogIndex >= 0) {
+        assistantMcpLogs[existingLogIndex] = {
+          ...assistantMcpLogs[existingLogIndex],
+          ...patch
+        }
+      } else {
+        assistantMcpLogs.push(
+          normalizeMcpLogItem({
+            id: messageId,
+            ...patch
+          })
+        )
+      }
+      syncAssistantMcpLogs()
+
       if (isViewingReceivingBranch.value) {
         scrollToBottom()
       }

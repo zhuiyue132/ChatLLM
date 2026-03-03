@@ -12,9 +12,9 @@
             v-for="msg in displayChatHistory"
             :id="`message-${msg.id}`"
             :key="msg.id || roomId"
+            :data-search-message-ids="formatSearchMessageIds(msg.searchMessageIds)"
             class="message-wrapper"
             :class="{
-              'mcp-log': msg.role.toLowerCase() === 'mcp',
               'user-log': msg.role.toLowerCase() === 'user',
               'assistant-log': shouldRenderAssistantMessage(msg)
             }"
@@ -58,22 +58,10 @@
               :current-page="msg.pageIndex + 1"
               :total-pages="msg.siblingCount || 1"
               :usage="msg.usage"
+              :segments="msg.assistantSegments || []"
               @regenerate="handleRegenerateAnswer"
               @prev="handleAssistantPrevPage(msg.parentId)"
               @next="handleAssistantNextPage(msg.parentId)"
-            />
-
-            <CompletionsMcpLogMessage
-              v-else-if="msg.role.toLowerCase() === 'mcp'"
-              :key="`mcp-${msg.id || roomId}`"
-              :model="msg.model"
-              :status="msg.status"
-              :server-name="msg.serverName"
-              :tool-name="msg.toolName"
-              :duration-ms="msg.durationMs"
-              :arguments="msg.arguments"
-              :result="msg.result"
-              :tool-error="msg.toolError"
             />
           </div>
         </div>
@@ -157,7 +145,6 @@ import { ref, computed, onBeforeUnmount, nextTick, watch } from 'vue'
 import AgentSender from '@/components/sender/index.vue'
 import CompletionsUserMessage from '@/components/completions-message/user.vue'
 import CompletionsAssistantMessage from '@/components/completions-message/assistant.vue'
-import CompletionsMcpLogMessage from '@/components/completions-message/mcp-log.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { FETCH_CHAR_HISTORY } from '@/config/symbol'
 import { useApiSettingsStore } from '@/stores/api-settings'
@@ -476,6 +463,27 @@ const availableMcpServers = computed(() => {
   return mcpSettingsStore.servers.filter(server => server.enabled)
 })
 
+const normalizeAssistantText = value => {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (!Array.isArray(value)) {
+    return ''
+  }
+
+  return value
+    .map(item => {
+      if (typeof item === 'string') return item
+      if (item && typeof item === 'object' && typeof item.content === 'string') {
+        return item.content
+      }
+      return ''
+    })
+    .filter(Boolean)
+    .join('\n')
+}
+
 const concatAssistantDisplayText = (baseText, incomingText) => {
   const safeBase = typeof baseText === 'string' ? baseText : ''
   const safeIncoming = typeof incomingText === 'string' ? incomingText : ''
@@ -485,6 +493,88 @@ const concatAssistantDisplayText = (baseText, incomingText) => {
     return `${safeBase}${safeIncoming}`
   }
   return `${safeBase}\n${safeIncoming}`
+}
+
+const createAssistantTextSegment = ({
+  id = '',
+  content = '',
+  reasoningContent = '',
+  reasoningDuration = 0,
+  error = false
+} = {}) => {
+  return {
+    id,
+    type: 'assistant',
+    content: normalizeAssistantText(content),
+    reasoningContent: normalizeAssistantText(reasoningContent),
+    reasoningDuration: Number(reasoningDuration || 0),
+    error: !!error
+  }
+}
+
+const createMcpLogSegment = (message = {}, { fallbackId = '' } = {}) => {
+  return {
+    id: message?.id || fallbackId,
+    type: 'mcp',
+    model: message?.model || '',
+    status: message?.status || 'pending',
+    serverName: message?.serverName || '',
+    toolName: message?.toolName || '',
+    durationMs: Number(message?.durationMs || 0),
+    arguments: message?.arguments ?? {},
+    result: message?.result ?? null,
+    toolError: message?.toolError || ''
+  }
+}
+
+const parseAssistantContentSegments = (content, { baseId = '' } = {}) => {
+  if (!Array.isArray(content)) {
+    return []
+  }
+
+  return content
+    .map((segment, index) => {
+      const fallbackId = baseId ? `${baseId}__content_${index}` : `content-${index}`
+
+      if (typeof segment === 'string') {
+        return createAssistantTextSegment({
+          id: fallbackId,
+          content: segment
+        })
+      }
+
+      if (!segment || typeof segment !== 'object') {
+        return null
+      }
+
+      const segmentType = `${segment.type || segment.role || ''}`.toLowerCase()
+      if (segmentType === 'mcp' || segmentType === 'mcp-log') {
+        return createMcpLogSegment(segment, {
+          fallbackId
+        })
+      }
+
+      return createAssistantTextSegment({
+        id: segment.id || fallbackId,
+        content: segment.content,
+        reasoningContent: segment.reasoningContent,
+        reasoningDuration: segment.reasoningDuration,
+        error: segment.error
+      })
+    })
+    .filter(Boolean)
+}
+
+const formatSearchMessageIds = ids => {
+  const normalizedIds = (Array.isArray(ids) ? ids : [])
+    .map(id => `${id || ''}`.trim())
+    .filter(Boolean)
+
+  if (normalizedIds.length === 0) {
+    return ''
+  }
+
+  return `|${normalizedIds.join('|')}|`
 }
 
 const displayChatHistory = computed(() => {
@@ -503,10 +593,98 @@ const displayChatHistory = computed(() => {
   const result = []
   let pendingAssistantNode = null
 
+  const createPendingAssistantNode = (msg, options = {}) => {
+    const { forceId = '' } = options
+
+    return {
+      ...msg,
+      id: forceId || msg?.id || `assistant-${Date.now()}`,
+      role: 'assistant',
+      sourceMessageId: msg?.id || '',
+      mergedAssistantIds: msg?.id ? [msg.id] : [],
+      assistantSegments: [],
+      searchMessageIds: msg?.id ? [msg.id] : [],
+      content: '',
+      reasoningContent: '',
+      reasoningTime: 0
+    }
+  }
+
   const flushPendingAssistantNode = () => {
     if (!pendingAssistantNode) return
+    if (!pendingAssistantNode.searchMessageIds.includes(pendingAssistantNode.id)) {
+      pendingAssistantNode.searchMessageIds.unshift(pendingAssistantNode.id)
+    }
     result.push(pendingAssistantNode)
     pendingAssistantNode = null
+  }
+
+  const appendSearchMessageId = messageId => {
+    if (!pendingAssistantNode) return
+    const normalizedId = `${messageId || ''}`.trim()
+    if (!normalizedId) return
+    if (!pendingAssistantNode.searchMessageIds.includes(normalizedId)) {
+      pendingAssistantNode.searchMessageIds.push(normalizedId)
+    }
+  }
+
+  const appendAssistantTextSegment = segment => {
+    if (!pendingAssistantNode || !segment) return
+    const normalizedSegment = createAssistantTextSegment(segment)
+    const hasDisplayPayload =
+      normalizedSegment.content.trim() ||
+      normalizedSegment.reasoningContent.trim() ||
+      normalizedSegment.error
+    if (!hasDisplayPayload) return
+
+    pendingAssistantNode.assistantSegments.push(normalizedSegment)
+    pendingAssistantNode.content = concatAssistantDisplayText(
+      pendingAssistantNode.content,
+      normalizedSegment.content
+    )
+    pendingAssistantNode.reasoningContent = concatAssistantDisplayText(
+      pendingAssistantNode.reasoningContent,
+      normalizedSegment.reasoningContent
+    )
+    pendingAssistantNode.reasoningTime =
+      Number(pendingAssistantNode.reasoningTime || 0) + Number(normalizedSegment.reasoningDuration)
+    appendSearchMessageId(normalizedSegment.id)
+  }
+
+  const appendMcpLogSegment = segment => {
+    if (!pendingAssistantNode || !segment) return
+    const normalizedSegment = createMcpLogSegment(segment)
+    const normalizedSegmentId = `${normalizedSegment.id || ''}`.trim()
+    if (normalizedSegmentId) {
+      const alreadyExists = pendingAssistantNode.assistantSegments.some(item => {
+        return item?.type === 'mcp' && `${item?.id || ''}`.trim() === normalizedSegmentId
+      })
+      if (alreadyExists) {
+        return
+      }
+    }
+    pendingAssistantNode.assistantSegments.push(normalizedSegment)
+    appendSearchMessageId(normalizedSegment.id)
+  }
+
+  const mergeAssistantMetadata = msg => {
+    if (!pendingAssistantNode || !msg) return
+
+    pendingAssistantNode.finished = !!msg.finished
+    pendingAssistantNode.error = !!pendingAssistantNode.error || !!msg.error
+    pendingAssistantNode.parentId = msg.parentId
+    pendingAssistantNode.sourceMessageId = msg.id || pendingAssistantNode.sourceMessageId
+
+    if (msg.usage) {
+      pendingAssistantNode.usage = msg.usage
+    }
+    if (msg.model) {
+      pendingAssistantNode.model = msg.model
+    }
+    if (msg.id && !pendingAssistantNode.mergedAssistantIds.includes(msg.id)) {
+      pendingAssistantNode.mergedAssistantIds.push(msg.id)
+    }
+    appendSearchMessageId(msg.id)
   }
 
   chatHistory.value.forEach(msg => {
@@ -514,85 +692,79 @@ const displayChatHistory = computed(() => {
 
     if (role === 'user') {
       flushPendingAssistantNode()
-      result.push(msg)
+      result.push({
+        ...msg,
+        searchMessageIds: [msg.id]
+      })
       return
     }
 
     if (role === 'assistant') {
+      if (!pendingAssistantNode) {
+        pendingAssistantNode = createPendingAssistantNode(msg)
+      }
+
+      mergeAssistantMetadata(msg)
+
       const timeline = Array.isArray(msg?.mcpTimeline) ? msg.mcpTimeline : []
       if (timeline.length > 0) {
-        flushPendingAssistantNode()
-        const hasAnyTimelineText = timeline.some(item => {
-          return (
-            (typeof item?.content === 'string' && item.content.trim().length > 0) ||
-            (typeof item?.reasoningContent === 'string' && item.reasoningContent.trim().length > 0)
-          )
-        })
-
         timeline.forEach((item, segmentIndex) => {
-          const segmentContent = typeof item?.content === 'string' ? item.content : ''
-          const segmentReasoningContent =
-            typeof item?.reasoningContent === 'string' ? item.reasoningContent : ''
-          const segmentReasoningDuration = Number(item?.reasoningDuration || 0)
+          const textSegmentId = `${msg.id}__timeline_${segmentIndex}`
+          appendAssistantTextSegment({
+            id: textSegmentId,
+            content: item?.content,
+            reasoningContent: item?.reasoningContent,
+            reasoningDuration: item?.reasoningDuration
+          })
+
           const segmentLogIds = Array.isArray(item?.logIds) ? item.logIds.filter(Boolean) : []
-
-          if (
-            segmentContent ||
-            segmentReasoningContent ||
-            (!hasAnyTimelineText && segmentIndex === timeline.length - 1)
-          ) {
-            result.push({
-              ...msg,
-              id: `${msg.id}__segment_${segmentIndex}`,
-              sourceMessageId: msg.id,
-              content: segmentContent,
-              reasoningContent: segmentReasoningContent,
-              reasoningTime: segmentReasoningDuration,
-              finished: !!msg.finished && segmentIndex === timeline.length - 1,
-              usage: segmentIndex === timeline.length - 1 ? msg.usage || null : null,
-              segmentIndex,
-              segmentCount: timeline.length
-            })
-          }
-
-          segmentLogIds.forEach(logId => {
+          segmentLogIds.forEach((logId, logIndex) => {
             const logMessage = mcpMessageMap.get(logId)
             if (!logMessage) return
-            result.push(logMessage)
+            appendMcpLogSegment({
+              ...logMessage,
+              id: logMessage.id || `${textSegmentId}__log_${logIndex}`
+            })
             consumedMcpMessageIds.add(logId)
           })
         })
-        return
-      }
-
-      if (!pendingAssistantNode) {
-        pendingAssistantNode = {
-          ...msg,
-          sourceMessageId: msg.id,
-          mergedAssistantIds: [msg.id]
+      } else {
+        const contentSegments = parseAssistantContentSegments(msg?.content, {
+          baseId: msg?.id
+        })
+        if (contentSegments.length > 0) {
+          contentSegments.forEach(segment => {
+            if (segment.type === 'mcp') {
+              appendMcpLogSegment(segment)
+              if (segment.id) {
+                consumedMcpMessageIds.add(segment.id)
+              }
+              return
+            }
+            appendAssistantTextSegment(segment)
+          })
+        } else {
+          appendAssistantTextSegment({
+            id: msg.id,
+            content: msg.content,
+            reasoningContent: msg.reasoningContent,
+            reasoningDuration: msg.reasoningTime,
+            error: msg.error
+          })
         }
-        return
       }
 
-      pendingAssistantNode.content = concatAssistantDisplayText(
-        pendingAssistantNode.content,
-        msg.content
-      )
-      pendingAssistantNode.reasoningContent = concatAssistantDisplayText(
-        pendingAssistantNode.reasoningContent,
-        msg.reasoningContent
-      )
-      pendingAssistantNode.reasoningTime =
-        Number(pendingAssistantNode.reasoningTime || 0) + Number(msg.reasoningTime || 0)
-      pendingAssistantNode.finished = !!msg.finished
-      pendingAssistantNode.error = !!pendingAssistantNode.error || !!msg.error
-      if (msg.usage) {
-        pendingAssistantNode.usage = msg.usage
+      if (Array.isArray(msg?.mcpLogs) && msg.mcpLogs.length > 0) {
+        msg.mcpLogs.forEach((logItem, logIndex) => {
+          const logId = logItem?.id || `${msg.id}__mcp_${logIndex}`
+          appendMcpLogSegment({
+            ...logItem,
+            id: logId
+          })
+          consumedMcpMessageIds.add(logId)
+        })
       }
-      if (msg.model) {
-        pendingAssistantNode.model = msg.model
-      }
-      pendingAssistantNode.mergedAssistantIds.push(msg.id)
+
       return
     }
 
@@ -600,13 +772,33 @@ const displayChatHistory = computed(() => {
       if (consumedMcpMessageIds.has(msg.id)) {
         return
       }
-      flushPendingAssistantNode()
-      result.push(msg)
+
+      if (!pendingAssistantNode) {
+        pendingAssistantNode = createPendingAssistantNode(
+          {
+            ...msg,
+            id: msg.parentId || msg.id,
+            parentId: msg.parentId,
+            model: msg.model,
+            finished: true,
+            error: false
+          },
+          {
+            forceId: msg.parentId || msg.id
+          }
+        )
+      }
+
+      appendMcpLogSegment(msg)
+      consumedMcpMessageIds.add(msg.id)
       return
     }
 
     flushPendingAssistantNode()
-    result.push(msg)
+    result.push({
+      ...msg,
+      searchMessageIds: [msg.id]
+    })
   })
 
   flushPendingAssistantNode()
@@ -668,10 +860,15 @@ const shouldRenderAssistantMessage = msg => {
   const role = `${msg?.role || ''}`.toLowerCase()
   if (role !== 'assistant') return false
 
-  const hasTextContent = typeof msg?.content === 'string' && msg.content.trim().length > 0
-  const hasReasoningContent =
-    typeof msg?.reasoningContent === 'string' && msg.reasoningContent.trim().length > 0
+  const hasAssistantSegments =
+    Array.isArray(msg?.assistantSegments) && msg.assistantSegments.length > 0
+  const hasTextContent = normalizeAssistantText(msg?.content).trim().length > 0
+  const hasReasoningContent = normalizeAssistantText(msg?.reasoningContent).trim().length > 0
   const hasChildren = Array.isArray(msg?.children) && msg.children.length > 0
+
+  if (hasAssistantSegments) {
+    return true
+  }
 
   // 隐藏作为 MCP 链路桥接的空 assistant 节点，避免打乱日志时序显示
   if (!hasTextContent && !hasReasoningContent && !msg?.error && !msg?.finished && hasChildren) {
@@ -730,7 +927,18 @@ const findSearchTargetElement = targetMessageId => {
   if (!targetMessageId) return null
   const exactElement = document.getElementById(`message-${targetMessageId}`)
   if (exactElement) return exactElement
-  return document.querySelector(`[id^="message-${targetMessageId}__segment_"]`)
+
+  const mergedElement = Array.from(
+    document.querySelectorAll('.message-wrapper[data-search-message-ids]')
+  ).find(element => {
+    const aliases = `${element.dataset.searchMessageIds || ''}`
+    return aliases.includes(`|${targetMessageId}|`)
+  })
+  if (mergedElement) {
+    return mergedElement
+  }
+
+  return null
 }
 
 const locateSearchTargetMessage = () => {
@@ -941,31 +1149,22 @@ onBeforeRouteLeave(async (_to, _from, next) => {
   max-width: 1080px;
   margin: 0 auto;
   padding: 0 16px 24px;
-  transition: transform 0.32s ease;
   padding-bottom: 120px;
+  transition: transform 0.32s ease;
 
   .message-wrapper {
     &.is-search-target {
+      animation: search-target-glow 2.2s ease;
       border: 1px solid var(--main-color);
       border-radius: 10px;
       background: var(--bg-highlight);
       box-shadow: 0 0 0 1px var(--main-color);
-      animation: search-target-glow 2.2s ease;
     }
 
     &.user-log {
       margin-bottom: 24px;
     }
-    &.mcp-log {
-      margin-bottom: 12px;
-      + .message-wrapper {
-        :deep(.assistant-message) {
-          .model-header {
-            display: none;
-          }
-        }
-      }
-    }
+
     &.assistant-log {
       + .message-wrapper {
         :deep(.assistant-message) {
