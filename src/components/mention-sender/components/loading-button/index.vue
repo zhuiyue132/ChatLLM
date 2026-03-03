@@ -11,12 +11,12 @@
 <template>
   <div class="el-send-button">
     <el-button circle @click="emits('cancel')">
-      <loading class="loading-svg" />
+      <LoadingIcon class="loading-svg" />
     </el-button>
   </div>
 </template>
 <script setup>
-import loading from './loading.vue'
+import LoadingIcon from './loading-icon.vue'
 
 const emits = defineEmits(['cancel'])
 </script>

@@ -50,6 +50,7 @@ declare module 'vue' {
     KnowledgePanel: typeof import('./src/components/api-settings-dialog/components/knowledge-panel/index.vue')['default']
     Loading: typeof import('./src/components/completions-message/loading.vue')['default']
     LoadingButton: typeof import('./src/components/mention-sender/components/loading-button/index.vue')['default']
+    LoadingIcon: typeof import('./src/components/mention-sender/components/loading-button/loading-icon.vue')['default']
     MarkdownRenderer: typeof import('./src/components/x-markdown/markdown-renderer.vue')['default']
     McpPanel: typeof import('./src/components/api-settings-dialog/components/mcp-panel/index.vue')['default']
     McpSelector: typeof import('./src/components/sender/components/mcp-selector.vue')['default']
