@@ -179,6 +179,8 @@ const PREVIEW_HEIGHT_EVENT_KEY = '__CHATLLM_PREVIEW_HEIGHT__'
 const PREVIEW_MIN_IFRAME_HEIGHT = 420
 const PREVIEW_MAX_IFRAME_HEIGHT = 8000
 const SCRIPT_CLOSE_TAG = '</scr' + 'ipt>'
+const SEARCH_TARGET_HIGHLIGHT_CLASS = 'is-search-target'
+const SEARCH_TARGET_HIGHLIGHT_DURATION = 2200
 
 const route = useRoute()
 const router = useRouter()
@@ -199,6 +201,8 @@ const previewIframeRef = ref(null)
 
 const previewFrameHeight = ref(0)
 const isPreviewFullscreen = ref(false)
+let searchTargetHighlightTimer = null
+let isClearingSearchTargetParam = false
 
 const { height: chatHistoryContainerHeight } = useElementSize(chatHistoryContainerRef)
 
@@ -677,6 +681,102 @@ const shouldRenderAssistantMessage = msg => {
   return true
 }
 
+const resolveSearchTargetMessageId = () => {
+  const routeChatDetailId = route.query.chatDetailId
+  const rawId = Array.isArray(routeChatDetailId) ? routeChatDetailId[0] : routeChatDetailId
+  return `${rawId || ''}`.trim()
+}
+
+const clearSearchTargetHighlight = () => {
+  if (searchTargetHighlightTimer) {
+    window.clearTimeout(searchTargetHighlightTimer)
+    searchTargetHighlightTimer = null
+  }
+  document
+    .querySelectorAll(`.message-wrapper.${SEARCH_TARGET_HIGHLIGHT_CLASS}`)
+    .forEach(element => element.classList.remove(SEARCH_TARGET_HIGHLIGHT_CLASS))
+}
+
+const clearSearchTargetRouteParam = async () => {
+  const targetMessageId = resolveSearchTargetMessageId()
+  if (!targetMessageId || isClearingSearchTargetParam) return
+
+  const nextQuery = {
+    ...route.query
+  }
+  delete nextQuery.chatDetailId
+
+  isClearingSearchTargetParam = true
+  try {
+    await router.replace({
+      path: route.path,
+      query: nextQuery
+    })
+  } catch (error) {
+    console.warn('[Completions] 清理搜索定位参数失败', error)
+  } finally {
+    isClearingSearchTargetParam = false
+  }
+}
+
+const syncConversationBranchBySearchTarget = () => {
+  const targetRoomId = `${roomId.value || ''}`.trim()
+  const targetMessageId = resolveSearchTargetMessageId()
+  if (!targetRoomId || !targetMessageId) return
+  chatRoomsStore.setCurrentIndexByMessageId(targetRoomId, targetMessageId)
+}
+
+const findSearchTargetElement = targetMessageId => {
+  if (!targetMessageId) return null
+  const exactElement = document.getElementById(`message-${targetMessageId}`)
+  if (exactElement) return exactElement
+  return document.querySelector(`[id^="message-${targetMessageId}__segment_"]`)
+}
+
+const locateSearchTargetMessage = () => {
+  const targetMessageId = resolveSearchTargetMessageId()
+  if (!targetMessageId) {
+    return
+  }
+
+  syncConversationBranchBySearchTarget()
+  nextTick(() => {
+    const targetElement = findSearchTargetElement(targetMessageId)
+    if (!targetElement) return
+
+    clearSearchTargetHighlight()
+    targetElement.classList.add(SEARCH_TARGET_HIGHLIGHT_CLASS)
+    targetElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
+    clearSearchTargetRouteParam()
+
+    searchTargetHighlightTimer = window.setTimeout(() => {
+      targetElement.classList.remove(SEARCH_TARGET_HIGHLIGHT_CLASS)
+      searchTargetHighlightTimer = null
+    }, SEARCH_TARGET_HIGHLIGHT_DURATION)
+  })
+}
+
+watch(
+  [roomId, () => route.query.chatDetailId],
+  () => {
+    syncConversationBranchBySearchTarget()
+    locateSearchTargetMessage()
+  },
+  { immediate: true }
+)
+
+watch(
+  () => displayChatHistory.value.length,
+  () => {
+    if (resolveSearchTargetMessageId()) {
+      locateSearchTargetMessage()
+    }
+  }
+)
+
 // 页面加载时获取数据
 tryOnMounted(async () => {
   let willSendMessage = null
@@ -710,9 +810,13 @@ tryOnMounted(async () => {
           name: 'Completions'
         })
       } else {
-        // 有聊天记录时，滚动到底部
-        enableAutoScroll()
-        scrollToBottom(true)
+        if (resolveSearchTargetMessageId()) {
+          locateSearchTargetMessage()
+        } else {
+          // 有聊天记录时，滚动到底部
+          enableAutoScroll()
+          scrollToBottom(true)
+        }
       }
     })
   }
@@ -720,8 +824,12 @@ tryOnMounted(async () => {
 
 // 监听侧边栏点击切换对话事件
 const eventBusOfHistory = useEventBus(FETCH_CHAR_HISTORY)
-eventBusOfHistory.on(() => {
+eventBusOfHistory.on(payload => {
   nextTick(() => {
+    if (payload?.chatDetailId || resolveSearchTargetMessageId()) {
+      locateSearchTargetMessage()
+      return
+    }
     if (chatHistory.value.length > 0) {
       enableAutoScroll()
       scrollToBottom(true)
@@ -755,6 +863,7 @@ useEventListener(window, 'beforeunload', async () => {
 
 // 组件卸载前停止对话
 onBeforeUnmount(async () => {
+  clearSearchTargetHighlight()
   loading.value = false
   await handleManualStop()
   await teardownPreviewFullscreen()
@@ -836,6 +945,14 @@ onBeforeRouteLeave(async (_to, _from, next) => {
   padding-bottom: 120px;
 
   .message-wrapper {
+    &.is-search-target {
+      border: 1px solid var(--main-color);
+      border-radius: 10px;
+      background: var(--bg-highlight);
+      box-shadow: 0 0 0 1px var(--main-color);
+      animation: search-target-glow 2.2s ease;
+    }
+
     &.user-log {
       margin-bottom: 24px;
     }
@@ -858,6 +975,16 @@ onBeforeRouteLeave(async (_to, _from, next) => {
         }
       }
     }
+  }
+}
+
+@keyframes search-target-glow {
+  0% {
+    box-shadow: 0 0 0 3px var(--main-color);
+  }
+
+  100% {
+    box-shadow: 0 0 0 1px var(--main-color);
   }
 }
 

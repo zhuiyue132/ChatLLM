@@ -2,16 +2,16 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-10-24
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2025-11-21
- * @FilePath     : /bi-agents/src/components/dialog/history-search-dialog.vue
- * @Description  : 历史记录搜索弹窗
+ * @LastEditTime : 2026-03-03
+ * @FilePath     : /ChatLLM/src/components/dialog/history-search-dialog.vue
+ * @Description  : 对话历史搜索弹窗（本地消息级检索）
  *
 -->
 
 <template>
   <bi-dialog
     v-model="dialogVisible"
-    title="历史记录"
+    title="搜索对话"
     width="812px"
     lock-scroll
     close-on-click-modal
@@ -20,44 +20,22 @@
     :show-footer="false"
     @close="handleClose"
   >
-    <!-- 内容区域 -->
     <div class="dialog-body">
-      <!-- 搜索栏 -->
       <div class="search-bar">
-        <!-- 智能体下拉选择 -->
-
         <el-input
+          ref="searchInputRef"
           v-model="searchKeyword"
           style="max-width: 437px"
           placeholder="搜索聊天..."
           clearable
           class="input-with-select"
         >
-          <template #prepend>
-            <el-select
-              v-model="selectedAgent"
-              placeholder="全部"
-              popper-class="agent-select-popper"
-              filterable
-              :filter-method="filterAgents"
-              :show-arrow="false"
-              :offset="4"
-            >
-              <el-option
-                v-for="agent in filteredAgentList"
-                :key="agent.value"
-                :label="agent.label"
-                :value="agent.value"
-              />
-            </el-select>
-          </template>
           <template #prefix>
             <i class="iconfont icon-search"></i>
           </template>
         </el-input>
       </div>
 
-      <!-- 历史记录列表 -->
       <div class="history-list">
         <el-scrollbar>
           <div
@@ -85,7 +63,6 @@
               </div>
             </div>
 
-            <!-- 没有更多数据提示 -->
             <div v-if="!loading && filteredHistoryList.length === 0" class="no-data">
               <AgentEmpty
                 type="search"
@@ -105,10 +82,10 @@
 
 <script setup>
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
+import AgentEmpty from '@/components/empty/index.vue'
+import { useChatRoomsStore } from '@/stores/chat-rooms'
 import BiDialog from './index.vue'
-import { useMagicKeys, useDebounceFn } from '@vueuse/core'
-import { AgentEmpty } from '@/components'
-import { historyRetrievalApi } from '@/api/agents'
 
 defineOptions({
   name: 'HistorySearchDialog'
@@ -118,65 +95,118 @@ const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false
-  },
-  // 智能体列表
-  agentList: {
-    type: Array,
-    default: () => []
   }
 })
 
 const emit = defineEmits(['update:modelValue', 'select-item'])
 
-// 弹窗显示状态
 const dialogVisible = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val)
 })
 
-// 搜索关键词
+const chatRoomsStore = useChatRoomsStore()
+const searchInputRef = ref(null)
 const searchKeyword = ref('')
-
-// 选中的智能体
-const selectedAgent = ref('all')
-
-// 当前选中的历史记录索引
 const currentSelectedIndex = ref(-1)
+const filteredHistoryList = ref([])
+const loading = ref(false)
 
-// 过滤后的智能体列表
-const filteredAgentList = ref(props.agentList)
+const MAX_RESULT_COUNT = 100
 
-// 过滤智能体方法
-const filterAgents = query => {
-  if (query) {
-    filteredAgentList.value = props.agentList.filter(agent =>
-      agent.label.toLowerCase().includes(query.toLowerCase())
-    )
-  } else {
-    filteredAgentList.value = props.agentList
-  }
-}
-
-// 过滤 HTML 标签
 const stripHtmlTags = text => {
   if (!text) return ''
-  // 创建一个临时 DOM 元素来解析 HTML
   const div = document.createElement('div')
   div.innerHTML = text
-  // 返回纯文本内容
   return div.textContent || div.innerText || ''
 }
 
-// 历史记录列表（从接口获取）
-const filteredHistoryList = ref([])
+const normalizeKeyword = value => `${value || ''}`.trim().toLowerCase()
+const normalizeForFuzzy = value => normalizeKeyword(value).replace(/\s+/g, '')
 
-// 加载状态
-const loading = ref(false)
+const getFuzzyScore = (text, keyword) => {
+  const normalizedText = normalizeForFuzzy(text)
+  const normalizedKeyword = normalizeForFuzzy(keyword)
+  if (!normalizedText || !normalizedKeyword) return -1
 
-// 搜索历史记录
+  const exactIndex = normalizedText.indexOf(normalizedKeyword)
+  if (exactIndex >= 0) {
+    return 1000 - exactIndex * 2 - (normalizedText.length - normalizedKeyword.length)
+  }
+
+  let queryIndex = 0
+  let firstMatchIndex = -1
+  let lastMatchIndex = -1
+
+  for (let textIndex = 0; textIndex < normalizedText.length; textIndex += 1) {
+    if (normalizedText[textIndex] === normalizedKeyword[queryIndex]) {
+      if (firstMatchIndex === -1) firstMatchIndex = textIndex
+      lastMatchIndex = textIndex
+      queryIndex += 1
+      if (queryIndex >= normalizedKeyword.length) break
+    }
+  }
+
+  if (queryIndex !== normalizedKeyword.length || firstMatchIndex === -1 || lastMatchIndex === -1) {
+    return -1
+  }
+
+  const compactness = lastMatchIndex - firstMatchIndex + 1 - normalizedKeyword.length
+  return 600 - compactness * 2 - firstMatchIndex
+}
+
+const collectRoomMessages = roomId => {
+  const tree = chatRoomsStore.getMessageTree(roomId)
+  if (!tree || !Array.isArray(tree.children) || tree.children.length === 0) {
+    return []
+  }
+
+  const list = []
+  const stack = [...tree.children]
+
+  while (stack.length > 0) {
+    const node = stack.pop()
+    if (!node || typeof node !== 'object') continue
+
+    const plainText = stripHtmlTags(node.content)
+    if (plainText.trim()) {
+      list.push({
+        chatDetailId: node.id,
+        taskId: roomId,
+        content: plainText,
+        role: node.role,
+        createdAt: node.createdAt || ''
+      })
+    }
+
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      stack.push(...node.children)
+    }
+  }
+
+  return list
+}
+
+const getSearchCandidates = () => {
+  const rooms = [...chatRoomsStore.rooms]
+  if (!rooms.length) return []
+
+  const roomMap = new Map(rooms.map(room => [room.id, room]))
+  const messages = rooms.flatMap(room => collectRoomMessages(room.id))
+
+  return messages.map(message => {
+    const room = roomMap.get(message.taskId)
+    return {
+      ...message,
+      roomTitle: room?.title || '新对话',
+      roomUpdatedAt: room?.updatedAt || '',
+      aiModel: room?.model || ''
+    }
+  })
+}
+
 const fetchHistoryList = async () => {
-  // 如果搜索关键词为空或只包含空格等无意义字符，显示空列表
-  const trimmedKeyword = searchKeyword.value?.replace(/\s+/g, '') || ''
+  const trimmedKeyword = normalizeForFuzzy(searchKeyword.value)
   if (!trimmedKeyword) {
     filteredHistoryList.value = []
     return
@@ -184,51 +214,71 @@ const fetchHistoryList = async () => {
 
   try {
     loading.value = true
-    const params = {
-      agentId: (selectedAgent.value === 'all' ? null : selectedAgent.value) || null,
-      queryStr: searchKeyword.value
-    }
-    const res = await historyRetrievalApi(params)
+    const keyword = searchKeyword.value
+    const candidates = getSearchCandidates()
 
-    console.log(res)
-
-    if (res.data.code === 0) {
-      // 转换数据格式，统一成外部传入的 history 格式
-      const data = res.data?.data || []
-      filteredHistoryList.value = data.map(item => ({
-        chatDetailId: item.chatDetailId,
-        content: item.matchContent,
-        agentId: item.agentId,
-        agentHeadUrl: item.agentHeadUrl,
-        date: item.date,
-        taskId: item.taskId,
-        role: item.role
+    filteredHistoryList.value = candidates
+      .map(item => ({
+        ...item,
+        _score: getFuzzyScore(item.content, keyword)
       }))
-    } else {
-      filteredHistoryList.value = []
-    }
+      .filter(item => item._score >= 0)
+      .sort((a, b) => {
+        if (b._score !== a._score) {
+          return b._score - a._score
+        }
+        return (
+          new Date(b.createdAt || b.roomUpdatedAt).getTime() -
+          new Date(a.createdAt || a.roomUpdatedAt).getTime()
+        )
+      })
+      .slice(0, MAX_RESULT_COUNT)
   } catch (error) {
     console.error('获取历史记录失败:', error)
     filteredHistoryList.value = []
   } finally {
-    setTimeout(() => {
-      loading.value = false
-    }, 1000)
+    loading.value = false
   }
 }
 
-// 防抖搜索
 const debouncedSearch = useDebounceFn(() => {
   fetchHistoryList()
 }, 500)
 
-// 监听搜索关键词和智能体选择变化
-watch([searchKeyword, selectedAgent], () => {
+watch(searchKeyword, () => {
   debouncedSearch()
 })
 
-// 键盘事件处理
+const focusSearchInput = () => {
+  nextTick(() => {
+    searchInputRef.value?.focus?.()
+  })
+}
+
+const scrollToSelectedItem = () => {
+  nextTick(() => {
+    const selectedElement = document.querySelector('.history-item.selected')
+    if (selectedElement) {
+      selectedElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      })
+    }
+  })
+}
+
+const handleItemClick = item => {
+  emit('select-item', item)
+  handleClose()
+}
+
 const handleKeydown = event => {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    handleClose()
+    return
+  }
+
   const listLength = filteredHistoryList.value.length
   if (listLength === 0) return
 
@@ -250,68 +300,38 @@ const handleKeydown = event => {
         handleItemClick(filteredHistoryList.value[currentSelectedIndex.value])
       }
       break
+    default:
+      break
   }
 }
 
-// 滚动到选中项
-const scrollToSelectedItem = () => {
-  nextTick(() => {
-    const selectedElement = document.querySelector('.history-item.selected')
-    if (selectedElement) {
-      selectedElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-      })
-    }
-  })
-}
-
-// 处理历史记录点击
-const handleItemClick = item => {
-  emit('select-item', item)
-  handleClose()
-}
-
-// 关闭弹窗
 const handleClose = () => {
   dialogVisible.value = false
-  // 重置搜索条件和数据
   searchKeyword.value = ''
-  selectedAgent.value = 'all'
   currentSelectedIndex.value = -1
   filteredHistoryList.value = []
 }
 
-// 监听弹窗显示状态
 watch(dialogVisible, val => {
   if (val) {
-    // 弹窗打开时，重置选中索引
     currentSelectedIndex.value = -1
-    // 初始加载历史记录
-    fetchHistoryList()
-    // 添加键盘事件监听
     nextTick(() => {
       document.addEventListener('keydown', handleKeydown)
     })
+    focusSearchInput()
   } else {
-    // 弹窗关闭时，移除键盘事件监听
     document.removeEventListener('keydown', handleKeydown)
   }
 })
 
-// 监听筛选列表变化，重置选中索引
-watch(filteredHistoryList, () => {
-  currentSelectedIndex.value = -1
-})
-
-const { ctrl_k, command_k, ctrl_option } = useMagicKeys()
-watch([ctrl_k, command_k, ctrl_option], v => {
-  if (v.some(v => v)) {
-    dialogVisible.value = true
+watch(filteredHistoryList, list => {
+  if (!Array.isArray(list) || list.length === 0) {
+    currentSelectedIndex.value = -1
+    return
   }
+  currentSelectedIndex.value = 0
 })
 
-// 组件卸载时移除事件监听
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
@@ -420,18 +440,6 @@ onUnmounted(() => {
 }
 </style>
 <style lang="scss">
-.input-with-select .el-input-group__prepend {
-  background-color: var(--el-fill-color-blank);
-}
-
-div.agent-select-popper.el-select__popper {
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  box-shadow: var(--shadow-dropdown);
-
-  --el-fill-color-light: var(--bg-highlight);
-}
-
 .history-search-dialog {
   .el-dialog__body {
     padding: 0;

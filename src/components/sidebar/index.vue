@@ -28,6 +28,9 @@
           <div title="发起对话" class="collapse-btn" @click.stop="handleStartChat">
             <i class="iconfont icon-faqixinduihua sidebar-header-icon"></i>
           </div>
+          <div title="搜索对话" class="collapse-btn" @click.stop="handleOpenSearchDialog">
+            <i class="iconfont icon-lishijilusousuo sidebar-header-icon"></i>
+          </div>
         </div>
 
         <div
@@ -55,6 +58,12 @@
             </div>
             <span class="item-text">发起对话</span>
           </div>
+          <div class="section-item" @click.stop="handleOpenSearchDialog">
+            <div class="item-icon">
+              <i class="iconfont icon-lishijilusousuo"></i>
+            </div>
+            <span class="item-text">搜索对话</span>
+          </div>
         </div>
 
         <!-- 历史记录 -->
@@ -80,17 +89,20 @@
           </div>
         </el-scrollbar>
       </template>
+
+      <HistorySearchDialog v-model="searchDialogVisible" @select-item="handleSearchResultSelect" />
     </div>
   </div>
 </template>
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useEventBus, tryOnMounted } from '@vueuse/core'
+import { useEventBus, tryOnMounted, useEventListener } from '@vueuse/core'
 import { APP_NAME } from '@/config/app'
 import AgentEmpty from '@/components/empty/index.vue'
 import { FETCH_CHAR_HISTORY } from '@/config/symbol'
 import { useSidebar } from '@/hooks/use-sidebar'
+import HistorySearchDialog from '@/components/dialog/history-search-dialog.vue'
 
 import ChatRoomItem from './chat-room-item/index.vue'
 import { useChatRoom } from './hooks/use-chat-room'
@@ -109,6 +121,7 @@ const eventBusOfHistory = useEventBus(FETCH_CHAR_HISTORY)
 const eventBusOfPopover = useEventBus('popover-action')
 
 const scrollRef = ref()
+const searchDialogVisible = ref(false)
 
 const {
   isCompleted,
@@ -148,6 +161,15 @@ const handleStartChat = () => {
   if (isMobile.value) closeSidebar()
 }
 
+const handleOpenSearchDialog = () => {
+  searchDialogVisible.value = true
+}
+
+const handleSearchResultSelect = item => {
+  if (!item?.taskId) return
+  handleChatRoomItemClick(null, item)
+}
+
 const handleChatRoomItemClick = (_event, room) => {
   if (room.taskId === activeRoomId.value && !room.chatDetailId) return
 
@@ -158,6 +180,7 @@ const handleChatRoomItemClick = (_event, room) => {
     roomId: room.taskId
   }
   if (room.chatDetailId) {
+    chatRoomsStore.setCurrentIndexByMessageId(room.taskId, room.chatDetailId)
     query.chatDetailId = room.chatDetailId
   }
 
@@ -172,10 +195,19 @@ const handleChatRoomItemClick = (_event, room) => {
   setTimeout(() => {
     eventBusOfHistory.emit({
       taskId: room.taskId,
-      aiModel: room.aiModel
+      aiModel: room.aiModel,
+      chatDetailId: room.chatDetailId || ''
     })
   }, 100)
 }
+
+useEventListener(window, 'keydown', event => {
+  const key = `${event.key || ''}`.toLowerCase()
+  if ((event.ctrlKey || event.metaKey) && key === 'k') {
+    event.preventDefault()
+    handleOpenSearchDialog()
+  }
+})
 
 const handleChatRoomItemOperation = async (command, room) => {
   console.log('command', command)
