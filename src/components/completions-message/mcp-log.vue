@@ -7,34 +7,48 @@
  * @Description  : MCP 调用日志消息节点
 -->
 <template>
-  <div class="mcp-log-message">
-    <button type="button" class="mcp-log-toggle" @click="toggleExpanded">
-      <div class="mcp-log-meta">
-        <div class="mcp-log-title">
-          <i class="icon-mcp-custom"></i>
-          <span class="mcp-log-label">MCP 调用</span>
-          <span class="mcp-log-title-separator">/</span>
-          <span class="mcp-log-title-text">{{ mcpDisplayName }}</span>
+  <div class="assistant-message">
+    <div class="model-header">
+      <div class="model-info">
+        <!-- 模型logo -->
+        <div class="model-logo">
+          <ModelIcon :name="model" :size="26" />
         </div>
-        <span class="mcp-status" :class="normalizedStatus">
-          {{ statusText }}
-        </span>
-        <span class="mcp-duration">
-          {{ normalizedStatus === 'pending' ? '进行中' : formatDuration(durationMs) }}
-        </span>
+        <!-- 模型名称标签 -->
+        <div class="model-name-tag">
+          <span>{{ model }}</span>
+        </div>
       </div>
-      <i class="iconfont icon-arrowDown toggle-icon" :class="{ expanded: isExpanded }"></i>
-    </button>
+    </div>
+    <div class="mcp-log-message">
+      <button type="button" class="mcp-log-toggle" @click="toggleExpanded">
+        <div class="mcp-log-meta">
+          <div class="mcp-log-title">
+            <i class="icon-mcp-custom"></i>
+            <span class="mcp-log-label">MCP 调用</span>
+            <span class="mcp-log-title-separator">/</span>
+            <span class="mcp-log-title-text">{{ mcpDisplayName }}</span>
+          </div>
+          <span class="mcp-status" :class="normalizedStatus">
+            {{ statusText }}
+          </span>
+          <span class="mcp-duration">
+            {{ normalizedStatus === 'pending' ? '进行中' : formatDuration(durationMs) }}
+          </span>
+        </div>
+        <i class="iconfont icon-arrowDown toggle-icon" :class="{ expanded: isExpanded }"></i>
+      </button>
 
-    <div v-show="isExpanded" class="mcp-log-detail">
-      <div v-if="formattedArguments" class="mcp-log-block">
-        <div class="mcp-log-block-title">参数</div>
-        <pre>{{ formattedArguments }}</pre>
-      </div>
+      <div v-show="isExpanded" class="mcp-log-detail">
+        <div v-if="formattedArguments" class="mcp-log-block">
+          <div class="mcp-log-block-title">参数</div>
+          <pre>{{ formattedArguments }}</pre>
+        </div>
 
-      <div class="mcp-log-block">
-        <div class="mcp-log-block-title">{{ outputTitle }}</div>
-        <pre>{{ outputContent }}</pre>
+        <div class="mcp-log-block">
+          <div class="mcp-log-block-title">{{ outputTitle }}</div>
+          <pre>{{ outputContent }}</pre>
+        </div>
       </div>
     </div>
   </div>
@@ -75,6 +89,10 @@ const props = defineProps({
   toolError: {
     type: String,
     default: ''
+  },
+  model: {
+    type: String,
+    default: 'deepseek-chat'
   }
 })
 
@@ -147,6 +165,46 @@ const toggleExpanded = () => {
 </script>
 
 <style lang="scss" scoped>
+// 模型信息头部
+.model-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 12px;
+
+  @include flex-gap(4px, column);
+
+  .model-info {
+    display: flex;
+    align-items: center;
+
+    @include flex-gap(12px, row);
+
+    .model-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .model-name-tag {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 0 4px;
+      border-radius: 2px;
+      background: var(--bg-tag);
+
+      span {
+        white-space: nowrap;
+        color: var(--text-dblight-color);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.6;
+      }
+    }
+  }
+}
 .mcp-log-message {
   width: 100%;
   padding: 12px;

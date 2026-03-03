@@ -13,7 +13,10 @@
             :id="`message-${msg.id}`"
             :key="msg.id || roomId"
             class="message-wrapper"
-            :class="{ 'mcp-log': msg.id?.indexOf('mcp-log') > -1 }"
+            :class="{
+              'mcp-log': msg.id?.indexOf('mcp-log') > -1,
+              'user-log': msg.role.toLowerCase() === 'user'
+            }"
           >
             <!-- 用户消息 -->
             <CompletionsUserMessage
@@ -833,27 +836,27 @@ onBeforeRouteLeave(async (_to, _from, next) => {
   transition: transform 0.32s ease;
 
   .message-wrapper {
-    margin-bottom: 24px;
-
+    &.user-log {
+      margin-bottom: 24px;
+    }
     &.mcp-log {
-      margin-top: -24px;
       margin-bottom: 12px;
-
       + .message-wrapper {
         :deep(.assistant-message) {
           .model-header {
             display: none;
           }
         }
-
-        &.mcp-log {
-          margin-top: 0;
-        }
       }
     }
-
-    &:last-child {
-      margin-bottom: 0;
+    &:not(.user-log):not(.mcp-log) {
+      + .message-wrapper {
+        :deep(.assistant-message) {
+          .model-header {
+            display: none;
+          }
+        }
+      }
     }
   }
 }
