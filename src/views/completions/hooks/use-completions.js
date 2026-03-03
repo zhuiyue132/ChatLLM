@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-11-03
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-01-30
+ * @LastEditTime : 2026-03-03
  * @FilePath     : /ChatLLM/src/views/completions/hooks/use-completions.js
  * @Description  : 单模型对话（OpenAI API 格式）
  *
@@ -883,6 +883,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
           role: 'mcp',
           messageType: 'mcp-log',
           content: '',
+          model: baseLog.model || model || null,
           status: 'pending',
           serverId: baseLog.serverId || '',
           serverName: baseLog.serverName || 'MCP',
@@ -1053,6 +1054,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
           .slice(2, 8)}`
         const baseLog = {
           id: logId,
+          model,
           serverId: mapping?.serverId || '',
           serverName: mapping?.serverName || functionName,
           toolName: mapping?.toolName || functionName,
@@ -1676,14 +1678,6 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     })
   }
 
-  /**
-   * 获取聊天历史（兼容旧接口）
-   */
-  const fetchChatHistory = () => {
-    // 从 store 获取，无需额外请求
-    return Promise.resolve()
-  }
-
   return {
     // 状态
     message,
@@ -1707,19 +1701,9 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     currentRoom,
     enableDeepThink,
 
-    // 旧接口兼容（设为不可见以隐藏相关 UI）
-    isDeepThinkButtonVisible: computed(() => false),
-    isFileButtonVisible: computed(() => false),
-    isUploadFileButtonVisible: computed(() => false),
-    isCreateImageButtonVisible: computed(() => false),
-    isCreateImageCountVisible: computed(() => false),
-    enableCreateImage: ref(false),
-    createImageCount: ref(1),
-
     // 方法
     sendMessage,
     stopSSE: handleStopSSE,
-    fetchChatHistory,
     handleRegenerateAnswer,
     handleAssistantPrevPage,
     handleAssistantNextPage,

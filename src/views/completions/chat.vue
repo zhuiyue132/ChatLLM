@@ -14,8 +14,9 @@
             :key="msg.id || roomId"
             class="message-wrapper"
             :class="{
-              'mcp-log': msg.id?.indexOf('mcp-log') > -1,
-              'user-log': msg.role.toLowerCase() === 'user'
+              'mcp-log': msg.role.toLowerCase() === 'mcp',
+              'user-log': msg.role.toLowerCase() === 'user',
+              'assistant-log': shouldRenderAssistantMessage(msg)
             }"
           >
             <!-- 用户消息 -->
@@ -65,6 +66,7 @@
             <CompletionsMcpLogMessage
               v-else-if="msg.role.toLowerCase() === 'mcp'"
               :key="`mcp-${msg.id || roomId}`"
+              :model="msg.model"
               :status="msg.status"
               :server-name="msg.serverName"
               :tool-name="msg.toolName"
@@ -834,6 +836,7 @@ onBeforeRouteLeave(async (_to, _from, next) => {
   margin: 0 auto;
   padding: 0 16px 24px;
   transition: transform 0.32s ease;
+  padding-bottom: 120px;
 
   .message-wrapper {
     &.user-log {
@@ -849,7 +852,7 @@ onBeforeRouteLeave(async (_to, _from, next) => {
         }
       }
     }
-    &:not(.user-log):not(.mcp-log) {
+    &.assistant-log {
       + .message-wrapper {
         :deep(.assistant-message) {
           .model-header {
