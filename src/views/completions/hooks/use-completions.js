@@ -51,6 +51,100 @@ export function useCompletions({ roomId }) {
     isReceiving.value = true
   }
 
+  const finalizeAssistantMessage = async ({
+    assistantMessageId,
+    content = '',
+    reasoningContent = '',
+    reasoningDuration = 0,
+    usage = null,
+    mcpTimeline = null
+  } = {}) => {
+    const id = getRoomId()
+
+    if (id && assistantMessageId) {
+      const updates = {
+        content: typeof content === 'string' ? content.replaceAll(ILLEGAL_UNICODE_REG, '') : '',
+        reasoningContent: typeof reasoningContent === 'string' ? reasoningContent : '',
+        finished: true,
+        error: false,
+        reasoningTime: reasoningDuration || 0,
+        usage: usage || null
+      }
+      if (Array.isArray(mcpTimeline)) {
+        updates.mcpTimeline = mcpTimeline
+      }
+      chatRoomsStore.updateMessage(id, assistantMessageId, {
+        ...updates
+      })
+    }
+
+    // 优先恢复交互状态，避免被标题生成请求阻塞
+    loading.value = false
+    isReceiving.value = false
+    receivingMessageId.value = null
+
+    if (!id) return
+
+    // 房间标题后台异步生成，不阻塞输入框按钮状态切换
+    const room = chatRoomsStore.rooms.find(r => r.id === id)
+    if (!room) return
+
+    try {
+      // 获取对话历史用于生成标题
+      const messages = chatRoomsStore.getMessages(id)
+      if (messages.length > 0 && messages.length <= 2) {
+        chatRoomsStore.updateRoomIsTitleLoading(id, true)
+        const title = await generateTitleSync(messages)
+        if (title && title.trim()) {
+          // 更新房间标题
+          chatRoomsStore.updateRoomTitle(id, title.trim())
+        }
+      }
+    } catch (error) {
+      console.warn('[OpenAI SSE] 生成标题失败:', error)
+      // 生成标题失败不影响正常对话
+    } finally {
+      chatRoomsStore.updateRoomIsTitleLoading(id, false)
+    }
+  }
+
+  const syncAssistantStreamingMessage = ({
+    assistantMessageId,
+    content,
+    reasoningContent,
+    reasoningDuration
+  } = {}) => {
+    const id = getRoomId()
+    if (!id || !assistantMessageId) return
+
+    const hasDisplayPayload =
+      (typeof content === 'string' && content.trim()) ||
+      (typeof reasoningContent === 'string' && reasoningContent.trim())
+
+    if (hasDisplayPayload) {
+      markReceivingStarted()
+    }
+
+    const updates = {}
+    if (typeof content === 'string') {
+      updates.content = content.replaceAll(ILLEGAL_UNICODE_REG, '')
+    }
+    if (typeof reasoningContent === 'string') {
+      updates.reasoningContent = reasoningContent
+    }
+    if (typeof reasoningDuration === 'number') {
+      updates.reasoningTime = reasoningDuration
+    }
+
+    if (Object.keys(updates).length > 0) {
+      chatRoomsStore.updateMessage(id, assistantMessageId, updates)
+
+      if (isViewingReceivingBranch.value) {
+        scrollToBottom()
+      }
+    }
+  }
+
   // 对话内容 - 从 store 获取
   const chatHistoryLoading = ref(false)
 
@@ -125,35 +219,12 @@ export function useCompletions({ roomId }) {
       console.log('[OpenAI SSE] 请求开始')
     },
     onToken: ({ content, reasoning_content, reasoning_duration }) => {
-      const id = getRoomId()
-      if (!id || !receivingMessageId.value) return
-
-      const hasDisplayPayload =
-        (typeof content === 'string' && content.trim()) ||
-        (typeof reasoning_content === 'string' && reasoning_content.trim())
-
-      if (hasDisplayPayload) {
-        markReceivingStarted()
-      }
-
-      // 更新 assistant 消息内容
-      const updates = {}
-      if (content) {
-        updates.content = content.replaceAll(ILLEGAL_UNICODE_REG, '')
-      }
-      if (reasoning_content) {
-        updates.reasoningContent = reasoning_content
-      }
-      if (reasoning_duration !== undefined) {
-        updates.reasoningTime = reasoning_duration
-      }
-
-      chatRoomsStore.updateMessage(id, receivingMessageId.value, updates)
-
-      // 滚动到底部
-      if (isViewingReceivingBranch.value) {
-        scrollToBottom()
-      }
+      syncAssistantStreamingMessage({
+        assistantMessageId: receivingMessageId.value,
+        content,
+        reasoningContent: reasoning_content,
+        reasoningDuration: reasoning_duration
+      })
     },
     onDone: async ({ content, reasoning_content, reasoning_duration, usage }) => {
       console.log('[OpenAI SSE] 请求完成', {
@@ -163,46 +234,14 @@ export function useCompletions({ roomId }) {
         usage
       })
 
-      const id = getRoomId()
       const doneMessageId = receivingMessageId.value
-
-      if (id && doneMessageId) {
-        chatRoomsStore.updateMessage(id, doneMessageId, {
-          finished: true,
-          error: false,
-          reasoningTime: reasoning_duration || 0,
-          usage: usage || null
-        })
-      }
-
-      // 优先恢复交互状态，避免被标题生成请求阻塞
-      loading.value = false
-      isReceiving.value = false
-      receivingMessageId.value = null
-
-      if (!id) return
-
-      // 房间标题后台异步生成，不阻塞输入框按钮状态切换
-      const room = chatRoomsStore.rooms.find(r => r.id === id)
-      if (!room) return
-
-      try {
-        // 获取对话历史用于生成标题
-        const messages = chatRoomsStore.getMessages(id)
-        if (messages.length > 0 && messages.length <= 2) {
-          chatRoomsStore.updateRoomIsTitleLoading(id, true)
-          const title = await generateTitleSync(messages)
-          if (title && title.trim()) {
-            // 更新房间标题
-            chatRoomsStore.updateRoomTitle(id, title.trim())
-          }
-        }
-      } catch (error) {
-        console.warn('[OpenAI SSE] 生成标题失败:', error)
-        // 生成标题失败不影响正常对话
-      } finally {
-        chatRoomsStore.updateRoomIsTitleLoading(id, false)
-      }
+      await finalizeAssistantMessage({
+        assistantMessageId: doneMessageId,
+        content,
+        reasoningContent: reasoning_content,
+        reasoningDuration: reasoning_duration,
+        usage
+      })
     },
     onError: ({ error }) => {
       console.error('[OpenAI SSE] 请求错误:', error)
@@ -343,26 +382,246 @@ export function useCompletions({ roomId }) {
 
   const buildOpenAIMessages = (messages = [], options = {}) => {
     const { excludeAssistantId = '', overrideImageDataUrlsByMessageId = {} } = options
+    const supportedRoles = new Set(['system', 'user', 'assistant', 'tool'])
 
     return messages
       .filter(msg => {
         if (!msg?.role) return false
-        if (excludeAssistantId && msg.id === excludeAssistantId && !msg.content) {
+        const normalizedRole = `${msg.role}`.toLowerCase()
+        if (!supportedRoles.has(normalizedRole)) return false
+        if (
+          normalizedRole === 'assistant' &&
+          excludeAssistantId &&
+          msg.id === excludeAssistantId &&
+          !msg.content
+        ) {
           return false
         }
         return true
       })
-      .map(msg => ({
-        role: msg.role,
-        content: buildOpenAIContent(msg, {
-          overrideImageDataUrls: Array.isArray(overrideImageDataUrlsByMessageId[msg.id])
-            ? overrideImageDataUrlsByMessageId[msg.id]
-            : []
-        })
-      }))
+      .map(msg => {
+        const normalizedRole = `${msg.role}`.toLowerCase()
+        return {
+          role: normalizedRole,
+          content: buildOpenAIContent(msg, {
+            overrideImageDataUrls: Array.isArray(overrideImageDataUrlsByMessageId[msg.id])
+              ? overrideImageDataUrlsByMessageId[msg.id]
+              : []
+          })
+        }
+      })
   }
 
-  const requestOpenAICompletion = async ({ model, messages, tools = [] } = {}) => {
+  const parseSSEDataLine = line => {
+    if (!line || line.startsWith(':') || !line.startsWith('data:')) {
+      return null
+    }
+
+    const data = line.slice(5).trim()
+    if (!data) return null
+    if (data === '[DONE]') {
+      return { done: true }
+    }
+
+    try {
+      return JSON.parse(data)
+    } catch {
+      return null
+    }
+  }
+
+  const parseOpenAIStreamMessage = async (response, callbacks = {}) => {
+    const { onDelta = () => {}, onToolCallDetected = () => {} } = callbacks
+    const reader = response.body?.getReader?.()
+    if (!reader) {
+      const data = await response.json().catch(() => ({}))
+      const message = data?.choices?.[0]?.message || null
+      const toolCalls = Array.isArray(message?.tool_calls) ? message.tool_calls : []
+      if (message) {
+        onDelta({
+          content: message?.content || '',
+          reasoning_content: message?.reasoning_content || '',
+          reasoning_duration: 0
+        })
+      }
+      if (toolCalls.length > 0) {
+        onToolCallDetected()
+      }
+      return {
+        message,
+        usage: data?.usage || null
+      }
+    }
+
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let usage = null
+    let role = 'assistant'
+    let content = ''
+    let reasoningContent = ''
+    let hasToolCalls = false
+    const toolCallChunks = new Map()
+    let reasoningStartTime = null
+    let reasoningDuration = 0
+
+    const maybeEmitDelta = () => {
+      if (hasToolCalls) return
+      onDelta({
+        content,
+        reasoning_content: reasoningContent,
+        reasoning_duration: reasoningDuration
+      })
+    }
+
+    const applyChunk = chunk => {
+      if (!chunk || chunk.done) return
+
+      if (chunk.usage) {
+        usage = chunk.usage
+      }
+
+      const choice = chunk.choices?.[0]
+      if (!choice) return
+      const delta = choice.delta || {}
+
+      if (typeof delta.role === 'string' && delta.role) {
+        role = delta.role
+      }
+      if (typeof delta.content === 'string') {
+        if (reasoningStartTime && reasoningDuration === 0) {
+          reasoningDuration = Date.now() - reasoningStartTime
+        }
+        content += delta.content
+        maybeEmitDelta()
+      }
+      if (typeof delta.reasoning_content === 'string') {
+        if (!reasoningStartTime) {
+          reasoningStartTime = Date.now()
+        }
+        reasoningContent += delta.reasoning_content
+        maybeEmitDelta()
+      }
+
+      if (Array.isArray(delta.tool_calls)) {
+        if (delta.tool_calls.length > 0 && !hasToolCalls) {
+          hasToolCalls = true
+          onToolCallDetected()
+        }
+        delta.tool_calls.forEach((toolCallDelta, index) => {
+          const deltaIndex = Number.isInteger(toolCallDelta?.index) ? toolCallDelta.index : index
+          if (!toolCallChunks.has(deltaIndex)) {
+            toolCallChunks.set(deltaIndex, {
+              id: '',
+              type: 'function',
+              function: {
+                name: '',
+                arguments: ''
+              }
+            })
+          }
+
+          const current = toolCallChunks.get(deltaIndex)
+          if (typeof toolCallDelta?.id === 'string' && toolCallDelta.id) {
+            current.id = toolCallDelta.id
+          }
+          if (typeof toolCallDelta?.type === 'string' && toolCallDelta.type) {
+            current.type = toolCallDelta.type
+          }
+
+          const functionDelta = toolCallDelta?.function
+          if (functionDelta && typeof functionDelta === 'object') {
+            if (typeof functionDelta.name === 'string') {
+              current.function.name += functionDelta.name
+            }
+            if (typeof functionDelta.arguments === 'string') {
+              current.function.arguments += functionDelta.arguments
+            }
+          }
+        })
+      }
+    }
+
+    const processLine = line => {
+      const parsed = parseSSEDataLine(line)
+      if (parsed?.done) return true
+      if (parsed) applyChunk(parsed)
+      return false
+    }
+
+    const buildToolCalls = () =>
+      Array.from(toolCallChunks.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([, toolCall], toolCallIndex) => ({
+          id: toolCall.id || `tool_call_${Date.now()}_${toolCallIndex}`,
+          type: toolCall.type || 'function',
+          function: {
+            name: toolCall.function?.name || '',
+            arguments: toolCall.function?.arguments || ''
+          }
+        }))
+        .filter(toolCall => {
+          return toolCall.function?.name || (toolCall.function?.arguments || '').trim().length > 0
+        })
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const rawLine of lines) {
+        const trimmedLine = rawLine.trim()
+        if (!trimmedLine) continue
+        if (processLine(trimmedLine)) {
+          return {
+            message: {
+              role,
+              content,
+              reasoning_content: reasoningContent,
+              tool_calls: buildToolCalls()
+            },
+            usage
+          }
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      processLine(buffer.trim())
+    }
+
+    if (reasoningStartTime && reasoningDuration === 0) {
+      reasoningDuration = Date.now() - reasoningStartTime
+      maybeEmitDelta()
+    }
+
+    const message = {
+      role,
+      content,
+      reasoning_content: reasoningContent
+    }
+    const toolCalls = buildToolCalls()
+
+    if (toolCalls.length > 0) {
+      message.tool_calls = toolCalls
+    }
+
+    return {
+      message,
+      usage
+    }
+  }
+
+  const requestOpenAICompletion = async ({
+    model,
+    messages,
+    tools = [],
+    onDelta = () => {},
+    onToolCallDetected = () => {}
+  } = {}) => {
     if (!apiSettingsStore.baseURL || !apiSettingsStore.apiKey) {
       throw new Error('API 配置不完整，无法调用 MCP 工具')
     }
@@ -370,7 +629,7 @@ export function useCompletions({ roomId }) {
     const body = {
       model,
       messages,
-      stream: false
+      stream: true
     }
 
     if (Array.isArray(tools) && tools.length > 0) {
@@ -394,8 +653,32 @@ export function useCompletions({ roomId }) {
       )
     }
 
-    const data = await response.json()
-    return data?.choices?.[0]?.message || null
+    const contentType = response.headers.get('Content-Type') || ''
+    if (!contentType.includes('text/event-stream')) {
+      const data = await response.json().catch(() => ({}))
+      const message = data?.choices?.[0]?.message || null
+      const toolCalls = Array.isArray(message?.tool_calls) ? message.tool_calls : []
+      if (message) {
+        onDelta({
+          content: message?.content || '',
+          reasoning_content: message?.reasoning_content || '',
+          reasoning_duration: 0
+        })
+      }
+      if (toolCalls.length > 0) {
+        onToolCallDetected()
+      }
+
+      return {
+        message,
+        usage: data?.usage || null
+      }
+    }
+
+    return parseOpenAIStreamMessage(response, {
+      onDelta,
+      onToolCallDetected
+    })
   }
 
   const formatServerNameForTool = name => {
@@ -512,45 +795,230 @@ export function useCompletions({ roomId }) {
     }
   }
 
+  const concatAssistantContent = (baseContent, incomingContent) => {
+    const safeBase = typeof baseContent === 'string' ? baseContent : ''
+    const safeIncoming = typeof incomingContent === 'string' ? incomingContent : ''
+    if (!safeIncoming) return safeBase
+    if (!safeBase) return safeIncoming
+    if (safeBase.endsWith('\n') || safeIncoming.startsWith('\n')) {
+      return `${safeBase}${safeIncoming}`
+    }
+    return `${safeBase}\n${safeIncoming}`
+  }
+
   const runMcpToolCalls = async ({ assistantMessageId, model, openAIMessages, serverIds }) => {
-    const mcpLogs = []
     const toolContext = await buildMcpToolContext(serverIds)
     if (!toolContext.tools.length) {
       return {
         requestMessages: openAIMessages,
-        mcpLogs
+        finalAssistantMessage: null,
+        finalUsage: null,
+        finalAssistantMessageId: assistantMessageId,
+        finalDisplayContent: '',
+        finalDisplayReasoningContent: '',
+        finalDisplayReasoningDuration: 0
       }
     }
 
-    const MAX_MCP_TOOL_ROUNDS = 6
     let requestMessages = [...openAIMessages]
+    let roundIndex = 0
+    const activeAssistantMessageId = assistantMessageId
+    let mcpLogParentId = assistantMessageId
+    let mergedDisplayContent = ''
+    let mergedDisplayReasoningContent = ''
+    let mergedDisplayReasoningDuration = 0
+    const assistantTimeline = []
 
-    const syncMcpLogs = () => {
-      if (!mcpLogs.length) return
-      markReceivingStarted()
-      chatRoomsStore.updateMessage(getRoomId(), assistantMessageId, {
-        mcpLogs
+    const normalizeTimelineItem = item => ({
+      content: typeof item?.content === 'string' ? item.content : '',
+      reasoningContent: typeof item?.reasoningContent === 'string' ? item.reasoningContent : '',
+      reasoningDuration: Number(item?.reasoningDuration || 0),
+      logIds: Array.isArray(item?.logIds) ? item.logIds.filter(Boolean) : []
+    })
+
+    const updateAssistantTimeline = timeline => {
+      const roomId = getRoomId()
+      if (!roomId || !activeAssistantMessageId) return
+      chatRoomsStore.updateMessage(roomId, activeAssistantMessageId, {
+        mcpTimeline: timeline.map(normalizeTimelineItem)
       })
     }
 
-    for (let roundIndex = 0; roundIndex < MAX_MCP_TOOL_ROUNDS; roundIndex += 1) {
-      const responseMessage = await requestOpenAICompletion({
+    const appendMcpLogMessage = ({ parentMessageId = '', baseLog = {} } = {}) => {
+      const roomId = getRoomId()
+      if (!roomId) return null
+
+      const tree = chatRoomsStore.getMessageTree(roomId)
+      const parentExists = parentMessageId
+        ? !!chatRoomsStore.findNodeById(tree, parentMessageId)
+        : false
+      const fallbackParentExists = mcpLogParentId
+        ? !!chatRoomsStore.findNodeById(tree, mcpLogParentId)
+        : false
+      const resolvedParentId = parentExists
+        ? parentMessageId
+        : fallbackParentExists
+          ? mcpLogParentId
+          : null
+
+      const messageId =
+        baseLog.id || `mcp-log-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      const addedMessage = chatRoomsStore.addMessage(
+        roomId,
+        {
+          id: messageId,
+          role: 'mcp',
+          messageType: 'mcp-log',
+          content: '',
+          status: 'pending',
+          serverId: baseLog.serverId || '',
+          serverName: baseLog.serverName || 'MCP',
+          toolName: baseLog.toolName || 'tool',
+          arguments: baseLog.arguments || {},
+          durationMs: 0,
+          result: null,
+          toolError: '',
+          createdAt: new Date().toISOString(),
+          finished: true,
+          error: false
+        },
+        resolvedParentId
+      )
+
+      if (!chatRoomsStore.findNodeById(tree, messageId)) {
+        return null
+      }
+
+      if (isViewingReceivingBranch.value) {
+        scrollToBottom()
+      }
+      return addedMessage || null
+    }
+
+    const updateMcpLogMessage = (messageId, patch = {}) => {
+      if (!messageId) return
+      const roomId = getRoomId()
+      if (!roomId) return
+      chatRoomsStore.updateMessage(roomId, messageId, patch)
+      if (isViewingReceivingBranch.value) {
+        scrollToBottom()
+      }
+    }
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      let roundDisplayContent = ''
+      let roundDisplayReasoningContent = ''
+      let roundDisplayReasoningDuration = 0
+
+      const { message: responseMessage, usage: responseUsage } = await requestOpenAICompletion({
         model,
         messages: requestMessages,
-        tools: toolContext.tools
+        tools: toolContext.tools,
+        onDelta: ({ content, reasoning_content, reasoning_duration }) => {
+          roundDisplayContent = typeof content === 'string' ? content : ''
+          roundDisplayReasoningContent =
+            typeof reasoning_content === 'string' ? reasoning_content : ''
+          roundDisplayReasoningDuration =
+            typeof reasoning_duration === 'number' ? reasoning_duration : 0
+
+          const hasDisplayPayload =
+            (typeof roundDisplayContent === 'string' && roundDisplayContent.trim()) ||
+            (typeof roundDisplayReasoningContent === 'string' &&
+              roundDisplayReasoningContent.trim())
+
+          if (!hasDisplayPayload) {
+            return
+          }
+
+          const streamingContent = concatAssistantContent(mergedDisplayContent, roundDisplayContent)
+          const streamingReasoningContent = concatAssistantContent(
+            mergedDisplayReasoningContent,
+            roundDisplayReasoningContent
+          )
+          const streamingReasoningDuration =
+            mergedDisplayReasoningDuration + roundDisplayReasoningDuration
+
+          syncAssistantStreamingMessage({
+            assistantMessageId: activeAssistantMessageId,
+            content: streamingContent,
+            reasoningContent: streamingReasoningContent,
+            reasoningDuration: streamingReasoningDuration
+          })
+          updateAssistantTimeline([
+            ...assistantTimeline,
+            {
+              content: roundDisplayContent,
+              reasoningContent: roundDisplayReasoningContent,
+              reasoningDuration: roundDisplayReasoningDuration,
+              logIds: []
+            }
+          ])
+        }
       })
+
+      const resolvedRoundContent =
+        roundDisplayContent ||
+        (typeof responseMessage?.content === 'string' ? responseMessage.content : '')
+      const resolvedRoundReasoningContent =
+        roundDisplayReasoningContent ||
+        (typeof responseMessage?.reasoning_content === 'string'
+          ? responseMessage.reasoning_content
+          : '')
+
+      if (
+        resolvedRoundContent ||
+        resolvedRoundReasoningContent ||
+        roundDisplayReasoningDuration > 0
+      ) {
+        mergedDisplayContent = concatAssistantContent(mergedDisplayContent, resolvedRoundContent)
+        mergedDisplayReasoningContent = concatAssistantContent(
+          mergedDisplayReasoningContent,
+          resolvedRoundReasoningContent
+        )
+        mergedDisplayReasoningDuration += roundDisplayReasoningDuration
+
+        syncAssistantStreamingMessage({
+          assistantMessageId: activeAssistantMessageId || assistantMessageId,
+          content: mergedDisplayContent,
+          reasoningContent: mergedDisplayReasoningContent,
+          reasoningDuration: mergedDisplayReasoningDuration
+        })
+      }
+
       const toolCalls = Array.isArray(responseMessage?.tool_calls) ? responseMessage.tool_calls : []
+      const roundTimelineItem = {
+        content: resolvedRoundContent,
+        reasoningContent: resolvedRoundReasoningContent,
+        reasoningDuration: roundDisplayReasoningDuration,
+        logIds: []
+      }
 
       if (!toolCalls.length) {
+        assistantTimeline.push(roundTimelineItem)
+        updateAssistantTimeline(assistantTimeline)
         return {
           requestMessages,
-          mcpLogs
+          finalAssistantMessage: responseMessage,
+          finalUsage: responseUsage,
+          finalAssistantMessageId: activeAssistantMessageId || assistantMessageId,
+          finalDisplayContent:
+            mergedDisplayContent || resolvedRoundContent || responseMessage?.content || '',
+          finalDisplayReasoningContent:
+            mergedDisplayReasoningContent ||
+            resolvedRoundReasoningContent ||
+            responseMessage?.reasoning_content ||
+            '',
+          finalDisplayReasoningDuration: mergedDisplayReasoningDuration,
+          finalMcpTimeline: assistantTimeline.map(normalizeTimelineItem)
         }
       }
 
       const normalizedToolCalls = toolCalls.map((toolCall, index) => ({
         ...(toolCall || {}),
-        id: toolCall?.id || `tool_call_${Date.now()}_${roundIndex}_${index}`
+        id:
+          toolCall?.id ||
+          `tool_call_${Date.now()}_${roundIndex}_${index}_${Math.random().toString(36).slice(2, 6)}`
       }))
 
       const toolMessages = []
@@ -559,14 +1027,19 @@ export function useCompletions({ roomId }) {
         content: responseMessage?.content || '',
         tool_calls: normalizedToolCalls
       }
+      const roundLogIds = []
 
-      for (const toolCall of normalizedToolCalls) {
+      for (let callIndex = 0; callIndex < normalizedToolCalls.length; callIndex += 1) {
+        const toolCall = normalizedToolCalls[callIndex]
         const startedAt = Date.now()
         const functionName = toolCall?.function?.name || ''
         const mapping = toolContext.mapping[functionName]
         const toolArguments = parseToolArguments(toolCall?.function?.arguments)
+        const logId = `mcp-log-${Date.now()}-${roundIndex}-${callIndex}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}`
         const baseLog = {
-          id: toolCall?.id || `${assistantMessageId}-tool-${startedAt}`,
+          id: logId,
           serverId: mapping?.serverId || '',
           serverName: mapping?.serverName || functionName,
           toolName: mapping?.toolName || functionName,
@@ -574,21 +1047,34 @@ export function useCompletions({ roomId }) {
           durationMs: 0
         }
 
+        const logMessage = appendMcpLogMessage({
+          parentMessageId: mcpLogParentId,
+          baseLog
+        })
+        if (logMessage?.id) {
+          mcpLogParentId = logMessage.id
+          roundLogIds.push(logMessage.id)
+        }
+        const patchCurrentLog = patch => {
+          if (!logMessage?.id) return
+          updateMcpLogMessage(logMessage.id, patch)
+        }
+
         if (!mapping) {
-          mcpLogs.push({
-            ...baseLog,
+          patchCurrentLog({
             status: 'error',
-            error: '未匹配到 MCP 工具'
+            durationMs: Date.now() - startedAt,
+            toolError: '未匹配到 MCP 工具'
           })
           continue
         }
 
         const server = mcpSettingsStore.getServerById(mapping.serverId)
         if (!server || !server.enabled) {
-          mcpLogs.push({
-            ...baseLog,
+          patchCurrentLog({
             status: 'error',
-            error: 'MCP 服务不可用'
+            durationMs: Date.now() - startedAt,
+            toolError: 'MCP 服务不可用'
           })
           continue
         }
@@ -605,49 +1091,43 @@ export function useCompletions({ roomId }) {
             tool_call_id: toolCall.id,
             content: toolResultText || ''
           })
-          mcpLogs.push({
-            ...baseLog,
+          patchCurrentLog({
             status: 'success',
             durationMs,
-            result: toolResult
+            result: toolResult,
+            toolError: ''
           })
         } catch (error) {
-          mcpLogs.push({
-            ...baseLog,
+          patchCurrentLog({
             status: 'error',
             durationMs: Date.now() - startedAt,
-            error: error?.message || '工具调用失败'
+            toolError: error?.message || '工具调用失败'
           })
         }
       }
 
-      syncMcpLogs()
-
       if (!toolMessages.length) {
+        roundTimelineItem.logIds = roundLogIds
+        assistantTimeline.push(roundTimelineItem)
+        updateAssistantTimeline(assistantTimeline)
         return {
           requestMessages,
-          mcpLogs
+          finalAssistantMessage: null,
+          finalUsage: null,
+          finalAssistantMessageId: activeAssistantMessageId || assistantMessageId,
+          finalDisplayContent: mergedDisplayContent || resolvedRoundContent,
+          finalDisplayReasoningContent:
+            mergedDisplayReasoningContent || resolvedRoundReasoningContent,
+          finalDisplayReasoningDuration: mergedDisplayReasoningDuration,
+          finalMcpTimeline: assistantTimeline.map(normalizeTimelineItem)
         }
       }
 
+      roundTimelineItem.logIds = roundLogIds
+      assistantTimeline.push(roundTimelineItem)
+      updateAssistantTimeline(assistantTimeline)
       requestMessages = [...requestMessages, assistantToolCallMessage, ...toolMessages]
-    }
-
-    mcpLogs.push({
-      id: `${assistantMessageId}-tool-limit`,
-      serverId: '',
-      serverName: 'MCP',
-      toolName: 'tool_round_guard',
-      arguments: {},
-      durationMs: 0,
-      status: 'error',
-      error: `MCP 链式调用超过最大轮次限制（${MAX_MCP_TOOL_ROUNDS}）`
-    })
-    syncMcpLogs()
-
-    return {
-      requestMessages,
-      mcpLogs
+      roundIndex += 1
     }
   }
 
@@ -668,12 +1148,50 @@ export function useCompletions({ roomId }) {
     }
 
     try {
-      const { requestMessages } = await runMcpToolCalls({
+      const {
+        requestMessages,
+        finalAssistantMessage,
+        finalUsage,
+        finalAssistantMessageId,
+        finalDisplayContent,
+        finalDisplayReasoningContent,
+        finalDisplayReasoningDuration,
+        finalMcpTimeline
+      } = await runMcpToolCalls({
         assistantMessageId,
         model,
         openAIMessages,
         serverIds: activeServerIds
       })
+
+      if (finalAssistantMessage) {
+        const roomId = getRoomId()
+        const tree = roomId ? chatRoomsStore.getMessageTree(roomId) : null
+        const finalAssistantNode =
+          roomId && tree && finalAssistantMessageId
+            ? chatRoomsStore.findNodeById(tree, finalAssistantMessageId)
+            : null
+        const resolvedFinalContent =
+          typeof finalDisplayContent === 'string' && finalDisplayContent
+            ? finalDisplayContent
+            : finalAssistantMessage.content || finalAssistantNode?.content || ''
+        const resolvedFinalReasoningContent =
+          typeof finalDisplayReasoningContent === 'string' && finalDisplayReasoningContent
+            ? finalDisplayReasoningContent
+            : finalAssistantMessage.reasoning_content || finalAssistantNode?.reasoningContent || ''
+        const resolvedFinalReasoningDuration =
+          finalDisplayReasoningDuration || finalAssistantNode?.reasoningTime || 0
+
+        await finalizeAssistantMessage({
+          assistantMessageId: finalAssistantMessageId || assistantMessageId,
+          content: resolvedFinalContent,
+          reasoningContent: resolvedFinalReasoningContent,
+          reasoningDuration: resolvedFinalReasoningDuration,
+          usage: finalUsage || null,
+          mcpTimeline: Array.isArray(finalMcpTimeline) ? finalMcpTimeline : null
+        })
+        return
+      }
 
       sendSSE({
         model,
@@ -800,25 +1318,58 @@ export function useCompletions({ roomId }) {
     stopSSE()
   }
 
+  const resolveUserMessageNodeFromRegenerateTarget = ({ tree, messageId = '', parentId = '' }) => {
+    if (!tree) return null
+
+    const findUserAncestor = startNode => {
+      let currentNode = startNode
+      while (currentNode) {
+        const role = `${currentNode?.role || ''}`.toLowerCase()
+        if (role === 'user') {
+          return currentNode
+        }
+        if (!currentNode?.parentId) {
+          return null
+        }
+        currentNode = chatRoomsStore.findNodeById(tree, currentNode.parentId)
+      }
+      return null
+    }
+
+    const tryResolve = nodeId => {
+      if (!nodeId) return null
+      const targetNode = chatRoomsStore.findNodeById(tree, nodeId)
+      if (!targetNode) return null
+      return findUserAncestor(targetNode)
+    }
+
+    return tryResolve(messageId) || tryResolve(parentId)
+  }
+
   /**
    * 重新生成回答
    * @param {Object} params - 参数对象
-   * @param {string} params.parentId - 父消息(用户消息)的 ID
+   * @param {string} params.parentId - 父消息 ID（兼容历史数据，可能不是用户消息）
+   * @param {string} params.messageId - 当前助手消息 ID
    */
-  const handleRegenerateAnswer = ({ parentId }) => {
+  const handleRegenerateAnswer = ({ parentId = '', messageId = '' } = {}) => {
     if (loading.value || isReceiving.value) {
       showMessage('正在生成回答中，请稍后再试', { type: 'warning' })
       return
     }
 
     const id = getRoomId()
-    if (!id || !parentId) {
+    if (!id) {
       showMessage('无法找到对应的用户消息', { type: 'error' })
       return
     }
 
     const tree = chatRoomsStore.getMessageTree(id)
-    const userMessageNode = chatRoomsStore.findNodeById(tree, parentId)
+    const userMessageNode = resolveUserMessageNodeFromRegenerateTarget({
+      tree,
+      messageId,
+      parentId
+    })
 
     if (!userMessageNode) {
       showMessage('无法找到对应的用户消息', { type: 'error' })
@@ -857,8 +1408,10 @@ export function useCompletions({ roomId }) {
       // 获取到用户消息为止的对话历史
       const allMessages = chatRoomsStore.getMessages(id)
       // 找到用户消息的位置，取其之前的消息 + 用户消息本身
-      const userMsgIndex = allMessages.findIndex(msg => msg.id === parentId)
-      const openAIMessages = buildOpenAIMessages(allMessages.slice(0, userMsgIndex + 1))
+      const userMsgIndex = allMessages.findIndex(msg => msg.id === userMessageNode.id)
+      const messagesBeforeUser =
+        userMsgIndex >= 0 ? allMessages.slice(0, userMsgIndex + 1) : allMessages
+      const openAIMessages = buildOpenAIMessages(messagesBeforeUser)
 
       await sendMessageWithMcp({
         assistantMessageId: newAssistantMessageId,
@@ -1113,6 +1666,7 @@ export function useCompletions({ roomId }) {
     message,
     loading,
     isReceiving,
+    receivingMessageId,
     shouldShowLoading,
     isViewingReceivingBranch,
     chatHistory,

@@ -45,11 +45,15 @@
         <div v-show="showMcpLogs" class="mcp-log-list">
           <div v-for="(log, index) in mcpLogs" :key="`${log.id || index}`" class="mcp-log-item">
             <div class="mcp-log-meta">
-              <span class="mcp-status" :class="log.status === 'success' ? 'success' : 'error'">
-                {{ log.status === 'success' ? '成功' : '失败' }}
+              <span class="mcp-status" :class="getMcpStatus(log.status)">
+                {{ getMcpStatusText(log.status) }}
               </span>
               <span class="mcp-name">{{ log.serverName }} / {{ log.toolName }}</span>
-              <span class="mcp-duration">{{ formatDuration(log.durationMs) }}</span>
+              <span class="mcp-duration">
+                {{
+                  getMcpStatus(log.status) === 'pending' ? '进行中' : formatDuration(log.durationMs)
+                }}
+              </span>
             </div>
 
             <div v-if="formatMcpArguments(log.arguments)" class="mcp-log-block">
@@ -58,10 +62,8 @@
             </div>
 
             <div class="mcp-log-block">
-              <div class="mcp-log-block-title">
-                {{ log.status === 'success' ? '返回' : '错误' }}
-              </div>
-              <pre>{{ log.status === 'success' ? formatMcpResult(log.result) : log.error }}</pre>
+              <div class="mcp-log-block-title">{{ getMcpOutputTitle(log.status) }}</div>
+              <pre>{{ getMcpOutputContent(log) }}</pre>
             </div>
           </div>
         </div>
@@ -374,6 +376,38 @@ const formatMcpResult = result => {
   }
 }
 
+const getMcpStatus = status => {
+  if (status === 'success' || status === 'error') {
+    return status
+  }
+  return 'pending'
+}
+
+const getMcpStatusText = status => {
+  const normalizedStatus = getMcpStatus(status)
+  if (normalizedStatus === 'success') return '成功'
+  if (normalizedStatus === 'error') return '失败'
+  return '调用中'
+}
+
+const getMcpOutputTitle = status => {
+  const normalizedStatus = getMcpStatus(status)
+  if (normalizedStatus === 'success') return '返回'
+  if (normalizedStatus === 'error') return '错误'
+  return '状态'
+}
+
+const getMcpOutputContent = log => {
+  const normalizedStatus = getMcpStatus(log?.status)
+  if (normalizedStatus === 'success') {
+    return formatMcpResult(log?.result)
+  }
+  if (normalizedStatus === 'error') {
+    return log?.error || '工具调用失败'
+  }
+  return '调用中...'
+}
+
 // 处理上一页
 const handlePrevPage = () => {
   if (!isFirstPage.value) {
@@ -479,6 +513,11 @@ const regenerateMessage = () => {
       &.error {
         color: var(--error-text);
         background: var(--error-bg);
+      }
+
+      &.pending {
+        color: var(--text-dblight-color);
+        background: var(--bg-muted);
       }
     }
 

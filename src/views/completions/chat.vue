@@ -14,7 +14,7 @@
       >
         <div v-if="!chatHistoryLoading" class="chat-messages">
           <div
-            v-for="msg in chatHistory"
+            v-for="msg in displayChatHistory"
             :id="`message-${msg.id}`"
             :key="msg.id || roomId"
             class="message-wrapper"
@@ -43,12 +43,12 @@
 
             <!-- 助手消息 -->
             <CompletionsAssistantMessage
-              v-else-if="msg.role.toLowerCase() === 'assistant'"
+              v-else-if="shouldRenderAssistantMessage(msg)"
               :key="`assistant-${msg.id || roomId}`"
               :message="msg.content"
               :finished="msg.finished"
-              :loading="loading && chatHistory.indexOf(msg) === chatHistory.length - 1"
-              :message-id="msg.id"
+              :loading="isAssistantMessageLoading(msg)"
+              :message-id="msg.sourceMessageId || msg.id"
               :parent-id="msg.parentId"
               :model="msg.model"
               :error="msg.error"
@@ -58,10 +58,21 @@
               :current-page="msg.pageIndex + 1"
               :total-pages="msg.siblingCount || 1"
               :usage="msg.usage"
-              :mcp-logs="msg.mcpLogs || []"
               @regenerate="handleRegenerateAnswer"
               @prev="handleAssistantPrevPage(msg.parentId)"
               @next="handleAssistantNextPage(msg.parentId)"
+            />
+
+            <CompletionsMcpLogMessage
+              v-else-if="msg.role.toLowerCase() === 'mcp'"
+              :key="`mcp-${msg.id || roomId}`"
+              :status="msg.status"
+              :server-name="msg.serverName"
+              :tool-name="msg.toolName"
+              :duration-ms="msg.durationMs"
+              :arguments="msg.arguments"
+              :result="msg.result"
+              :tool-error="msg.toolError"
             />
           </div>
         </div>
@@ -142,6 +153,7 @@ import { ref, computed, onBeforeUnmount, nextTick, watch } from 'vue'
 import AgentSender from '@/components/sender/index.vue'
 import CompletionsUserMessage from '@/components/completions-message/user.vue'
 import CompletionsAssistantMessage from '@/components/completions-message/assistant.vue'
+import CompletionsMcpLogMessage from '@/components/completions-message/mcp-log.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { FETCH_CHAR_HISTORY } from '@/config/symbol'
 import { useApiSettingsStore } from '@/stores/api-settings'
@@ -444,6 +456,7 @@ const {
   loading,
   chatHistory,
   isReceiving,
+  receivingMessageId,
   chatHistoryLoading,
   editingMessageId,
   scrollToBottom,
@@ -480,11 +493,168 @@ const availableMcpServers = computed(() => {
   return mcpSettingsStore.servers.filter(server => server.enabled)
 })
 
+const concatAssistantDisplayText = (baseText, incomingText) => {
+  const safeBase = typeof baseText === 'string' ? baseText : ''
+  const safeIncoming = typeof incomingText === 'string' ? incomingText : ''
+  if (!safeIncoming) return safeBase
+  if (!safeBase) return safeIncoming
+  if (safeBase.endsWith('\n') || safeIncoming.startsWith('\n')) {
+    return `${safeBase}${safeIncoming}`
+  }
+  return `${safeBase}\n${safeIncoming}`
+}
+
+const displayChatHistory = computed(() => {
+  if (!Array.isArray(chatHistory.value) || chatHistory.value.length === 0) {
+    return []
+  }
+
+  const mcpMessageMap = new Map()
+  chatHistory.value.forEach(msg => {
+    if (`${msg?.role || ''}`.toLowerCase() === 'mcp' && msg?.id) {
+      mcpMessageMap.set(msg.id, msg)
+    }
+  })
+
+  const consumedMcpMessageIds = new Set()
+  const result = []
+  let pendingAssistantNode = null
+
+  const flushPendingAssistantNode = () => {
+    if (!pendingAssistantNode) return
+    result.push(pendingAssistantNode)
+    pendingAssistantNode = null
+  }
+
+  chatHistory.value.forEach(msg => {
+    const role = `${msg?.role || ''}`.toLowerCase()
+
+    if (role === 'user') {
+      flushPendingAssistantNode()
+      result.push(msg)
+      return
+    }
+
+    if (role === 'assistant') {
+      const timeline = Array.isArray(msg?.mcpTimeline) ? msg.mcpTimeline : []
+      if (timeline.length > 0) {
+        flushPendingAssistantNode()
+        const hasAnyTimelineText = timeline.some(item => {
+          return (
+            (typeof item?.content === 'string' && item.content.trim().length > 0) ||
+            (typeof item?.reasoningContent === 'string' && item.reasoningContent.trim().length > 0)
+          )
+        })
+
+        timeline.forEach((item, segmentIndex) => {
+          const segmentContent = typeof item?.content === 'string' ? item.content : ''
+          const segmentReasoningContent =
+            typeof item?.reasoningContent === 'string' ? item.reasoningContent : ''
+          const segmentReasoningDuration = Number(item?.reasoningDuration || 0)
+          const segmentLogIds = Array.isArray(item?.logIds) ? item.logIds.filter(Boolean) : []
+
+          if (
+            segmentContent ||
+            segmentReasoningContent ||
+            (!hasAnyTimelineText && segmentIndex === timeline.length - 1)
+          ) {
+            result.push({
+              ...msg,
+              id: `${msg.id}__segment_${segmentIndex}`,
+              sourceMessageId: msg.id,
+              content: segmentContent,
+              reasoningContent: segmentReasoningContent,
+              reasoningTime: segmentReasoningDuration,
+              finished: !!msg.finished && segmentIndex === timeline.length - 1,
+              usage: segmentIndex === timeline.length - 1 ? msg.usage || null : null,
+              segmentIndex,
+              segmentCount: timeline.length
+            })
+          }
+
+          segmentLogIds.forEach(logId => {
+            const logMessage = mcpMessageMap.get(logId)
+            if (!logMessage) return
+            result.push(logMessage)
+            consumedMcpMessageIds.add(logId)
+          })
+        })
+        return
+      }
+
+      if (!pendingAssistantNode) {
+        pendingAssistantNode = {
+          ...msg,
+          sourceMessageId: msg.id,
+          mergedAssistantIds: [msg.id]
+        }
+        return
+      }
+
+      pendingAssistantNode.content = concatAssistantDisplayText(
+        pendingAssistantNode.content,
+        msg.content
+      )
+      pendingAssistantNode.reasoningContent = concatAssistantDisplayText(
+        pendingAssistantNode.reasoningContent,
+        msg.reasoningContent
+      )
+      pendingAssistantNode.reasoningTime =
+        Number(pendingAssistantNode.reasoningTime || 0) + Number(msg.reasoningTime || 0)
+      pendingAssistantNode.finished = !!msg.finished
+      pendingAssistantNode.error = !!pendingAssistantNode.error || !!msg.error
+      if (msg.usage) {
+        pendingAssistantNode.usage = msg.usage
+      }
+      if (msg.model) {
+        pendingAssistantNode.model = msg.model
+      }
+      pendingAssistantNode.mergedAssistantIds.push(msg.id)
+      return
+    }
+
+    if (role === 'mcp') {
+      if (consumedMcpMessageIds.has(msg.id)) {
+        return
+      }
+      flushPendingAssistantNode()
+      result.push(msg)
+      return
+    }
+
+    flushPendingAssistantNode()
+    result.push(msg)
+  })
+
+  flushPendingAssistantNode()
+  return result
+})
+
+const isAssistantMessageLoading = msg => {
+  if (!loading.value) return false
+  if (!msg) return false
+
+  const sourceMessageId = msg.sourceMessageId || msg.id
+  if (sourceMessageId !== receivingMessageId.value) return false
+
+  if (typeof msg.segmentIndex === 'number' && typeof msg.segmentCount === 'number') {
+    return msg.segmentIndex === msg.segmentCount - 1
+  }
+
+  if (Array.isArray(msg.mergedAssistantIds) && msg.mergedAssistantIds.length > 0) {
+    return msg.mergedAssistantIds.includes(receivingMessageId.value)
+  }
+
+  return false
+}
+
 // 最后一条消息是否有错误
 const lastMessageHasError = computed(() => {
-  if (chatHistory.value.length === 0) return false
-  const lastMessage = chatHistory.value[chatHistory.value.length - 1]
-  return !!lastMessage?.error
+  if (displayChatHistory.value.length === 0) return false
+  const lastAssistantMessage = [...displayChatHistory.value]
+    .reverse()
+    .find(msg => `${msg?.role || ''}`.toLowerCase() === 'assistant')
+  return !!lastAssistantMessage?.error
 })
 
 // 输入框高度 + 垂直padding：68 + 80：最后一条消息到输入框的距离
@@ -493,6 +663,23 @@ const pagePaddingBottom = computed(() => `${inputContainerHeight.value + 68 + 80
 const isCurrentModelSupportsVision = computed(() => {
   return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'vision')
 })
+
+const shouldRenderAssistantMessage = msg => {
+  const role = `${msg?.role || ''}`.toLowerCase()
+  if (role !== 'assistant') return false
+
+  const hasTextContent = typeof msg?.content === 'string' && msg.content.trim().length > 0
+  const hasReasoningContent =
+    typeof msg?.reasoningContent === 'string' && msg.reasoningContent.trim().length > 0
+  const hasChildren = Array.isArray(msg?.children) && msg.children.length > 0
+
+  // 隐藏作为 MCP 链路桥接的空 assistant 节点，避免打乱日志时序显示
+  if (!hasTextContent && !hasReasoningContent && !msg?.error && !msg?.finished && hasChildren) {
+    return false
+  }
+
+  return true
+}
 
 // 页面加载时获取数据
 tryOnMounted(async () => {
