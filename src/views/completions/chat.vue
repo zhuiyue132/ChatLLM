@@ -18,6 +18,7 @@
             :id="`message-${msg.id}`"
             :key="msg.id || roomId"
             class="message-wrapper"
+            :class="{ 'mcp-log': msg.id?.indexOf('mcp-log') > -1 }"
           >
             <!-- 用户消息 -->
             <CompletionsUserMessage
@@ -833,6 +834,18 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 
   .message-wrapper {
     margin-bottom: 24px;
+    &.mcp-log {
+      margin-bottom: 12px;
+      margin-top: -24px;
+
+      + .message-wrapper {
+        :deep(.assistant-message) {
+          .model-header {
+            display: none;
+          }
+        }
+      }
+    }
 
     &:last-child {
       margin-bottom: 0;
