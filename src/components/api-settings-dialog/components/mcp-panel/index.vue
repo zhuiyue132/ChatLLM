@@ -2,7 +2,7 @@
  * @Author       : zhuiyue132
  * @Date         : 2026-03-02
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-03-02
+ * @LastEditTime : 2026-03-03
  * @FilePath     : /ChatLLM/src/components/api-settings-dialog/components/mcp-panel/index.vue
  * @Description  : MCP 设置面板
 -->
@@ -82,9 +82,10 @@
           <el-form-item label="Streamable HTTP 地址">
             <el-input
               v-model="editorForm.endpoint"
-              placeholder="例如：https://mcp.example.com/mcp 或 /mcp"
+              placeholder="例如：https://mcp.example.com/mcp"
               clearable
             />
+            <div class="form-item-tip">填写 http(s)://... 将自动走 /mcp-proxy 动态反代</div>
           </el-form-item>
 
           <el-form-item label="API Key（可选）">
@@ -234,9 +235,8 @@ const buildServerPayload = () => {
     throw new Error('请输入 MCP 名称')
   }
   const isAbsoluteHttpUrl = /^https?:\/\/.+/.test(endpoint)
-  const isRelativePath = /^\/.+/.test(endpoint)
-  if (!endpoint || (!isAbsoluteHttpUrl && !isRelativePath)) {
-    throw new Error('请输入合法的 Streamable HTTP 地址（支持 https://... 或 /mcp）')
+  if (!endpoint || !isAbsoluteHttpUrl) {
+    throw new Error('请输入合法的 Streamable HTTP 地址（仅支持 http(s)://...）')
   }
 
   return {
@@ -573,6 +573,13 @@ const handleImport = async () => {
       font-size: 13px;
       line-height: 20px;
     }
+  }
+
+  .form-item-tip {
+    margin-top: 6px;
+    color: var(--text-dblight-color);
+    font-size: 12px;
+    line-height: 18px;
   }
 
   .toggle-password {

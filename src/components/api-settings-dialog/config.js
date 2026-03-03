@@ -10,10 +10,10 @@
 // 左侧菜单配置
 export const MENU_LIST = [
   { key: 'user-profile', label: '用户信息', icon: 'iconfont icon-yonghu' },
+  { key: 'appearance', label: '外观', icon: 'iconfont icon-zhengyan' },
   { key: 'api-config', label: 'API设定', icon: 'iconfont icon-fuwu' },
   { key: 'model-list', label: '模型列表', icon: 'iconfont icon-moxing-lora' },
   { key: 'default-model', label: '默认模型', icon: 'iconfont icon-duihua' },
-  { key: 'appearance', label: '外观', icon: 'iconfont icon-zhengyan' },
   { key: 'knowledge', label: '知识库', icon: 'iconfont icon-brain' },
   { key: 'mcp', label: 'MCP', icon: 'icon-mcp-custom' },
   { key: 'backup', label: '数据备份', icon: 'iconfont icon-download' },

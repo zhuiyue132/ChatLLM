@@ -14,7 +14,11 @@
       'hidden-input': filesUploaded.length > 0 && hiddenInputWhenFiles
     }"
   >
-    <FloatButton v-if="floatButtonEnable" :float-button-offset="floatButtonOffset" />
+    <FloatButton
+      v-if="floatButtonEnable"
+      :float-button-offset="floatButtonOffset"
+      :scroll-container="scrollContainer"
+    />
 
     <MentionSender
       v-bind="$attrs"
@@ -314,6 +318,11 @@ const props = defineProps({
   floatButtonOffset: {
     type: String,
     default: '-42px'
+  },
+  // 悬浮按钮滚动目标容器（默认回退 window）
+  scrollContainer: {
+    type: Object,
+    default: null
   },
 
   // 是否启用 @模型 功能

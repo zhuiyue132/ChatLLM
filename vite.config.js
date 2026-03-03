@@ -2,12 +2,12 @@
  * @Author       : zhuiyue132
  * @Date         : 2025-07-15
  * @LastEditors  : zhuiyue132
- * @LastEditTime : 2026-02-28
+ * @LastEditTime : 2026-03-03
  * @FilePath     : /ChatLLM/vite.config.js
  * @Description  : vite配置
  *
  */
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import AutoImport from 'unplugin-auto-import/vite'
@@ -18,13 +18,16 @@ import legacy from '@vitejs/plugin-legacy'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { BASE_URL } from './src/config/app'
 import ElementPlus from 'unplugin-element-plus/vite'
+import { createDynamicHeaderProxyPlugin } from './vite.dynamic-proxy'
+
+const MCP_DYNAMIC_PROXY_PATH = '/mcp-proxy'
+const MCP_TARGET_HEADER = 'x-mcp-target'
+const WEBDAV_DYNAMIC_PROXY_PATH = '/webdav-proxy'
+const WEBDAV_TARGET_HEADER = 'x-webdav-target'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const isProd = mode === 'production'
-  const env = loadEnv(mode, process.cwd(), '')
-  const webdavProxyTarget = env.VITE_WEBDAV_PROXY_TARGET || 'https://webdav.123pan.cn/webdav'
-  const mcpProxyTarget = env.VITE_MCP_PROXY_TARGET || 'http://127.0.0.1:3845'
   return {
     base: BASE_URL,
     envDir: './env',
@@ -42,6 +45,22 @@ export default defineConfig(({ mode }) => {
       }),
 
       ElementPlus({ useSource: true }),
+      createDynamicHeaderProxyPlugin({
+        name: 'dynamic-mcp-proxy',
+        routePath: MCP_DYNAMIC_PROXY_PATH,
+        targetHeader: MCP_TARGET_HEADER,
+        proxyMarkerHeader: 'X-MCP-Proxy',
+        invalidTargetMessage: 'Invalid X-MCP-Target',
+        proxyErrorPrefix: 'MCP proxy failed'
+      }),
+      createDynamicHeaderProxyPlugin({
+        name: 'dynamic-webdav-proxy',
+        routePath: WEBDAV_DYNAMIC_PROXY_PATH,
+        targetHeader: WEBDAV_TARGET_HEADER,
+        proxyMarkerHeader: 'X-WebDAV-Proxy',
+        invalidTargetMessage: 'Invalid X-WebDAV-Target',
+        proxyErrorPrefix: 'WebDAV proxy failed'
+      }),
       AutoImport({
         resolvers: [ElementPlusResolver({ importStyle: 'sass' })]
       }),
@@ -88,20 +107,7 @@ export default defineConfig(({ mode }) => {
       port: 3002,
       open: false,
       cors: true,
-      allowedHosts: ['.ecbis.com'],
-      proxy: {
-        '/webdav': {
-          target: webdavProxyTarget,
-          changeOrigin: true,
-          secure: false,
-          rewrite: path => path.replace(/^\/webdav/, '')
-        },
-        '/mcp': {
-          target: mcpProxyTarget,
-          changeOrigin: true,
-          secure: false
-        }
-      }
+      allowedHosts: ['.ecbis.com']
     },
     build: {
       // 直接关闭，需要的自行打开

@@ -10,6 +10,9 @@
 const DEFAULT_TIMEOUT_MS = 20000
 const PROTOCOL_VERSION = '2025-06-18'
 const FALLBACK_PROTOCOL_VERSIONS = ['2025-03-26', '2024-11-05']
+const MCP_DYNAMIC_PROXY_PATH = '/mcp-proxy'
+const MCP_TARGET_HEADER = 'X-MCP-Target'
+const MCP_PROXY_RESPONSE_HEADER = 'x-mcp-proxy'
 const initializedServerRuntimeKeys = new Set()
 const runtimeStateMap = new Map()
 let rpcIdSeed = Date.now()
@@ -36,6 +39,8 @@ const normalizeTimeout = timeoutMs => {
   }
   return Math.floor(timeout)
 }
+
+const isAbsoluteHttpUrl = value => /^https?:\/\/.+/i.test((value || '').trim())
 
 const parseJsonSafely = raw => {
   if (!raw) return null
@@ -82,6 +87,23 @@ const buildRequestHeaders = (server, options = {}) => {
   }
 
   return requestHeaders
+}
+
+const buildRequestContext = (server, headers = {}) => {
+  const endpoint = `${server?.endpoint || ''}`.trim()
+  if (!isAbsoluteHttpUrl(endpoint)) {
+    throw new Error('MCP 服务地址仅支持 http(s)://... 格式')
+  }
+
+  return {
+    requestUrl: MCP_DYNAMIC_PROXY_PATH,
+    requestHeaders: {
+      ...headers,
+      [MCP_TARGET_HEADER]: endpoint
+    },
+    originalHeaders: headers,
+    useDynamicProxy: true
+  }
 }
 
 const parseSSEPayload = async response => {
@@ -180,10 +202,10 @@ const buildCorsOrNetworkErrorMessage = server => {
     '网络请求失败（可能是 CORS 拦截）。',
     `当前页面来源：${currentOrigin}`,
     `目标 MCP 地址：${targetEndpoint}`,
-    '请在 MCP 服务端允许跨域访问，并放行 OPTIONS 预检请求。',
-    `建议至少返回：Access-Control-Allow-Origin: ${currentOrigin}`,
-    '并允许请求头 Content-Type、Authorization。',
-    '开发环境也可改用 Vite 反代：将 endpoint 配置为 /mcp。'
+    '已优先尝试通过 /mcp-proxy 动态反代访问（仅绝对 http(s) 地址）。',
+    '若仍失败，请检查部署端是否已配置 /mcp-proxy 反代，或 MCP 服务端是否允许跨域并放行 OPTIONS 预检。',
+    `若走直连，建议至少返回：Access-Control-Allow-Origin: ${currentOrigin}`,
+    '并允许请求头 Content-Type、Authorization。'
   ].join('\n')
 }
 
@@ -209,6 +231,9 @@ const requestMcp = async (
   if (!server?.endpoint) {
     throw new Error('MCP 服务地址不能为空')
   }
+  if (!isAbsoluteHttpUrl(server.endpoint)) {
+    throw new Error('MCP 服务地址仅支持 http(s)://... 格式')
+  }
   if (!method) {
     throw new Error('MCP 方法名不能为空')
   }
@@ -230,18 +255,34 @@ const requestMcp = async (
   }
 
   const runtimeKey = getRuntimeKey(server)
+  const requestHeaders = buildRequestHeaders(server, {
+    runtimeKey,
+    protocolVersionOverride,
+    includeProtocolHeader
+  })
+  const requestContext = buildRequestContext(server, requestHeaders)
 
   try {
-    const response = await fetch(server.endpoint, {
+    let response = await fetch(requestContext.requestUrl, {
       method: 'POST',
-      headers: buildRequestHeaders(server, {
-        runtimeKey,
-        protocolVersionOverride,
-        includeProtocolHeader
-      }),
+      headers: requestContext.requestHeaders,
       body: JSON.stringify(requestBody),
       signal: controller.signal
     })
+
+    // 开发环境若未挂载 /mcp-proxy，可回退到直连（前提是目标端允许 CORS）。
+    if (
+      requestContext.useDynamicProxy &&
+      response.status === 404 &&
+      response.headers.get(MCP_PROXY_RESPONSE_HEADER) !== '1'
+    ) {
+      response = await fetch(server.endpoint, {
+        method: 'POST',
+        headers: requestContext.originalHeaders,
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      })
+    }
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '')

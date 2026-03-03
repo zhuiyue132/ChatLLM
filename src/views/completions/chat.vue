@@ -1,10 +1,5 @@
 <template>
-  <div
-    ref="chatContainerRef"
-    class="chat-page"
-    :class="{ 'is-preview-visible': previewVisible }"
-    :style="{ paddingBottom: pagePaddingBottom }"
-  >
+  <div class="chat-page" :class="{ 'is-preview-visible': previewVisible }">
     <div ref="chatMainRef" class="chat-main">
       <!-- 聊天记录内容 -->
       <div
@@ -121,7 +116,7 @@
       </div>
     </aside>
 
-    <div ref="inputContainerRef" class="input-container" :style="inputContainerStyle">
+    <div ref="inputContainerRef" class="input-container">
       <div class="input-container-content">
         <AgentSender
           ref="senderRef"
@@ -142,6 +137,7 @@
           :min-rows="2"
           :show-image-btn="isCurrentModelSupportsVision"
           :show-mcp-selector="isCurrentModelSupportsToolCall"
+          :scroll-container="chatHistoryContainerRef"
           show-model-select
           show-mention-model
           @submit="handleSendMessage"
@@ -166,15 +162,7 @@ import { useThemeStore } from '@/stores/theme'
 import { useRoute, onBeforeRouteLeave, useRouter } from 'vue-router'
 import { useCodePreview } from '@/hooks/use-code-preview'
 import { useSidebar } from '@/hooks/use-sidebar'
-import {
-  tryOnMounted,
-  useElementSize,
-  useElementBounding,
-  useWindowScroll,
-  useWindowSize,
-  useEventListener,
-  useEventBus
-} from '@vueuse/core'
+import { tryOnMounted, useElementSize, useEventListener, useEventBus } from '@vueuse/core'
 import { useCompletions } from './hooks/use-completions'
 import { consumePendingCompletionsMessage } from './utils'
 
@@ -187,15 +175,6 @@ const PREVIEW_MIN_IFRAME_HEIGHT = 420
 const PREVIEW_MAX_IFRAME_HEIGHT = 8000
 const SCRIPT_CLOSE_TAG = '</scr' + 'ipt>'
 
-const { x: windowScrollX } = useWindowScroll()
-const { width: windowWidth } = useWindowSize()
-const agentPositionX = computed(() => {
-  if (windowScrollX.value) {
-    return `${-windowScrollX.value}px`
-  }
-  return '0'
-})
-
 const route = useRoute()
 const router = useRouter()
 const apiSettingsStore = useApiSettingsStore()
@@ -206,7 +185,6 @@ const { closeSidebar } = useSidebar()
 
 const roomId = computed(() => route.query.roomId)
 const senderRef = ref(null)
-const chatContainerRef = ref(null)
 const chatMainRef = ref(null)
 
 const chatHistoryContainerRef = ref(null)
@@ -217,28 +195,10 @@ const previewIframeRef = ref(null)
 const previewFrameHeight = ref(0)
 const isPreviewFullscreen = ref(false)
 
-const { height: inputContainerHeight } = useElementSize(inputContainerRef)
 const { height: chatHistoryContainerHeight } = useElementSize(chatHistoryContainerRef)
-const { left: chatMainLeft, width: chatMainWidth } = useElementBounding(chatMainRef)
 
 const { previewVisible, previewState, previewVersion, closePreview, refreshPreview, resetPreview } =
   useCodePreview()
-
-const floatButtonEnable = computed(() => {
-  return chatHistoryContainerHeight.value > window.innerHeight
-})
-
-const inputContainerStyle = computed(() => {
-  const hasMainWidth = chatMainWidth.value > 0
-  const safeLeft = hasMainWidth ? Math.max(chatMainLeft.value, 0) : 0
-  const safeWidth = hasMainWidth ? chatMainWidth.value : windowWidth.value
-
-  return {
-    left: `${safeLeft}px`,
-    width: `${safeWidth}px`,
-    transform: `translateX(${agentPositionX.value})`
-  }
-})
 
 const resolveThemeBridge = () => {
   const rootStyle = window.getComputedStyle(document.documentElement)
@@ -476,7 +436,8 @@ const {
   handleCancelEditUserMessage,
   handleSendEditedUserMessage
 } = useCompletions({
-  roomId
+  roomId,
+  scrollContainer: chatHistoryContainerRef
 })
 
 const mcpSessionEnabled = computed({
@@ -643,6 +604,22 @@ const displayChatHistory = computed(() => {
   return result
 })
 
+const floatButtonEnable = computed(() => {
+  // 依赖消息数量和容器尺寸变化，确保滚动状态可被重新计算
+  const messageCount = displayChatHistory.value.length
+  const containerHeight = chatHistoryContainerHeight.value
+  if (messageCount === 0 || containerHeight <= 0) {
+    return false
+  }
+
+  const containerElement = chatHistoryContainerRef.value
+  if (!containerElement) {
+    return false
+  }
+
+  return containerElement.scrollHeight - containerElement.clientHeight > 8
+})
+
 const isAssistantMessageLoading = msg => {
   if (!loading.value) return false
   if (!msg) return false
@@ -669,9 +646,6 @@ const lastMessageHasError = computed(() => {
     .find(msg => `${msg?.role || ''}`.toLowerCase() === 'assistant')
   return !!lastAssistantMessage?.error
 })
-
-// 输入框高度 + 垂直padding：68 + 80：最后一条消息到输入框的距离
-const pagePaddingBottom = computed(() => `${inputContainerHeight.value + 68 + 80}px`)
 
 const isCurrentModelSupportsVision = computed(() => {
   return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'vision')
@@ -797,23 +771,29 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 
 <style lang="scss" scoped>
 .chat-page {
-  display: flex;
-  overflow: hidden auto;
-  align-items: flex-start;
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: stretch;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  min-height: calc(100vh - 72px);
-  padding: 32px 16px 0;
+  height: calc(100vh - 72px);
+  padding: 32px 0 16px;
   background-color: var(--bg-app);
+  row-gap: 12px;
 }
 
 .chat-main {
   display: flex;
+  overflow: hidden;
   flex: 1;
-  justify-content: center;
   min-width: 0;
+  min-height: 0;
   transition: transform 0.32s ease;
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .chat-page.is-preview-visible {
@@ -822,9 +802,9 @@ onBeforeRouteLeave(async (_to, _from, next) => {
     transform: translateX(-8px);
   }
 
-  .chat-messages {
+  .input-container-content {
     transition: transform 0.32s ease;
-    transform: translateX(-4px);
+    transform: translateX(-8px);
   }
 }
 
@@ -832,27 +812,32 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 .chat-history-container {
   position: relative;
   display: flex;
-  overflow-y: visible;
+  overflow: hidden auto;
   flex: 1;
   flex-direction: column;
   width: 100%;
-  max-width: 1080px;
-  min-height: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chat-messages {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   width: 100%;
-  padding: 0;
-  padding-bottom: 180px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 16px 24px;
   transition: transform 0.32s ease;
 
   .message-wrapper {
     margin-bottom: 24px;
+
     &.mcp-log {
-      margin-bottom: 12px;
       margin-top: -24px;
+      margin-bottom: 12px;
 
       + .message-wrapper {
         :deep(.assistant-message) {
@@ -860,6 +845,7 @@ onBeforeRouteLeave(async (_to, _from, next) => {
             display: none;
           }
         }
+
         &.mcp-log {
           margin-top: 0;
         }
@@ -873,6 +859,8 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 }
 
 .code-preview-panel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   position: relative;
   flex: 0 0 auto;
   width: 0;
@@ -1014,20 +1002,20 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 }
 
 .input-container {
-  position: fixed;
-  bottom: 0;
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
   z-index: 11;
-  padding: 20px 0 48px;
-  transition:
-    left 0.32s cubic-bezier(0.2, 0.65, 0.2, 1),
-    width 0.32s cubic-bezier(0.2, 0.65, 0.2, 1),
-    transform 0.18s ease;
+  padding: 0 0 8px;
   background-color: var(--bg-app);
 
   &-content {
+    box-sizing: border-box;
     width: 100%;
     max-width: 1080px;
     margin: 0 auto;
+    padding: 0 16px;
+    transition: transform 0.32s ease;
   }
 }
 
@@ -1040,13 +1028,16 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 
 @include mobile {
   .chat-page {
-    min-height: calc(100vh - 56px);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    height: calc(100vh - 56px);
     padding: 16px 0 0;
+    row-gap: 8px;
   }
 
   .chat-page.is-preview-visible {
     .chat-main,
-    .chat-messages {
+    .input-container-content {
       transform: none;
     }
   }
@@ -1084,10 +1075,9 @@ onBeforeRouteLeave(async (_to, _from, next) => {
   }
 
   .input-container {
-    right: 0;
-    left: 0 !important;
-    width: 100% !important;
-    padding: 12px 0 0;
+    grid-column: 1;
+    grid-row: 2;
+    padding: 0;
 
     @include safe-area-padding(bottom);
 
@@ -1095,7 +1085,7 @@ onBeforeRouteLeave(async (_to, _from, next) => {
       box-sizing: border-box;
       width: 100%;
       max-width: none;
-      padding: 0 12px;
+      padding: 0 12px 8px;
     }
   }
 }

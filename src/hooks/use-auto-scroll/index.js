@@ -10,16 +10,41 @@
 import { ref, onMounted } from 'vue'
 import { useEventListener, useThrottleFn } from '@vueuse/core'
 
-export const useAutoScroll = scrollable => {
+export const useAutoScroll = (scrollable, scrollContainer = null) => {
   const isAutoScrollEnabled = ref(true)
+
+  const getScrollMetrics = () => {
+    const containerElement = scrollContainer?.value || null
+    if (containerElement) {
+      return {
+        scrollHeight: containerElement.scrollHeight,
+        scrollTop: containerElement.scrollTop,
+        clientHeight: containerElement.clientHeight
+      }
+    }
+
+    return {
+      scrollHeight: document.documentElement.scrollHeight,
+      scrollTop: window.pageYOffset || document.documentElement.scrollTop,
+      clientHeight: window.innerHeight
+    }
+  }
 
   // 实际执行滚动的函数
   const doScroll = force => {
     if (!isAutoScrollEnabled.value) return
 
-    const scrollHeight = document.documentElement.scrollHeight
-    const clientHeight = window.innerHeight
+    const containerElement = scrollContainer?.value || null
+    const { scrollHeight, clientHeight } = getScrollMetrics()
     if (scrollHeight > clientHeight) {
+      if (containerElement) {
+        containerElement.scrollTo({
+          top: scrollHeight,
+          behavior: force ? 'auto' : 'smooth'
+        })
+        return
+      }
+
       window.scrollTo({
         top: scrollHeight,
         behavior: force ? 'auto' : 'smooth'
@@ -49,9 +74,7 @@ export const useAutoScroll = scrollable => {
   const handleWheel = () => {
     if (scrollable.value) {
       isAutoScrollEnabled.value = false
-      const scrollHeight = document.documentElement.scrollHeight
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-      const clientHeight = window.innerHeight
+      const { scrollHeight, scrollTop, clientHeight } = getScrollMetrics()
       // 这里20px是经验值，根据实际情况调整
       if (scrollHeight - scrollTop - clientHeight <= 20) {
         isAutoScrollEnabled.value = true
@@ -62,9 +85,7 @@ export const useAutoScroll = scrollable => {
   const handleScroll = () => {
     if (!isAutoScrollEnabled.value && scrollable.value) {
       // 滚动到底部时，设置isAutoScrollEnabled为true; 距离底部100px,认为到底了。
-      const scrollHeight = document.documentElement.scrollHeight
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-      const clientHeight = window.innerHeight
+      const { scrollHeight, scrollTop, clientHeight } = getScrollMetrics()
       if (scrollHeight - scrollTop - clientHeight <= 100) {
         isAutoScrollEnabled.value = true
       }
@@ -72,9 +93,9 @@ export const useAutoScroll = scrollable => {
   }
 
   onMounted(() => {
-    // 监听页面级滚动事件
-    useEventListener(window, 'wheel', handleWheel)
-    useEventListener(window, 'scroll', handleScroll)
+    // 监听滚动事件（优先容器滚动，其次页面滚动）
+    useEventListener(scrollContainer || window, 'wheel', handleWheel)
+    useEventListener(scrollContainer || window, 'scroll', handleScroll)
   })
 
   return {

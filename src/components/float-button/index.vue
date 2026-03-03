@@ -23,14 +23,36 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   floatButtonOffset: {
     type: String,
     default: '-42px'
+  },
+  // 目标滚动容器，未提供则回退到 window
+  scrollContainer: {
+    type: Object,
+    default: null
   }
 })
+
+const resolveScrollContainer = () => {
+  const target = props.scrollContainer
+  if (target && typeof target.scrollTo === 'function') {
+    return target
+  }
+  return null
+}
 // 滚动到顶部
 const scrollToTop = () => {
+  const container = resolveScrollContainer()
+  if (container) {
+    container.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+    return
+  }
+
   window.scrollTo({
     top: 0,
     behavior: 'smooth'
@@ -39,6 +61,15 @@ const scrollToTop = () => {
 
 // 滚动到底部
 const scrollToBottom = () => {
+  const container = resolveScrollContainer()
+  if (container) {
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth'
+    })
+    return
+  }
+
   window.scrollTo({
     top: document.documentElement.scrollHeight,
     behavior: 'smooth'

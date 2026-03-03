@@ -20,8 +20,9 @@ import { ILLEGAL_UNICODE_REG } from '../config'
  * 单模型对话 Hook
  * @param {Object} options - 配置项
  * @param {import('vue').Ref<string>|string} options.roomId - 房间 ID（响应式引用或普通值）
+ * @param {import('vue').Ref<HTMLElement|null>|null} options.scrollContainer - 滚动容器
  */
-export function useCompletions({ roomId }) {
+export function useCompletions({ roomId, scrollContainer = null }) {
   const apiSettingsStore = useApiSettingsStore()
   const mcpSettingsStore = useMcpSettingsStore()
   const chatRoomsStore = useChatRoomsStore()
@@ -211,7 +212,8 @@ export function useCompletions({ roomId }) {
   })
 
   const { scrollToBottom, enableAutoScroll } = useAutoScroll(
-    computed(() => shouldShowLoading.value && chatHistory.value.length > 0)
+    computed(() => shouldShowLoading.value && chatHistory.value.length > 0),
+    scrollContainer
   )
 
   // 创建 OpenAI SSE 请求实例
