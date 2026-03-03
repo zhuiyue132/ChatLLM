@@ -25,10 +25,12 @@
             <el-form-item label="WebDAV 地址">
               <el-input
                 v-model="webdavForm.baseUrl"
-                placeholder="例如: /webdav 或 https://dav.example.com/remote.php/dav/files/username"
+                placeholder="例如: https://dav.example.com/remote.php/dav/files/username"
                 clearable
               />
-              <div class="form-item-tip">使用代理时可填写 /webdav</div>
+              <div class="form-item-tip">
+                填写 https://... 将自动走 /webdav-proxy 动态反代
+              </div>
             </el-form-item>
 
             <el-form-item label="用户名">

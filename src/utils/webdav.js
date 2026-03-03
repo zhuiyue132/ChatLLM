@@ -13,6 +13,12 @@ const encodeBasicAuth = (username, password) => {
   return `Basic ${window.btoa(unescape(encodeURIComponent(token)))}`
 }
 
+const WEBDAV_DYNAMIC_PROXY_PATH = '/webdav-proxy'
+const WEBDAV_TARGET_HEADER = 'X-WebDAV-Target'
+const WEBDAV_PROXY_RESPONSE_HEADER = 'x-webdav-proxy'
+
+const isAbsoluteHttpUrl = value => /^https?:\/\/.+/i.test((value || '').trim())
+
 const buildWebdavUrl = (baseUrl, path = '') => {
   const safeBase = (baseUrl || '').trim().replace(/\/+$/, '')
   const safePath = (path || '').trim().replace(/^\/+/, '')
@@ -38,8 +44,54 @@ const buildHeaders = (username, password, extraHeaders = {}) => {
   return headers
 }
 
-const requestWebdav = async (url, options = {}) => {
-  const response = await fetch(url, options)
+const buildRequestContext = ({ baseUrl, path = '', headers = {}, ensureTrailingSlash = false }) => {
+  let targetUrl = buildWebdavUrl(baseUrl, path)
+  if (ensureTrailingSlash && !targetUrl.endsWith('/')) {
+    targetUrl = `${targetUrl}/`
+  }
+
+  if (!isAbsoluteHttpUrl(baseUrl)) {
+    return {
+      requestUrl: targetUrl,
+      targetUrl,
+      requestHeaders: headers,
+      originalHeaders: headers,
+      useDynamicProxy: false
+    }
+  }
+
+  return {
+    requestUrl: WEBDAV_DYNAMIC_PROXY_PATH,
+    targetUrl,
+    requestHeaders: {
+      ...headers,
+      [WEBDAV_TARGET_HEADER]: targetUrl
+    },
+    originalHeaders: headers,
+    useDynamicProxy: true
+  }
+}
+
+const requestWebdav = async ({ baseUrl, path = '', ensureTrailingSlash = false, ...options } = {}) => {
+  const { headers = {}, ...restOptions } = options
+  const context = buildRequestContext({ baseUrl, path, headers, ensureTrailingSlash })
+  let response = await fetch(context.requestUrl, {
+    ...restOptions,
+    headers: context.requestHeaders
+  })
+
+  // 开发环境若未挂载 /webdav-proxy，可回退到直连（前提是目标端允许 CORS）。
+  if (
+    context.useDynamicProxy &&
+    response.status === 404 &&
+    response.headers.get(WEBDAV_PROXY_RESPONSE_HEADER) !== '1'
+  ) {
+    response = await fetch(context.targetUrl, {
+      ...restOptions,
+      headers: context.originalHeaders
+    })
+  }
+
   if (!response.ok) {
     const message = `${response.status} ${response.statusText}`.trim()
     throw new Error(message || 'WebDAV 请求失败')
@@ -55,9 +107,10 @@ const ensureWebdavDirectory = async ({ baseUrl, backupPath, username, password }
   let currentPath = ''
   for (const segment of directory) {
     currentPath = currentPath ? `${currentPath}/${segment}` : segment
-    const url = buildWebdavUrl(baseUrl, currentPath)
     try {
-      await requestWebdav(url, {
+      await requestWebdav({
+        baseUrl,
+        path: currentPath,
         method: 'MKCOL',
         headers: buildHeaders(username, password)
       })
@@ -80,9 +133,10 @@ export const uploadWebdavJson = async ({ baseUrl, backupPath, username, password
     throw new Error('备份路径不能为空')
   }
   await ensureWebdavDirectory({ baseUrl, backupPath: normalizedPath, username, password })
-  const url = buildWebdavUrl(baseUrl, normalizedPath)
   const body = JSON.stringify(data, null, 2)
-  await requestWebdav(url, {
+  await requestWebdav({
+    baseUrl,
+    path: normalizedPath,
     method: 'PUT',
     headers: buildHeaders(username, password, {
       'Content-Type': 'application/json'
@@ -96,8 +150,9 @@ export const downloadWebdavJson = async ({ baseUrl, backupPath, username, passwo
   if (!normalizedPath) {
     throw new Error('备份路径不能为空')
   }
-  const url = buildWebdavUrl(baseUrl, normalizedPath)
-  const response = await requestWebdav(url, {
+  const response = await requestWebdav({
+    baseUrl,
+    path: normalizedPath,
     method: 'GET',
     headers: buildHeaders(username, password)
   })
@@ -112,25 +167,23 @@ export const downloadWebdavJson = async ({ baseUrl, backupPath, username, passwo
 export const testWebdavConnection = async ({ baseUrl, backupPath, username, password }) => {
   const normalizedPath = normalizeBackupPath(backupPath)
   const directory = normalizedPath.split('/').slice(0, -1).filter(Boolean).join('/')
-  let url = ''
-  if (directory) {
-    const path = directory.endsWith('/') ? directory : `${directory}/`
-    url = buildWebdavUrl(baseUrl, path)
-  } else {
-    url = buildWebdavUrl(baseUrl)
-    if (!url.endsWith('/')) {
-      url = `${url}/`
-    }
-  }
+  const testPath = directory ? `${directory}/` : ''
+  const ensureTrailingSlash = !directory
   try {
-    await requestWebdav(url, {
+    await requestWebdav({
+      baseUrl,
+      path: testPath,
+      ensureTrailingSlash,
       method: 'PROPFIND',
       headers: buildHeaders(username, password, {
         Depth: '0'
       })
     })
   } catch (error) {
-    await requestWebdav(url, {
+    await requestWebdav({
+      baseUrl,
+      path: testPath,
+      ensureTrailingSlash,
       method: 'OPTIONS',
       headers: buildHeaders(username, password)
     })
