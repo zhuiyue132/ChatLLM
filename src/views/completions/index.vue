@@ -14,16 +14,18 @@
           v-model="inputMessage"
           v-model:model="currentModel"
           v-model:mcp-session-enabled="sessionMcpEnabled"
+          v-model:mcp-server-ids="selectedMcpServerIds"
           :model-list="modelList"
           :mcp-server-list="availableMcpServers"
           :mcp-global-enabled="mcpSettingsStore.globalEnabled"
+          :mcp-supported="isCurrentModelSupportsToolCall"
           :float-button-enable="false"
           :min-rows="2"
           :hidden-input-when-files="false"
           :allow-empty-message="false"
           :show-image-btn="isCurrentModelSupportsVision"
+          :show-mcp-selector="isCurrentModelSupportsToolCall"
           :placeholder="PLACEHOLDER_MAP.DEFAULT"
-          show-mcp-selector
           show-model-select
           show-mention-model
           @submit="handleMessageSubmit"
@@ -67,11 +69,15 @@ eventBus.on(() => {
 // 输入框内容
 const inputMessage = ref('')
 const sessionMcpEnabled = ref(mcpSettingsStore.globalEnabled)
+const selectedMcpServerIds = ref([])
 
 // 当前选中的模型（支持用户手动切换）
 const currentModel = ref(apiSettingsStore.effectiveDefaultChatModel || '')
 const isCurrentModelSupportsVision = computed(() => {
   return apiSettingsStore.modelSupportsCapability(currentModel.value, 'vision')
+})
+const isCurrentModelSupportsToolCall = computed(() => {
+  return apiSettingsStore.modelSupportsCapability(currentModel.value, 'tool_call')
 })
 
 // 监听默认模型变化，如果当前模型是默认值且用户没有手动修改过，则更新
@@ -113,7 +119,10 @@ const handleMessageSubmit = (payload = {}) => {
   const { message, fileList = [], mcpServerIds = [] } = payload
   const safeMessage = typeof message === 'string' ? message : ''
   const model = currentModel.value || apiSettingsStore.effectiveDefaultChatModel
-  const safeMcpServerIds = Array.isArray(mcpServerIds) ? mcpServerIds : []
+  const safeMcpServerIds = Array.isArray(mcpServerIds)
+    ? mcpServerIds
+    : [...selectedMcpServerIds.value]
+  const effectiveMcpServerIds = isCurrentModelSupportsToolCall.value ? safeMcpServerIds : []
 
   if (!safeMessage.trim() && (!Array.isArray(fileList) || fileList.length === 0)) {
     return
@@ -128,7 +137,8 @@ const handleMessageSubmit = (payload = {}) => {
   // 1. 创建新房间，使用用户第一句话作为标题（截取前50个字符）
   const title = safeMessage.trim() ? safeMessage.trim().slice(0, 50) : '图片识别'
   const roomId = chatRoomsStore.createRoom(model, title, {
-    mcpEnabled: !!sessionMcpEnabled.value
+    mcpEnabled: !!sessionMcpEnabled.value,
+    mcpServerIds: effectiveMcpServerIds
   })
 
   // 2. 存储待发送的消息到 sessionStorage
@@ -136,7 +146,7 @@ const handleMessageSubmit = (payload = {}) => {
     message: safeMessage,
     model,
     fileList,
-    mcpServerIds: safeMcpServerIds
+    mcpServerIds: effectiveMcpServerIds
   })
   try {
     window.sessionStorage.setItem(
@@ -144,7 +154,7 @@ const handleMessageSubmit = (payload = {}) => {
       JSON.stringify({
         message: safeMessage,
         model,
-        mcpServerIds: safeMcpServerIds
+        mcpServerIds: effectiveMcpServerIds
       })
     )
   } catch (error) {

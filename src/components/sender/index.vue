@@ -73,7 +73,7 @@
             />
             <!-- MCP 选择 -->
             <McpSelector
-              v-if="showMcpSelector"
+              v-if="shouldShowMcpSelector"
               v-model="selectedMcpServerIds"
               v-model:session-enabled="mcpSessionEnabled"
               :global-enabled="mcpGlobalEnabled"
@@ -327,6 +327,11 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  // 当前模型是否支持 MCP 工具调用
+  mcpSupported: {
+    type: Boolean,
+    default: true
+  },
   // MCP 全局开关（仅用于提示）
   mcpGlobalEnabled: {
     type: Boolean,
@@ -339,6 +344,11 @@ const props = defineProps({
   },
   // MCP 服务列表
   mcpServerList: {
+    type: Array,
+    default: () => []
+  },
+  // MCP 服务选择（会话级）
+  mcpServerIds: {
     type: Array,
     default: () => []
   }
@@ -360,6 +370,7 @@ const emits = defineEmits([
   'update:createImageCount',
   'update:customTemplateId',
   'update:mcpSessionEnabled',
+  'update:mcpServerIds',
   'template-setting-confirmed'
 ])
 
@@ -384,8 +395,16 @@ const customTemplateId = useVModel(props, 'customTemplateId', emits)
 // 会话 MCP 开关
 const mcpSessionEnabled = useVModel(props, 'mcpSessionEnabled', emits)
 
-// 本条消息启用的 MCP 服务列表
-const selectedMcpServerIds = ref([])
+// 会话级 MCP 服务列表
+const selectedMcpServerIds = useVModel(props, 'mcpServerIds', emits)
+
+const shouldShowMcpSelector = computed(() => {
+  return props.showMcpSelector && props.mcpSupported
+})
+
+const canUseMcpForCurrentMessage = computed(() => {
+  return shouldShowMcpSelector.value && mcpSessionEnabled.value
+})
 
 const mcpAvailableServerIds = computed(() => {
   return (props.mcpServerList || [])
@@ -414,7 +433,7 @@ const footerEnable = computed(() => {
     props.showPriceBtn ||
     props.showSelectionBtn ||
     props.showTemplateSettingBtn ||
-    props.showMcpSelector
+    shouldShowMcpSelector.value
   )
 })
 
@@ -526,7 +545,9 @@ const handleSendClick = (extraData = {}) => {
     emits('submit', {
       fileList: [...filesUploaded.value],
       message: inputValue.value,
-      mcpServerIds: mcpSessionEnabled.value ? [...selectedMcpServerIds.value] : [],
+      mcpServerIds: canUseMcpForCurrentMessage.value
+        ? [...(Array.isArray(selectedMcpServerIds.value) ? selectedMcpServerIds.value : [])]
+        : [],
       priceRangeTemplateId: priceRangeTemplateId.value,
       selectionTemplateId: selectionTemplateId.value,
       customTemplateId: customTemplateId.value,
@@ -542,7 +563,9 @@ const handleSendClick = (extraData = {}) => {
     }
     emits('submit', {
       message: inputValue.value,
-      mcpServerIds: mcpSessionEnabled.value ? [...selectedMcpServerIds.value] : [],
+      mcpServerIds: canUseMcpForCurrentMessage.value
+        ? [...(Array.isArray(selectedMcpServerIds.value) ? selectedMcpServerIds.value : [])]
+        : [],
       priceRangeTemplateId: priceRangeTemplateId.value,
       selectionTemplateId: selectionTemplateId.value,
       customTemplateId: customTemplateId.value,
@@ -553,8 +576,6 @@ const handleSendClick = (extraData = {}) => {
 
     filesUploaded.value = []
   }
-
-  selectedMcpServerIds.value = []
 }
 
 const handleStopClick = () => {
@@ -599,7 +620,10 @@ watch(
   () => mcpAvailableServerIds.value.join(','),
   value => {
     const availableSet = new Set((value || '').split(',').filter(Boolean))
-    selectedMcpServerIds.value = selectedMcpServerIds.value.filter(id => availableSet.has(id))
+    const currentSelectedIds = Array.isArray(selectedMcpServerIds.value)
+      ? selectedMcpServerIds.value
+      : []
+    selectedMcpServerIds.value = currentSelectedIds.filter(id => availableSet.has(id))
   }
 )
 </script>

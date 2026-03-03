@@ -8,35 +8,40 @@
 -->
 <template>
   <div class="mcp-log-message">
-    <div class="mcp-log-meta">
-      <div class="mcp-log-title">
-        <i class="icon-mcp-custom"></i>
-        <span>MCP 调用</span>
+    <button type="button" class="mcp-log-toggle" @click="toggleExpanded">
+      <div class="mcp-log-meta">
+        <div class="mcp-log-title">
+          <i class="icon-mcp-custom"></i>
+          <span class="mcp-log-label">MCP 调用</span>
+          <span class="mcp-log-title-separator">/</span>
+          <span class="mcp-log-title-text">{{ mcpDisplayName }}</span>
+        </div>
+        <span class="mcp-status" :class="normalizedStatus">
+          {{ statusText }}
+        </span>
+        <span class="mcp-duration">
+          {{ normalizedStatus === 'pending' ? '进行中' : formatDuration(durationMs) }}
+        </span>
       </div>
-      <span class="mcp-status" :class="normalizedStatus">
-        {{ statusText }}
-      </span>
-      <span class="mcp-duration">
-        {{ normalizedStatus === 'pending' ? '进行中' : formatDuration(durationMs) }}
-      </span>
-    </div>
+      <i class="iconfont icon-arrowDown toggle-icon" :class="{ expanded: isExpanded }"></i>
+    </button>
 
-    <div class="mcp-log-name">{{ serverName || 'MCP' }} / {{ toolName || 'tool' }}</div>
+    <div v-show="isExpanded" class="mcp-log-detail">
+      <div v-if="formattedArguments" class="mcp-log-block">
+        <div class="mcp-log-block-title">参数</div>
+        <pre>{{ formattedArguments }}</pre>
+      </div>
 
-    <div v-if="formattedArguments" class="mcp-log-block">
-      <div class="mcp-log-block-title">参数</div>
-      <pre>{{ formattedArguments }}</pre>
-    </div>
-
-    <div class="mcp-log-block">
-      <div class="mcp-log-block-title">{{ outputTitle }}</div>
-      <pre>{{ outputContent }}</pre>
+      <div class="mcp-log-block">
+        <div class="mcp-log-block-title">{{ outputTitle }}</div>
+        <pre>{{ outputContent }}</pre>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 defineOptions({
   name: 'CompletionsMcpLogMessage'
@@ -92,6 +97,12 @@ const outputTitle = computed(() => {
   return '状态'
 })
 
+const mcpDisplayName = computed(() => {
+  const safeServerName = props.serverName || 'MCP'
+  const safeToolName = props.toolName || 'tool'
+  return `${safeServerName} / ${safeToolName}`
+})
+
 const formatDuration = duration => {
   const safeDuration = Number(duration)
   if (!Number.isFinite(safeDuration) || safeDuration < 0) {
@@ -128,6 +139,11 @@ const outputContent = computed(() => {
   }
   return '调用中...'
 })
+
+const isExpanded = ref(true)
+const toggleExpanded = () => {
+  isExpanded.value = !isExpanded.value
+}
 </script>
 
 <style lang="scss" scoped>
@@ -138,24 +154,78 @@ const outputContent = computed(() => {
   border-radius: 10px;
   background: var(--bg-panel);
 
+  .mcp-log-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 24px;
+    padding: 0;
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+  }
+
   .mcp-log-meta {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    flex: 1;
+    min-width: 0;
     gap: 8px;
+  }
+
+  .toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    transition: transform 0.2s ease;
+    color: var(--text-dblight-color);
+    font-size: 12px;
+
+    &.expanded {
+      transform: rotate(180deg);
+    }
+  }
+
+  .mcp-log-detail {
+    margin-top: 8px;
   }
 
   .mcp-log-title {
     display: flex;
     align-items: center;
+    min-width: 0;
+    flex: 1;
     color: var(--text-normal-color);
     font-size: 13px;
     font-weight: 500;
     gap: 6px;
+
+    .icon-mcp-custom {
+      flex: 0 0 auto;
+    }
+  }
+
+  .mcp-log-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mcp-log-label,
+  .mcp-log-title-separator {
+    flex: 0 0 auto;
   }
 
   .mcp-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 42px;
+    height: 20px;
+    flex: 0 0 auto;
     text-align: center;
     border-radius: 999px;
     font-size: 12px;
@@ -179,14 +249,13 @@ const outputContent = computed(() => {
   }
 
   .mcp-duration {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    margin-right: 8px;
+    line-height: 20px;
     color: var(--text-dblight-color);
     font-size: 12px;
-  }
-
-  .mcp-log-name {
-    color: var(--text-normal-color);
-    font-size: 12px;
-    font-weight: 500;
   }
 
   .mcp-log-block {

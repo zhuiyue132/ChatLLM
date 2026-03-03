@@ -193,6 +193,9 @@ export function useCompletions({ roomId }) {
   const currentModelSupportsVision = computed(() => {
     return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'vision')
   })
+  const currentModelSupportsToolCall = computed(() => {
+    return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'tool_call')
+  })
 
   // 判断当前显示的分支是否包含正在接收消息的节点
   const isViewingReceivingBranch = computed(() => {
@@ -705,7 +708,15 @@ export function useCompletions({ roomId }) {
     return mcpSettingsStore.globalEnabled
   }
 
-  const resolveActiveMcpServerIds = requestedServerIds => {
+  const resolveRoomSelectedMcpServerIds = () => {
+    return Array.isArray(currentRoom.value?.mcpServerIds) ? [...currentRoom.value.mcpServerIds] : []
+  }
+
+  const resolveActiveMcpServerIds = ({ requestedServerIds, model }) => {
+    if (!apiSettingsStore.modelSupportsCapability(model, 'tool_call')) {
+      return []
+    }
+
     if (!resolveMcpEnabledByRoom()) {
       return []
     }
@@ -1137,7 +1148,10 @@ export function useCompletions({ roomId }) {
     openAIMessages,
     mcpServerIds
   }) => {
-    const activeServerIds = resolveActiveMcpServerIds(mcpServerIds)
+    const activeServerIds = resolveActiveMcpServerIds({
+      requestedServerIds: mcpServerIds,
+      model
+    })
 
     if (!activeServerIds.length) {
       sendSSE({
@@ -1214,7 +1228,12 @@ export function useCompletions({ roomId }) {
     const targetModel = payload.model || currentModelValue.value
     const sentMessage = typeof payload.message === 'string' ? payload.message : message.value
     const sentFileList = Array.isArray(payload.fileList) ? [...payload.fileList] : []
-    const sentMcpServerIds = Array.isArray(payload.mcpServerIds) ? [...payload.mcpServerIds] : []
+    const sentMcpServerIds = Array.isArray(payload.mcpServerIds)
+      ? [...payload.mcpServerIds]
+      : resolveRoomSelectedMcpServerIds()
+    const effectiveMcpServerIds = apiSettingsStore.modelSupportsCapability(targetModel, 'tool_call')
+      ? sentMcpServerIds
+      : []
     const storedFileList = sanitizeFileListForStorage(sentFileList)
 
     if (!sentMessage.trim() && sentFileList.length === 0) {
@@ -1260,7 +1279,7 @@ export function useCompletions({ roomId }) {
       role: 'user',
       content: sentMessage,
       fileList: storedFileList,
-      mcpServerIds: sentMcpServerIds,
+      mcpServerIds: effectiveMcpServerIds,
       createdAt: new Date().toISOString(),
       children: [],
       currentIndex: 0
@@ -1307,7 +1326,7 @@ export function useCompletions({ roomId }) {
       assistantMessageId,
       model: targetModel,
       openAIMessages,
-      mcpServerIds: sentMcpServerIds
+      mcpServerIds: effectiveMcpServerIds
     })
   }
 
@@ -1412,14 +1431,15 @@ export function useCompletions({ roomId }) {
       const messagesBeforeUser =
         userMsgIndex >= 0 ? allMessages.slice(0, userMsgIndex + 1) : allMessages
       const openAIMessages = buildOpenAIMessages(messagesBeforeUser)
+      const selectedMcpServerIds = currentModelSupportsToolCall.value
+        ? resolveRoomSelectedMcpServerIds()
+        : []
 
       await sendMessageWithMcp({
         assistantMessageId: newAssistantMessageId,
         model: currentModelValue.value,
         openAIMessages,
-        mcpServerIds: Array.isArray(userMessageNode.mcpServerIds)
-          ? userMessageNode.mcpServerIds
-          : []
+        mcpServerIds: selectedMcpServerIds
       })
     })
   }
@@ -1586,6 +1606,9 @@ export function useCompletions({ roomId }) {
     // 创建新的用户消息和助手消息
     const newUserMessageId = `user-${Date.now()}`
     const newAssistantMessageId = `assistant-${Date.now()}`
+    const selectedMcpServerIds = currentModelSupportsToolCall.value
+      ? resolveRoomSelectedMcpServerIds()
+      : []
 
     const newUserMessage = {
       id: newUserMessageId,
@@ -1594,9 +1617,7 @@ export function useCompletions({ roomId }) {
       fileList: Array.isArray(currentUserMessageNode.fileList)
         ? [...currentUserMessageNode.fileList]
         : [],
-      mcpServerIds: Array.isArray(currentUserMessageNode.mcpServerIds)
-        ? [...currentUserMessageNode.mcpServerIds]
-        : [],
+      mcpServerIds: selectedMcpServerIds,
       createdAt: new Date().toISOString(),
       parentId: parentNode === tree ? null : parentNode.id,
       children: [],
@@ -1648,7 +1669,7 @@ export function useCompletions({ roomId }) {
         assistantMessageId: newAssistantMessageId,
         model: currentModelValue.value,
         openAIMessages,
-        mcpServerIds: Array.isArray(newUserMessage.mcpServerIds) ? newUserMessage.mcpServerIds : []
+        mcpServerIds: selectedMcpServerIds
       })
     })
   }

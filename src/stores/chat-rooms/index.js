@@ -17,6 +17,10 @@ const generateId = (prefix = '') => {
   return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+const normalizeMcpServerIds = serverIds => {
+  return Array.from(new Set((Array.isArray(serverIds) ? serverIds : []).filter(Boolean)))
+}
+
 export const useChatRoomsStore = defineStore(
   'chat-rooms',
   () => {
@@ -76,7 +80,7 @@ export const useChatRoomsStore = defineStore(
      * @returns {string} 房间 ID
      */
     const createRoom = (model, title = '新对话', options = {}) => {
-      const { mcpEnabled = false } = options
+      const { mcpEnabled = false, mcpServerIds = [] } = options
       const roomId = generateId('room-')
       const now = new Date().toISOString()
 
@@ -86,6 +90,7 @@ export const useChatRoomsStore = defineStore(
         isTitleLoading: false,
         model,
         mcpEnabled: !!mcpEnabled,
+        mcpServerIds: normalizeMcpServerIds(mcpServerIds),
         createdAt: now,
         updatedAt: now,
         topFlag: false,
@@ -167,6 +172,14 @@ export const useChatRoomsStore = defineStore(
       const room = rooms.value.find(r => r.id === roomId)
       if (room) {
         room.mcpEnabled = !!enabled
+        room.updatedAt = new Date().toISOString()
+      }
+    }
+
+    const updateRoomMcpServerIds = (roomId, serverIds) => {
+      const room = rooms.value.find(r => r.id === roomId)
+      if (room) {
+        room.mcpServerIds = normalizeMcpServerIds(serverIds)
         room.updatedAt = new Date().toISOString()
       }
     }
@@ -467,7 +480,10 @@ export const useChatRoomsStore = defineStore(
       // 导入房间（跳过已存在的）
       for (const room of importRooms) {
         if (!rooms.value.find(r => r.id === room.id)) {
-          rooms.value.push(room)
+          rooms.value.push({
+            ...room,
+            mcpServerIds: normalizeMcpServerIds(room?.mcpServerIds)
+          })
           importedCount++
         }
       }
@@ -499,6 +515,7 @@ export const useChatRoomsStore = defineStore(
       updateRoomIsTitleLoading,
       updateRoomModel,
       updateRoomMcpEnabled,
+      updateRoomMcpServerIds,
       pinRoom,
       unpinRoom,
       // 消息操作

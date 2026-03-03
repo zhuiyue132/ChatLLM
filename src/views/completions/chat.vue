@@ -128,9 +128,11 @@
           v-model="message"
           v-model:model="currentModelValue"
           v-model:mcp-session-enabled="mcpSessionEnabled"
+          v-model:mcp-server-ids="mcpSelectedServerIds"
           :model-list="models"
           :mcp-server-list="availableMcpServers"
           :mcp-global-enabled="mcpSettingsStore.globalEnabled"
+          :mcp-supported="isCurrentModelSupportsToolCall"
           :float-button-enable="floatButtonEnable && !loading && !isReceiving"
           :loading="loading || isReceiving"
           :placeholder="PLACEHOLDER_MAP.DEFAULT"
@@ -139,7 +141,7 @@
           :hidden-input-when-files="false"
           :min-rows="2"
           :show-image-btn="isCurrentModelSupportsVision"
-          show-mcp-selector
+          :show-mcp-selector="isCurrentModelSupportsToolCall"
           show-model-select
           show-mention-model
           @submit="handleSendMessage"
@@ -490,6 +492,16 @@ const mcpSessionEnabled = computed({
   }
 })
 
+const mcpSelectedServerIds = computed({
+  get: () => {
+    return Array.isArray(currentRoom.value?.mcpServerIds) ? currentRoom.value.mcpServerIds : []
+  },
+  set: value => {
+    if (!currentRoom.value?.id) return
+    chatRoomsStore.updateRoomMcpServerIds(currentRoom.value.id, value)
+  }
+})
+
 const availableMcpServers = computed(() => {
   return mcpSettingsStore.servers.filter(server => server.enabled)
 })
@@ -663,6 +675,10 @@ const pagePaddingBottom = computed(() => `${inputContainerHeight.value + 68 + 80
 
 const isCurrentModelSupportsVision = computed(() => {
   return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'vision')
+})
+
+const isCurrentModelSupportsToolCall = computed(() => {
+  return apiSettingsStore.modelSupportsCapability(currentModelValue.value, 'tool_call')
 })
 
 const shouldRenderAssistantMessage = msg => {
@@ -843,6 +859,9 @@ onBeforeRouteLeave(async (_to, _from, next) => {
           .model-header {
             display: none;
           }
+        }
+        &.mcp-log {
+          margin-top: 0;
         }
       }
     }
