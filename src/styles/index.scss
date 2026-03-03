@@ -69,6 +69,16 @@ input:-webkit-autofill:active {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-mcp-custom {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  background-color: currentColor;
+  -webkit-mask: url('../assets/icon/mcp.svg') no-repeat center / contain;
+  mask: url('../assets/icon/mcp.svg') no-repeat center / contain;
+}
+
 .truncate {
   overflow: hidden;
   white-space: nowrap;

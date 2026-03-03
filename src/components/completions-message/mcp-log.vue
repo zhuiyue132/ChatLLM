@@ -10,7 +10,7 @@
   <div class="mcp-log-message">
     <div class="mcp-log-meta">
       <div class="mcp-log-title">
-        <i class="iconfont icon-fuwu"></i>
+        <i class="icon-mcp-custom"></i>
         <span>MCP 调用</span>
       </div>
       <span class="mcp-status" :class="normalizedStatus">

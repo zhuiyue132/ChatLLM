@@ -21,7 +21,7 @@
         class="mcp-trigger"
         :class="{ active: sessionEnabled && selectedCount > 0, disabled: disabled }"
       >
-        <i class="iconfont icon-fuwu"></i>
+        <i class="icon-mcp-custom"></i>
         <span>MCP</span>
         <span v-if="sessionEnabled && selectedCount > 0" class="selected-count">
           {{ selectedCount }}

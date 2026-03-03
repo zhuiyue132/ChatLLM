@@ -33,7 +33,7 @@
       <div v-if="mcpLogs.length > 0" class="mcp-log-section">
         <div class="mcp-log-header" @click="toggleMcpLogs">
           <div class="mcp-log-title">
-            <i class="iconfont icon-fuwu"></i>
+            <i class="icon-mcp-custom"></i>
             <span>MCP 调用日志（{{ mcpLogs.length }}）</span>
           </div>
           <i
