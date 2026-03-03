@@ -737,12 +737,9 @@ const handleSendMessage = (payload = {}) => {
 }
 
 const handleManualStop = async () => {
-  if (loading.value) return
-  if (isReceiving.value) {
-    stopSSE()
-    loading.value = false
-    isReceiving.value = false
-  }
+  stopSSE()
+  loading.value = false
+  isReceiving.value = false
 }
 
 useEventListener(window, 'message', handlePreviewMessage)

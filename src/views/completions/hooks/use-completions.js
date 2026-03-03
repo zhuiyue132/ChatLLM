@@ -26,6 +26,8 @@ export function useCompletions({ roomId, scrollContainer = null }) {
   const apiSettingsStore = useApiSettingsStore()
   const mcpSettingsStore = useMcpSettingsStore()
   const chatRoomsStore = useChatRoomsStore()
+  const MCP_ABORT_ERROR_CODE = 'MCP_MANUAL_ABORT'
+  let mcpAbortController = null
 
   // 初始化标题生成器
   const { generateTitleSync } = useTitleGenerator()
@@ -45,6 +47,54 @@ export function useCompletions({ roomId, scrollContainer = null }) {
 
   // 正在接收消息的 assistant 节点 ID
   const receivingMessageId = ref(null)
+
+  const createMcpAbortError = () => {
+    const abortError = new Error('用户已停止')
+    abortError.name = 'AbortError'
+    abortError.code = MCP_ABORT_ERROR_CODE
+    return abortError
+  }
+
+  const isMcpAbortError = error => {
+    return error?.name === 'AbortError' || error?.code === MCP_ABORT_ERROR_CODE
+  }
+
+  const throwIfMcpAborted = signal => {
+    if (signal?.aborted) {
+      throw createMcpAbortError()
+    }
+  }
+
+  const startMcpAbortController = () => {
+    if (mcpAbortController) {
+      mcpAbortController.abort()
+    }
+    mcpAbortController = new AbortController()
+    return mcpAbortController
+  }
+
+  const stopMcpFlow = () => {
+    if (mcpAbortController) {
+      mcpAbortController.abort()
+      mcpAbortController = null
+    }
+  }
+
+  const finishReceivingByAbort = ({ assistantMessageId = '' } = {}) => {
+    const id = getRoomId()
+    if (id && assistantMessageId) {
+      chatRoomsStore.updateMessage(id, assistantMessageId, {
+        finished: true,
+        error: false
+      })
+    }
+
+    loading.value = false
+    isReceiving.value = false
+    if (!assistantMessageId || receivingMessageId.value === assistantMessageId) {
+      receivingMessageId.value = null
+    }
+  }
 
   const markReceivingStarted = () => {
     if (!receivingMessageId.value) return
@@ -435,8 +485,10 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     }
   }
 
-  const parseOpenAIStreamMessage = async (response, callbacks = {}) => {
+  const parseOpenAIStreamMessage = async (response, callbacks = {}, options = {}) => {
     const { onDelta = () => {}, onToolCallDetected = () => {} } = callbacks
+    const { signal = null } = options
+    throwIfMcpAborted(signal)
     const reader = response.body?.getReader?.()
     if (!reader) {
       const data = await response.json().catch(() => ({}))
@@ -570,6 +622,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
+      throwIfMcpAborted(signal)
       const { done, value } = await reader.read()
       if (done) break
 
@@ -597,6 +650,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     if (buffer.trim()) {
       processLine(buffer.trim())
     }
+    throwIfMcpAborted(signal)
 
     if (reasoningStartTime && reasoningDuration === 0) {
       reasoningDuration = Date.now() - reasoningStartTime
@@ -625,11 +679,13 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     messages,
     tools = [],
     onDelta = () => {},
-    onToolCallDetected = () => {}
+    onToolCallDetected = () => {},
+    signal = null
   } = {}) => {
     if (!apiSettingsStore.baseURL || !apiSettingsStore.apiKey) {
       throw new Error('API 配置不完整，无法调用 MCP 工具')
     }
+    throwIfMcpAborted(signal)
 
     const body = {
       model,
@@ -648,7 +704,8 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         Authorization: `Bearer ${apiSettingsStore.apiKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal
     })
 
     if (!response.ok) {
@@ -680,10 +737,16 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       }
     }
 
-    return parseOpenAIStreamMessage(response, {
-      onDelta,
-      onToolCallDetected
-    })
+    return parseOpenAIStreamMessage(
+      response,
+      {
+        onDelta,
+        onToolCallDetected
+      },
+      {
+        signal
+      }
+    )
   }
 
   const formatServerNameForTool = name => {
@@ -735,7 +798,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     return Array.from(new Set(safeRequestedIds)).filter(serverId => enabledServerSet.has(serverId))
   }
 
-  const buildMcpToolContext = async serverIds => {
+  const buildMcpToolContext = async (serverIds, { signal = null } = {}) => {
     const availableServers = serverIds
       .map(serverId => mcpSettingsStore.getServerById(serverId))
       .filter(Boolean)
@@ -747,8 +810,11 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     const mapping = {}
 
     for (const server of availableServers) {
+      throwIfMcpAborted(signal)
       try {
-        const toolList = await listMcpTools(server)
+        const toolList = await listMcpTools(server, {
+          signal
+        })
         toolList.forEach(tool => {
           if (!tool?.name) return
           let openAIToolName = formatToolNameForOpenAI({
@@ -781,6 +847,9 @@ export function useCompletions({ roomId, scrollContainer = null }) {
           }
         })
       } catch (error) {
+        if (isMcpAbortError(error)) {
+          throw error
+        }
         console.warn(`[MCP] 获取工具列表失败（${server.name}）`, error)
       }
     }
@@ -819,8 +888,17 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     return `${safeBase}\n${safeIncoming}`
   }
 
-  const runMcpToolCalls = async ({ assistantMessageId, model, openAIMessages, serverIds }) => {
-    const toolContext = await buildMcpToolContext(serverIds)
+  const runMcpToolCalls = async ({
+    assistantMessageId,
+    model,
+    openAIMessages,
+    serverIds,
+    signal = null
+  }) => {
+    throwIfMcpAborted(signal)
+    const toolContext = await buildMcpToolContext(serverIds, {
+      signal
+    })
     if (!toolContext.tools.length) {
       return {
         requestMessages: openAIMessages,
@@ -921,6 +999,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
+      throwIfMcpAborted(signal)
       let roundDisplayContent = ''
       let roundDisplayReasoningContent = ''
       let roundDisplayReasoningDuration = 0
@@ -929,6 +1008,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         model,
         messages: requestMessages,
         tools: toolContext.tools,
+        signal,
         onDelta: ({ content, reasoning_content, reasoning_duration }) => {
           roundDisplayContent = typeof content === 'string' ? content : ''
           roundDisplayReasoningContent =
@@ -1044,6 +1124,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       const roundLogIds = []
 
       for (let callIndex = 0; callIndex < normalizedToolCalls.length; callIndex += 1) {
+        throwIfMcpAborted(signal)
         const toolCall = normalizedToolCalls[callIndex]
         const startedAt = Date.now()
         const functionName = toolCall?.function?.name || ''
@@ -1095,10 +1176,17 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         }
 
         try {
-          const toolResult = await callMcpTool(server, {
-            name: mapping.toolName,
-            arguments: toolArguments
-          })
+          throwIfMcpAborted(signal)
+          const toolResult = await callMcpTool(
+            server,
+            {
+              name: mapping.toolName,
+              arguments: toolArguments
+            },
+            {
+              signal
+            }
+          )
           const durationMs = Date.now() - startedAt
           const toolResultText = stringifyMcpToolResult(toolResult)
           toolMessages.push({
@@ -1113,6 +1201,14 @@ export function useCompletions({ roomId, scrollContainer = null }) {
             toolError: ''
           })
         } catch (error) {
+          if (isMcpAbortError(error)) {
+            patchCurrentLog({
+              status: 'error',
+              durationMs: Date.now() - startedAt,
+              toolError: '用户已停止'
+            })
+            throw error
+          }
           patchCurrentLog({
             status: 'error',
             durationMs: Date.now() - startedAt,
@@ -1165,6 +1261,8 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       return
     }
 
+    const mcpController = startMcpAbortController()
+
     try {
       const {
         requestMessages,
@@ -1179,7 +1277,8 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         assistantMessageId,
         model,
         openAIMessages,
-        serverIds: activeServerIds
+        serverIds: activeServerIds,
+        signal: mcpController.signal
       })
 
       if (finalAssistantMessage) {
@@ -1216,11 +1315,21 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         messages: requestMessages
       })
     } catch (error) {
+      if (isMcpAbortError(error)) {
+        finishReceivingByAbort({
+          assistantMessageId
+        })
+        return
+      }
       console.warn('[MCP] 调用流程失败，已降级为普通对话', error)
       sendSSE({
         model,
         messages: openAIMessages
       })
+    } finally {
+      if (mcpAbortController === mcpController) {
+        mcpAbortController = null
+      }
     }
   }
 
@@ -1338,6 +1447,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
    * 停止对话
    */
   const handleStopSSE = () => {
+    stopMcpFlow()
     stopSSE()
   }
 

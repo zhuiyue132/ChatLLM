@@ -40,6 +40,18 @@ const normalizeTimeout = timeoutMs => {
   return Math.floor(timeout)
 }
 
+const createAbortError = (message = '请求已取消') => {
+  const error = new Error(message)
+  error.name = 'AbortError'
+  return error
+}
+
+const throwIfAborted = signal => {
+  if (signal?.aborted) {
+    throw createAbortError()
+  }
+}
+
 const isAbsoluteHttpUrl = value => /^https?:\/\/.+/i.test((value || '').trim())
 
 const parseJsonSafely = raw => {
@@ -225,7 +237,8 @@ const requestMcp = async (
     params = {},
     notification = false,
     protocolVersionOverride = '',
-    includeProtocolHeader = true
+    includeProtocolHeader = true,
+    signal = null
   } = {}
 ) => {
   if (!server?.endpoint) {
@@ -237,12 +250,23 @@ const requestMcp = async (
   if (!method) {
     throw new Error('MCP 方法名不能为空')
   }
+  throwIfAborted(signal)
 
   const controller = new AbortController()
+  const handleExternalAbort = () => {
+    controller.abort()
+  }
   const timeoutMs = normalizeTimeout(server.timeoutMs)
   const timeoutId = window.setTimeout(() => {
     controller.abort()
   }, timeoutMs)
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort()
+    } else {
+      signal.addEventListener('abort', handleExternalAbort, { once: true })
+    }
+  }
 
   const requestBody = {
     jsonrpc: '2.0',
@@ -312,6 +336,9 @@ const requestMcp = async (
     return result
   } catch (error) {
     if (error?.name === 'AbortError') {
+      if (signal?.aborted) {
+        throw createAbortError()
+      }
       throw new Error(`请求超时（>${timeoutMs}ms）`)
     }
     if (isNetworkFetchError(error)) {
@@ -320,10 +347,15 @@ const requestMcp = async (
     throw error
   } finally {
     window.clearTimeout(timeoutId)
+    if (signal) {
+      signal.removeEventListener('abort', handleExternalAbort)
+    }
   }
 }
 
-const ensureInitialized = async server => {
+const ensureInitialized = async (server, options = {}) => {
+  const { signal = null } = options
+  throwIfAborted(signal)
   const runtimeKey = getRuntimeKey(server)
   if (initializedServerRuntimeKeys.has(runtimeKey)) {
     return
@@ -344,6 +376,7 @@ const ensureInitialized = async server => {
   let initialized = false
   for (const version of uniqueProtocolVersions) {
     for (const headerMode of initializeHeaderModes) {
+      throwIfAborted(signal)
       try {
         const initializeResult = await requestMcp(server, {
           method: 'initialize',
@@ -356,7 +389,8 @@ const ensureInitialized = async server => {
             }
           },
           protocolVersionOverride: headerMode.includeProtocolHeader ? version : '',
-          includeProtocolHeader: headerMode.includeProtocolHeader
+          includeProtocolHeader: headerMode.includeProtocolHeader,
+          signal
         })
 
         setRuntimeState(runtimeKey, {
@@ -365,6 +399,9 @@ const ensureInitialized = async server => {
         initialized = true
         break
       } catch (error) {
+        if (error?.name === 'AbortError') {
+          throw error
+        }
         lastError = error
       }
     }
@@ -378,20 +415,28 @@ const ensureInitialized = async server => {
   try {
     await requestMcp(server, {
       method: 'notifications/initialized',
-      notification: true
+      notification: true,
+      signal
     })
   } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw error
+    }
     console.warn('[MCP] initialized 通知失败，已忽略:', error)
   }
 
   initializedServerRuntimeKeys.add(runtimeKey)
 }
 
-export const listMcpTools = async server => {
-  await ensureInitialized(server)
+export const listMcpTools = async (server, options = {}) => {
+  const { signal = null } = options
+  await ensureInitialized(server, {
+    signal
+  })
   const result = await requestMcp(server, {
     method: 'tools/list',
-    params: {}
+    params: {},
+    signal
   })
   if (!Array.isArray(result?.tools)) {
     return []
@@ -399,11 +444,15 @@ export const listMcpTools = async server => {
   return result.tools
 }
 
-export const listMcpPrompts = async server => {
-  await ensureInitialized(server)
+export const listMcpPrompts = async (server, options = {}) => {
+  const { signal = null } = options
+  await ensureInitialized(server, {
+    signal
+  })
   const result = await requestMcp(server, {
     method: 'prompts/list',
-    params: {}
+    params: {},
+    signal
   })
   if (!Array.isArray(result?.prompts)) {
     return []
@@ -411,17 +460,25 @@ export const listMcpPrompts = async server => {
   return result.prompts
 }
 
-export const callMcpTool = async (server, { name, arguments: toolArguments = {} } = {}) => {
+export const callMcpTool = async (
+  server,
+  { name, arguments: toolArguments = {} } = {},
+  options = {}
+) => {
+  const { signal = null } = options
   if (!name) {
     throw new Error('工具名称不能为空')
   }
-  await ensureInitialized(server)
+  await ensureInitialized(server, {
+    signal
+  })
   return await requestMcp(server, {
     method: 'tools/call',
     params: {
       name,
       arguments: toolArguments
-    }
+    },
+    signal
   })
 }
 
