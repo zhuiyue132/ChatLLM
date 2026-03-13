@@ -72,7 +72,12 @@ const buildRequestContext = ({ baseUrl, path = '', headers = {}, ensureTrailingS
   }
 }
 
-const requestWebdav = async ({ baseUrl, path = '', ensureTrailingSlash = false, ...options } = {}) => {
+const requestWebdav = async ({
+  baseUrl,
+  path = '',
+  ensureTrailingSlash = false,
+  ...options
+} = {}) => {
   const { headers = {}, ...restOptions } = options
   const context = buildRequestContext({ baseUrl, path, headers, ensureTrailingSlash })
   let response = await fetch(context.requestUrl, {

@@ -28,9 +28,7 @@
                 placeholder="例如: https://dav.example.com/remote.php/dav/files/username"
                 clearable
               />
-              <div class="form-item-tip">
-                填写 https://... 将自动走 /webdav-proxy 动态反代
-              </div>
+              <div class="form-item-tip">填写 https://... 将自动走 /webdav-proxy 动态反代</div>
             </el-form-item>
 
             <el-form-item label="用户名">
