@@ -24,6 +24,8 @@
       v-bind="$attrs"
       ref="mentionSenderRef"
       v-model="inputValue"
+      :placeholder="senderPlaceholder"
+      :disabled="senderDisabled"
       :input-style="{
         fontSize: '16px'
       }"
@@ -101,6 +103,18 @@
               :disabled="loading"
               @upload-success="handleUploadSuccess"
             />
+            <!-- 翻译 -->
+            <el-button
+              v-if="showTranslateBtn"
+              v-title="translateButtonTitle"
+              class="sender-button"
+              :loading="translating"
+              :disabled="senderDisabled"
+              @click="handleTranslateClick"
+            >
+              <i v-if="!translating" class="iconfont icon-huanyihuan1 sender-icon"></i>
+              <span>{{ translating ? '翻译中' : '翻译' }}</span>
+            </el-button>
           </div>
 
           <div class="action-list-self-wrap-right">
@@ -128,7 +142,7 @@
 
 <script setup>
 import MentionSender from '../mention-sender/index.vue'
-import { ref, computed, useSlots, nextTick, watch } from 'vue'
+import { ref, computed, useSlots, nextTick, watch, useAttrs, onBeforeUnmount } from 'vue'
 import Loading from '../mention-sender/components/loading-button/index.vue'
 import { showMessage } from '@/hooks'
 import FloatButton from '../float-button/index.vue'
@@ -139,11 +153,16 @@ import FileItem from './components/file-item.vue'
 import ImageUploadButton from './components/image-upload.vue'
 import { useVModel, useEventBus } from '@vueuse/core'
 import { OPEN_SETTINGS_COMMAND } from '@/config/symbol'
+import { useApiSettingsStore } from '@/stores/api-settings'
+import { createOpenAISSERequest } from '@/hooks/use-sse/use-openai-sse'
 import './common.scss'
 
 defineOptions({
   name: 'AgentSender'
 })
+
+const attrs = useAttrs()
+const apiSettingsStore = useApiSettingsStore()
 
 const props = defineProps({
   // 输入框绑定值
@@ -197,6 +216,11 @@ const props = defineProps({
   showImageBtn: {
     type: Boolean,
     default: false
+  },
+  // 是否展示翻译按钮
+  showTranslateBtn: {
+    type: Boolean,
+    default: true
   },
   // 是否展示文件上传按钮
   showFileBtn: {
@@ -389,6 +413,86 @@ const model = useVModel(props, 'model', emits)
 // 输入框值
 const inputValue = useVModel(props, 'modelValue', emits)
 
+// ========== 翻译功能相关 ==========
+const translating = ref(false)
+const translateOriginText = ref('')
+let translateRequest = null
+
+const senderDisabled = computed(() => {
+  return !!attrs.disabled || translating.value
+})
+
+const senderPlaceholder = computed(() => {
+  if (translating.value) return '翻译中...'
+  return typeof attrs.placeholder === 'string' ? attrs.placeholder : undefined
+})
+
+const countMatches = (text, regex) => {
+  if (!text) return 0
+  const matches = text.match(regex)
+  return Array.isArray(matches) ? matches.length : 0
+}
+
+const detectTranslateDirection = text => {
+  const chineseCount = countMatches(text, /[\u4e00-\u9fff]/g)
+  const latinCount = countMatches(text, /[A-Za-z]/g)
+  if (chineseCount === 0 && latinCount === 0) {
+    return { source: 'auto', target: 'auto', label: '中/英文' }
+  }
+  if (chineseCount >= latinCount) {
+    return { source: 'zh-CN', target: 'en', label: '英文' }
+  }
+  return { source: 'en', target: 'zh-CN', label: '中文' }
+}
+
+const translateButtonTitle = computed(() => {
+  if (translating.value) return '翻译中...'
+  if (!apiSettingsStore.isConfigured) return '请先配置 API'
+  if (!apiSettingsStore.defaultTranslateModel) return '请先在设置中配置翻译模型'
+  if (!inputValue.value.trim()) return '请输入要翻译的内容'
+
+  const direction = detectTranslateDirection(inputValue.value)
+  return `翻译为${direction.label}（模型：${apiSettingsStore.defaultTranslateModel}）`
+})
+
+const runTranslate = async (text, direction) => {
+  if (!apiSettingsStore.baseURL || !apiSettingsStore.apiKey) {
+    throw new Error('API 配置不完整，请先在设置中配置')
+  }
+  if (!apiSettingsStore.defaultTranslateModel) {
+    throw new Error('未配置翻译模型，请先在设置中选择翻译模型')
+  }
+
+  const systemPrompt =
+    direction?.source &&
+    direction?.target &&
+    direction.source !== 'auto' &&
+    direction.target !== 'auto'
+      ? `You are a professional translator. Translate the user's text from ${direction.source} to ${direction.target}. Preserve meaning, tone, and formatting (Markdown, lists, line breaks, punctuation). Keep code blocks, inline code, URLs, numbers, and proper nouns unchanged. Output ONLY the translated text without any explanation.`
+      : `You are a professional translator. Translate the user's text between Simplified Chinese and English. If the text is mainly Chinese, translate to natural English; if mainly English, translate to Simplified Chinese. Preserve meaning, tone, and formatting (Markdown, lists, line breaks, punctuation). Keep code blocks, inline code, URLs, numbers, and proper nouns unchanged. Output ONLY the translated text without any explanation.`
+
+  return new Promise((resolve, reject) => {
+    translateRequest?.stop?.()
+
+    translateRequest = createOpenAISSERequest({
+      baseURL: apiSettingsStore.baseURL,
+      apiKey: apiSettingsStore.apiKey,
+      onDone: ({ content }) => resolve(content || ''),
+      onError: ({ error }) => reject(error || new Error('翻译失败')),
+      onAbort: () => reject(new Error('翻译已取消'))
+    })
+
+    translateRequest.send({
+      model: apiSettingsStore.defaultTranslateModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: text }
+      ],
+      temperature: 0.2
+    })
+  })
+}
+
 // 价格段模板id
 const priceRangeTemplateId = useVModel(props, 'priceRangeTemplateId', emits)
 
@@ -436,6 +540,7 @@ const footerEnable = computed(() => {
     !!slots.footer ||
     props.showFileBtn ||
     props.showImageBtn ||
+    props.showTranslateBtn ||
     props.showModelSelect ||
     props.showPasteBtn ||
     props.showRadioBtn ||
@@ -506,6 +611,10 @@ const isNotEmpty = computed(() => {
 })
 
 const sendButtonProps = computed(() => {
+  if (translating.value) {
+    return { class: 'disabled', customTitle: '翻译中，请稍候' }
+  }
+
   if (loadingMap.value.image || loadingMap.value.file || loadingMap.value.paste) {
     return { class: 'disabled', customTitle: '文件上传中，请稍候' }
   }
@@ -591,6 +700,53 @@ const handleStopClick = () => {
   emits('stop')
 }
 
+const handleTranslateClick = async () => {
+  if (translating.value) return
+
+  if (!apiSettingsStore.isConfigured) {
+    showMessage('请先配置 API 设置', { type: 'warning' })
+    handleOpenSettings()
+    return
+  }
+
+  if (!apiSettingsStore.defaultTranslateModel) {
+    showMessage('请先在设置中配置翻译模型', { type: 'warning' })
+    handleOpenSettings()
+    return
+  }
+
+  const rawText = inputValue.value
+  const text = rawText.trim()
+  if (!text) {
+    showMessage('请输入要翻译的内容', { type: 'warning' })
+    return
+  }
+
+  const direction = detectTranslateDirection(text)
+
+  translateOriginText.value = rawText
+  translating.value = true
+  inputValue.value = ''
+
+  let shouldFocusAfterTranslate = false
+  try {
+    const translated = (await runTranslate(text, direction)).trim()
+    if (!translated) {
+      throw new Error('翻译结果为空')
+    }
+    inputValue.value = translated
+    shouldFocusAfterTranslate = true
+  } catch (error) {
+    inputValue.value = translateOriginText.value
+    showMessage(error?.message || '翻译失败', { type: 'error' })
+  } finally {
+    translating.value = false
+    if (shouldFocusAfterTranslate) {
+      nextTick(() => mentionSenderRef.value?.focus('end'))
+    }
+  }
+}
+
 // 打开设置对话框
 const eventBus = useEventBus(OPEN_SETTINGS_COMMAND)
 const handleOpenSettings = () => {
@@ -614,6 +770,10 @@ defineExpose({
   },
   cancel: () => mentionSenderRef.value?.cancel(),
   filesUploaded
+})
+
+onBeforeUnmount(() => {
+  translateRequest?.stop?.()
 })
 
 watch(
