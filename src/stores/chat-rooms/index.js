@@ -8,13 +8,69 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, isProxy } from 'vue'
 
 /**
  * 生成唯一 ID
  */
 const generateId = (prefix = '') => {
   return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+const syncPagingMetaForChildren = node => {
+  if (!node || !Array.isArray(node.children) || node.children.length === 0) {
+    return
+  }
+
+  const siblingCount = node.children.length
+  node.children.forEach((child, index) => {
+    if (!child || typeof child !== 'object') return
+    child.pageIndex = index
+    child.siblingCount = siblingCount
+  })
+}
+
+const createChatRoomsPersistFilter = () => {
+  const STREAMING_MUTATION_KEYS = new Set(['content', 'reasoningContent', 'reasoningTime'])
+  const STREAMING_PERSIST_INTERVAL = 1200
+  const GENERAL_PERSIST_INTERVAL = 250
+
+  let lastPersistAt = 0
+  let lastStreamingPersistAt = 0
+
+  const getEventKeys = mutation => {
+    const events = Array.isArray(mutation?.events) ? mutation.events : []
+    return events.map(event => event?.key).filter(Boolean)
+  }
+
+  return mutation => {
+    const now = Date.now()
+    const keys = getEventKeys(mutation).map(key => `${key}`)
+
+    // 关键状态变化（例如结束、切分分支）优先落盘
+    if (keys.includes('finished') || keys.includes('currentIndex')) {
+      lastPersistAt = now
+      lastStreamingPersistAt = now
+      return true
+    }
+
+    // 流式更新高频触发，降频持久化，降低 JSON 序列化开销
+    const isStreamingOnly = keys.length > 0 && keys.every(key => STREAMING_MUTATION_KEYS.has(key))
+    if (isStreamingOnly) {
+      if (now - lastStreamingPersistAt < STREAMING_PERSIST_INTERVAL) {
+        return false
+      }
+      lastStreamingPersistAt = now
+      lastPersistAt = now
+      return true
+    }
+
+    if (now - lastPersistAt < GENERAL_PERSIST_INTERVAL) {
+      return false
+    }
+    lastPersistAt = now
+    return true
+  }
 }
 
 const normalizeMcpServerIds = serverIds => {
@@ -31,6 +87,38 @@ export const useChatRoomsStore = defineStore(
     // 消息存储，按房间 ID 索引
     // { roomId: { children: [], currentIndex: 0 } }
     const messages = ref({})
+
+    // roomId -> Map<messageId, messageNode>
+    // 用于加速 updateMessage / 查找节点（避免每次都递归遍历整棵树）
+    const messageIndexByRoom = new Map()
+
+    const buildRoomMessageIndex = roomId => {
+      const tree = messages.value[roomId]
+      const index = new Map()
+      if (tree) {
+        const stack = [tree]
+        while (stack.length > 0) {
+          const node = stack.pop()
+          if (!node || typeof node !== 'object') continue
+          if (node.id) {
+            index.set(node.id, node)
+          }
+          if (Array.isArray(node.children) && node.children.length > 0) {
+            node.children.forEach(child => stack.push(child))
+          }
+        }
+      }
+      messageIndexByRoom.set(roomId, index)
+      return index
+    }
+
+    const ensureRoomMessageIndex = roomId => {
+      if (!roomId) return null
+      if (messageIndexByRoom.has(roomId)) {
+        return messageIndexByRoom.get(roomId)
+      }
+      return buildRoomMessageIndex(roomId)
+    }
 
     // 当前房间
     const currentRoom = computed(() => {
@@ -61,9 +149,6 @@ export const useChatRoomsStore = defineStore(
         const selectedChild = node.children[currentIndex]
 
         if (selectedChild) {
-          // 添加分页信息
-          selectedChild.pageIndex = currentIndex
-          selectedChild.siblingCount = node.children.length
           result.push(selectedChild)
           traverse(selectedChild)
         }
@@ -102,6 +187,7 @@ export const useChatRoomsStore = defineStore(
         children: [],
         currentIndex: 0
       }
+      messageIndexByRoom.set(roomId, new Map())
 
       currentRoomId.value = roomId
       return roomId
@@ -116,6 +202,7 @@ export const useChatRoomsStore = defineStore(
       if (index !== -1) {
         rooms.value.splice(index, 1)
         delete messages.value[roomId]
+        messageIndexByRoom.delete(roomId)
 
         // 如果删除的是当前房间，切换到第一个房间
         if (currentRoomId.value === roomId) {
@@ -311,6 +398,16 @@ export const useChatRoomsStore = defineStore(
         messageWithDefaults.parentId = targetNode === tree ? null : targetNode.id
         targetNode.children.push(messageWithDefaults)
         targetNode.currentIndex = targetNode.children.length - 1
+        syncPagingMetaForChildren(targetNode)
+
+        const index = ensureRoomMessageIndex(roomId)
+        if (index) {
+          // 注意：push 进去的是原始对象，必须从响应式数组里再取一次，拿到 proxy，
+          // 否则 updateMessage 通过 Map 命中原始对象时不会触发视图更新（流式输出会“卡住”）。
+          const insertedMessage =
+            targetNode.children[targetNode.currentIndex] || messageWithDefaults
+          index.set(messageWithDefaults.id, insertedMessage)
+        }
       }
 
       // 更新房间时间
@@ -333,12 +430,61 @@ export const useChatRoomsStore = defineStore(
       const tree = messages.value[roomId]
       if (!tree) return null
 
-      const message = findNodeById(tree, messageId)
-      if (message) {
-        Object.assign(message, updates)
-        return message
+      const index = ensureRoomMessageIndex(roomId)
+      const messageFromIndex = index?.get(messageId) || null
+      const message = messageFromIndex && isProxy(messageFromIndex) ? messageFromIndex : null
+      if (!message) {
+        const fallback = findNodeById(tree, messageId)
+        if (!fallback) return null
+        if (index) {
+          index.set(messageId, fallback)
+        }
+        Object.assign(fallback, updates)
+        return fallback
       }
-      return null
+
+      Object.assign(message, updates)
+      return message
+    }
+
+    const getMessageById = (roomId, messageId) => {
+      const tree = messages.value[roomId]
+      if (!tree || !messageId) return null
+
+      const index = ensureRoomMessageIndex(roomId)
+      const messageFromIndex = index?.get(messageId) || null
+      if (messageFromIndex) {
+        if (isProxy(messageFromIndex)) {
+          return messageFromIndex
+        }
+        // 自愈：索引里如果混入了原始对象，回退到树里拿 proxy 并替换索引
+        const fallback = findNodeById(tree, messageId)
+        if (fallback && index) {
+          index.set(messageId, fallback)
+        }
+        return fallback || messageFromIndex
+      }
+
+      const fallback = findNodeById(tree, messageId)
+      if (fallback && index) {
+        index.set(messageId, fallback)
+      }
+      return fallback || null
+    }
+
+    const getParentNodeByMessageId = (roomId, messageId) => {
+      const tree = messages.value[roomId]
+      if (!tree) return null
+      if (!messageId) return tree
+
+      const message = getMessageById(roomId, messageId)
+      if (!message) return null
+
+      const parentId = message.parentId
+      if (!parentId) {
+        return tree
+      }
+      return getMessageById(roomId, parentId)
     }
 
     /**
@@ -371,8 +517,6 @@ export const useChatRoomsStore = defineStore(
         const selectedChild = node.children[currentIndex]
 
         if (selectedChild) {
-          selectedChild.pageIndex = currentIndex
-          selectedChild.siblingCount = node.children.length
           result.push(selectedChild)
           traverse(selectedChild)
         }
@@ -403,6 +547,7 @@ export const useChatRoomsStore = defineStore(
             const child = node.children[i]
             if (doSet(child, targetId)) {
               node.currentIndex = i
+              syncPagingMetaForChildren(node)
               return true
             }
           }
@@ -417,21 +562,23 @@ export const useChatRoomsStore = defineStore(
      * 处理上一页（切换到上一个兄弟节点）
      * @param {string} roomId - 房间 ID
      * @param {string} messageId - 当前消息 ID
-     * @param {string} role - 消息角色
      */
-    const handlePrevPage = (roomId, messageId, role) => {
+    const handlePrevPage = (roomId, messageId) => {
       const tree = messages.value[roomId]
       if (!tree) return
 
-      const parentNode =
-        role === 'assistant'
-          ? findNodeById(tree, findNodeById(tree, messageId)?.parentId)
-          : findParentNode(tree, messageId)
+      const index = ensureRoomMessageIndex(roomId)
+      const messageNode = index?.get(messageId) || findNodeById(tree, messageId)
+      if (!messageNode) return
+
+      const parentId = messageNode.parentId
+      const parentNode = parentId ? index?.get(parentId) || findNodeById(tree, parentId) : tree
 
       if (parentNode && parentNode.children && parentNode.children.length > 0) {
         const currentIndex = parentNode.currentIndex ?? 0
         if (currentIndex > 0) {
           parentNode.currentIndex = currentIndex - 1
+          syncPagingMetaForChildren(parentNode)
         }
       }
     }
@@ -440,21 +587,23 @@ export const useChatRoomsStore = defineStore(
      * 处理下一页（切换到下一个兄弟节点）
      * @param {string} roomId - 房间 ID
      * @param {string} messageId - 当前消息 ID
-     * @param {string} role - 消息角色
      */
-    const handleNextPage = (roomId, messageId, role) => {
+    const handleNextPage = (roomId, messageId) => {
       const tree = messages.value[roomId]
       if (!tree) return
 
-      const parentNode =
-        role === 'assistant'
-          ? findNodeById(tree, findNodeById(tree, messageId)?.parentId)
-          : findParentNode(tree, messageId)
+      const index = ensureRoomMessageIndex(roomId)
+      const messageNode = index?.get(messageId) || findNodeById(tree, messageId)
+      if (!messageNode) return
+
+      const parentId = messageNode.parentId
+      const parentNode = parentId ? index?.get(parentId) || findNodeById(tree, parentId) : tree
 
       if (parentNode && parentNode.children && parentNode.children.length > 0) {
         const currentIndex = parentNode.currentIndex ?? 0
         if (currentIndex < parentNode.children.length - 1) {
           parentNode.currentIndex = currentIndex + 1
+          syncPagingMetaForChildren(parentNode)
         }
       }
     }
@@ -466,6 +615,7 @@ export const useChatRoomsStore = defineStore(
       rooms.value = []
       messages.value = {}
       currentRoomId.value = null
+      messageIndexByRoom.clear()
     }
 
     /**
@@ -492,6 +642,7 @@ export const useChatRoomsStore = defineStore(
       for (const [roomId, tree] of Object.entries(importMessages)) {
         if (!messages.value[roomId]) {
           messages.value[roomId] = tree
+          buildRoomMessageIndex(roomId)
         }
       }
 
@@ -521,6 +672,8 @@ export const useChatRoomsStore = defineStore(
       // 消息操作
       addMessage,
       updateMessage,
+      getMessageById,
+      getParentNodeByMessageId,
       getMessageTree,
       getMessages,
       findNodeById,
@@ -535,8 +688,9 @@ export const useChatRoomsStore = defineStore(
     }
   },
   {
-    persist: {
-      key: 'chat-llm-rooms'
+    persistedState: {
+      serialize: JSON.stringify,
+      filter: createChatRoomsPersistFilter()
     }
   }
 )

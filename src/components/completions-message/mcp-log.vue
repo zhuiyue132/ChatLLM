@@ -205,6 +205,7 @@ const toggleExpanded = () => {
     }
   }
 }
+
 .mcp-log-message {
   width: 100%;
   padding: 12px;
@@ -236,8 +237,8 @@ const toggleExpanded = () => {
   .toggle-icon {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     flex: 0 0 auto;
+    justify-content: center;
     transition: transform 0.2s ease;
     color: var(--text-dblight-color);
     font-size: 12px;
@@ -254,8 +255,8 @@ const toggleExpanded = () => {
   .mcp-log-title {
     display: flex;
     align-items: center;
-    min-width: 0;
     flex: 1;
+    min-width: 0;
     color: var(--text-normal-color);
     font-size: 13px;
     font-weight: 500;
@@ -268,8 +269,8 @@ const toggleExpanded = () => {
 
   .mcp-log-title-text {
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .mcp-log-label,
@@ -280,10 +281,10 @@ const toggleExpanded = () => {
   .mcp-status {
     display: inline-flex;
     align-items: center;
+    flex: 0 0 auto;
     justify-content: center;
     min-width: 42px;
     height: 20px;
-    flex: 0 0 auto;
     text-align: center;
     border-radius: 999px;
     font-size: 12px;
@@ -311,9 +312,9 @@ const toggleExpanded = () => {
     align-items: center;
     flex: 0 0 auto;
     margin-right: 8px;
-    line-height: 20px;
     color: var(--text-dblight-color);
     font-size: 12px;
+    line-height: 20px;
   }
 
   .mcp-log-block {

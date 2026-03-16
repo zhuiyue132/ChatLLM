@@ -200,16 +200,25 @@ export default defineComponent({
     const context = useMarkdownContext()
     const { codeXRender } = toValue(context)
     const { openPreview } = useCodePreview()
+    const MAX_HIGHLIGHT_LENGTH = 12000
+    const MAX_AUTO_HIGHLIGHT_LENGTH = 2000
 
     const getHighlightHtml = (content, language) => {
-      if (!content) {
+      const safeContent = typeof content === 'string' ? content : ''
+      if (!safeContent) {
+        return null
+      }
+      if (safeContent.length > MAX_HIGHLIGHT_LENGTH) {
         return null
       }
       try {
         if (language && hljs.getLanguage(language)) {
-          return hljs.highlight(content, { language, ignoreIllegals: true }).value
+          return hljs.highlight(safeContent, { language, ignoreIllegals: true }).value
         }
-        return hljs.highlightAuto(content).value
+        if (safeContent.length > MAX_AUTO_HIGHLIGHT_LENGTH) {
+          return null
+        }
+        return hljs.highlightAuto(safeContent).value
       } catch {
         return null
       }

@@ -23,7 +23,7 @@
             <CompletionsUserMessage
               v-if="msg.role.toLowerCase() === 'user'"
               :key="`${msg.id || roomId}`"
-              :current-page="msg.pageIndex + 1"
+              :current-page="Number(msg.pageIndex || 0) + 1"
               :total-pages="msg.siblingCount || 1"
               :message="msg.content"
               :file-list="msg.fileList || []"
@@ -55,10 +55,10 @@
               :receiving="isReceiving"
               :thinking-content="msg.reasoningContent"
               :thinking-duration="msg.reasoningTime"
-              :current-page="msg.pageIndex + 1"
+              :current-page="Number(msg.pageIndex || 0) + 1"
               :total-pages="msg.siblingCount || 1"
               :usage="msg.usage"
-              :segments="msg.assistantSegments || []"
+              :segments="msg.assistantSegments"
               @regenerate="handleRegenerateAnswer"
               @prev="handleAssistantPrevPage(msg.parentId)"
               @next="handleAssistantNextPage(msg.parentId)"
@@ -612,6 +612,20 @@ const displayChatHistory = computed(() => {
 
   const flushPendingAssistantNode = () => {
     if (!pendingAssistantNode) return
+
+    const assistantSegments = Array.isArray(pendingAssistantNode.assistantSegments)
+      ? pendingAssistantNode.assistantSegments
+      : []
+    const hasMcpSegment = assistantSegments.some(segment => segment?.type === 'mcp')
+    const assistantTextSegmentCount = assistantSegments.filter(
+      segment => segment?.type !== 'mcp'
+    ).length
+
+    // 大多数 assistant 仅包含一段文本，不需要走分段渲染，避免 props 变化导致整页反复解析 Markdown
+    if (!hasMcpSegment && assistantTextSegmentCount <= 1) {
+      pendingAssistantNode.assistantSegments = undefined
+    }
+
     if (!pendingAssistantNode.searchMessageIds.includes(pendingAssistantNode.id)) {
       pendingAssistantNode.searchMessageIds.unshift(pendingAssistantNode.id)
     }

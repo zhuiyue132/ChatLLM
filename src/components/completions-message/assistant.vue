@@ -116,7 +116,7 @@
                   <div v-if="segment.error" class="error-content">
                     内容生成时出现错误，请稍后重试！
                   </div>
-                  <MarkdownRenderer v-else :content="segment.content" />
+                  <MarkdownRenderer :content="segment.content" />
                 </div>
               </div>
             </template>
@@ -149,7 +149,7 @@
         <div v-if="!imageList.length" class="message-content">
           <div class="message-text markdown-body">
             <div v-if="error" class="error-content">内容生成时出现错误，请稍后重试！</div>
-            <MarkdownRenderer v-else :content="normalizedMessageText" />
+            <MarkdownRenderer :content="normalizedMessageText" />
           </div>
         </div>
         <!-- 图片内容 -->
@@ -389,9 +389,20 @@ const normalizeAssistantSegment = (segment, index, prefix = 'segment') => {
   }
 }
 
+const isNormalizedSegment = segment => {
+  if (!segment || typeof segment !== 'object') {
+    return false
+  }
+  return segment.type === 'assistant' || segment.type === 'mcp'
+}
+
 const normalizedSegments = computed(() => {
-  const directSegments = Array.isArray(props.segments) ? props.segments : []
+  const directSegments = Array.isArray(props.segments) ? props.segments.filter(Boolean) : []
   if (directSegments.length > 0) {
+    const alreadyNormalized = directSegments.every(isNormalizedSegment)
+    if (alreadyNormalized) {
+      return directSegments
+    }
     return directSegments
       .map((segment, index) => normalizeAssistantSegment(segment, index, 'assistant'))
       .filter(Boolean)
@@ -465,6 +476,14 @@ const getSegmentKey = (segment, index) => {
   return `${segment?.type || 'assistant'}-${segmentId}`
 }
 
+const segmentInitKeys = computed(() => {
+  return normalizedSegments.value.map((segment, index) => {
+    const key = getSegmentKey(segment, index)
+    const hasReasoning = !!segment?.reasoningContent
+    return `${key}::${segment?.type || 'assistant'}::${hasReasoning ? 1 : 0}`
+  })
+})
+
 // 监听思考内容变化：有新内容时展开
 watch(
   () => props.thinkingContent,
@@ -477,8 +496,9 @@ watch(
 )
 
 watch(
-  normalizedSegments,
-  segments => {
+  segmentInitKeys,
+  () => {
+    const segments = normalizedSegments.value
     const nextThinkingVisibility = { ...segmentThinkingVisibility.value }
     const nextMcpExpanded = { ...mcpSegmentExpanded.value }
 
@@ -501,7 +521,7 @@ watch(
   },
   {
     immediate: true,
-    deep: true
+    flush: 'sync'
   }
 )
 

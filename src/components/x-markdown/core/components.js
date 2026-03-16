@@ -85,10 +85,13 @@ function createMarkdownSetup(isAsync = false) {
         return hast.value ? render(hast.value, attrs, slots, customAttrs.value) : null
       }
     } else {
-      return () => {
+      const hast = computed(() => {
         const mdast = processor.value.parse(preprocessedMarkdown.value)
-        const hast = processor.value.runSync(mdast)
-        return render(hast, attrs, slots, customAttrs.value)
+        return processor.value.runSync(mdast)
+      })
+
+      return () => {
+        return render(hast.value, attrs, slots, customAttrs.value)
       }
     }
   }

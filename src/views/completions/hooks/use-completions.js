@@ -196,6 +196,32 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     }
   }
 
+  // 流式输出的 UI 同步节流：避免每个 token 都触发一次 store 更新 / 重新渲染
+  const STREAM_SYNC_INTERVAL = 100
+  let streamingSyncTimer = null
+  let latestStreamingPayload = null
+
+  const clearStreamingSyncTimer = () => {
+    if (streamingSyncTimer) {
+      window.clearTimeout(streamingSyncTimer)
+      streamingSyncTimer = null
+    }
+  }
+
+  const flushStreamingSync = () => {
+    clearStreamingSyncTimer()
+    if (!latestStreamingPayload) return
+    const payload = latestStreamingPayload
+    latestStreamingPayload = null
+    syncAssistantStreamingMessage(payload)
+  }
+
+  const scheduleStreamingSync = payload => {
+    latestStreamingPayload = payload
+    if (streamingSyncTimer) return
+    streamingSyncTimer = window.setTimeout(flushStreamingSync, STREAM_SYNC_INTERVAL)
+  }
+
   // 对话内容 - 从 store 获取
   const chatHistoryLoading = ref(false)
 
@@ -274,7 +300,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       console.log('[OpenAI SSE] 请求开始')
     },
     onToken: ({ content, reasoning_content, reasoning_duration }) => {
-      syncAssistantStreamingMessage({
+      scheduleStreamingSync({
         assistantMessageId: receivingMessageId.value,
         content,
         reasoningContent: reasoning_content,
@@ -288,6 +314,9 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         reasoning_duration,
         usage
       })
+
+      clearStreamingSyncTimer()
+      latestStreamingPayload = null
 
       const doneMessageId = receivingMessageId.value
       await finalizeAssistantMessage({
@@ -310,6 +339,9 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         })
       }
 
+      clearStreamingSyncTimer()
+      latestStreamingPayload = null
+
       loading.value = false
       isReceiving.value = false
       receivingMessageId.value = null
@@ -327,6 +359,9 @@ export function useCompletions({ roomId, scrollContainer = null }) {
           reasoningTime: reasoning_duration || 0
         })
       }
+
+      clearStreamingSyncTimer()
+      latestStreamingPayload = null
 
       loading.value = false
       isReceiving.value = false
@@ -968,12 +1003,11 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       const roomId = getRoomId()
       if (!roomId) return null
 
-      const tree = chatRoomsStore.getMessageTree(roomId)
       const parentExists = parentMessageId
-        ? !!chatRoomsStore.findNodeById(tree, parentMessageId)
+        ? !!chatRoomsStore.getMessageById(roomId, parentMessageId)
         : false
       const fallbackParentExists = mcpLogParentId
-        ? !!chatRoomsStore.findNodeById(tree, mcpLogParentId)
+        ? !!chatRoomsStore.getMessageById(roomId, mcpLogParentId)
         : false
       const resolvedParentId = parentExists
         ? parentMessageId
@@ -1002,7 +1036,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         resolvedParentId
       )
 
-      if (!chatRoomsStore.findNodeById(tree, messageId)) {
+      if (!chatRoomsStore.getMessageById(roomId, messageId)) {
         return null
       }
 
@@ -1336,10 +1370,9 @@ export function useCompletions({ roomId, scrollContainer = null }) {
 
       if (finalAssistantMessage) {
         const roomId = getRoomId()
-        const tree = roomId ? chatRoomsStore.getMessageTree(roomId) : null
         const finalAssistantNode =
-          roomId && tree && finalAssistantMessageId
-            ? chatRoomsStore.findNodeById(tree, finalAssistantMessageId)
+          roomId && finalAssistantMessageId
+            ? chatRoomsStore.getMessageById(roomId, finalAssistantMessageId)
             : null
         const resolvedFinalContent =
           typeof finalDisplayContent === 'string' && finalDisplayContent
@@ -1504,8 +1537,12 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     stopSSE()
   }
 
-  const resolveUserMessageNodeFromRegenerateTarget = ({ tree, messageId = '', parentId = '' }) => {
-    if (!tree) return null
+  const resolveUserMessageNodeFromRegenerateTarget = ({
+    roomId,
+    messageId = '',
+    parentId = ''
+  }) => {
+    if (!roomId) return null
 
     const findUserAncestor = startNode => {
       let currentNode = startNode
@@ -1517,14 +1554,14 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         if (!currentNode?.parentId) {
           return null
         }
-        currentNode = chatRoomsStore.findNodeById(tree, currentNode.parentId)
+        currentNode = chatRoomsStore.getMessageById(roomId, currentNode.parentId)
       }
       return null
     }
 
     const tryResolve = nodeId => {
       if (!nodeId) return null
-      const targetNode = chatRoomsStore.findNodeById(tree, nodeId)
+      const targetNode = chatRoomsStore.getMessageById(roomId, nodeId)
       if (!targetNode) return null
       return findUserAncestor(targetNode)
     }
@@ -1550,9 +1587,8 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       return
     }
 
-    const tree = chatRoomsStore.getMessageTree(id)
     const userMessageNode = resolveUserMessageNodeFromRegenerateTarget({
-      tree,
+      roomId: id,
       messageId,
       parentId
     })
@@ -1615,17 +1651,30 @@ export function useCompletions({ roomId, scrollContainer = null }) {
    * 处理助手消息的上一页
    * @param {string} parentId - 父消息（用户消息）的 ID
    */
+  const syncPagingMetaForChildren = node => {
+    if (!node || !Array.isArray(node.children) || node.children.length === 0) {
+      return
+    }
+
+    const siblingCount = node.children.length
+    node.children.forEach((child, index) => {
+      if (!child || typeof child !== 'object') return
+      child.pageIndex = index
+      child.siblingCount = siblingCount
+    })
+  }
+
   const handleAssistantPrevPage = parentId => {
     const id = getRoomId()
     if (!id) return
 
-    const tree = chatRoomsStore.getMessageTree(id)
-    const userMessageNode = chatRoomsStore.findNodeById(tree, parentId)
+    const userMessageNode = chatRoomsStore.getMessageById(id, parentId)
 
     if (userMessageNode && userMessageNode.children && userMessageNode.children.length > 0) {
       const currentIndex = userMessageNode.currentIndex ?? 0
       if (currentIndex > 0) {
         userMessageNode.currentIndex = currentIndex - 1
+        syncPagingMetaForChildren(userMessageNode)
 
         nextTick(() => {
           if (isViewingReceivingBranch.value) {
@@ -1645,13 +1694,13 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     const id = getRoomId()
     if (!id) return
 
-    const tree = chatRoomsStore.getMessageTree(id)
-    const userMessageNode = chatRoomsStore.findNodeById(tree, parentId)
+    const userMessageNode = chatRoomsStore.getMessageById(id, parentId)
 
     if (userMessageNode && userMessageNode.children && userMessageNode.children.length > 0) {
       const currentIndex = userMessageNode.currentIndex ?? 0
       if (currentIndex < userMessageNode.children.length - 1) {
         userMessageNode.currentIndex = currentIndex + 1
+        syncPagingMetaForChildren(userMessageNode)
 
         nextTick(() => {
           if (isViewingReceivingBranch.value) {
@@ -1671,13 +1720,13 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     const id = getRoomId()
     if (!id) return
 
-    const tree = chatRoomsStore.getMessageTree(id)
-    const parentNode = chatRoomsStore.findParentNode(tree, messageId)
+    const parentNode = chatRoomsStore.getParentNodeByMessageId(id, messageId)
 
     if (parentNode && parentNode.children && parentNode.children.length > 0) {
       const currentIndex = parentNode.currentIndex ?? 0
       if (currentIndex > 0) {
         parentNode.currentIndex = currentIndex - 1
+        syncPagingMetaForChildren(parentNode)
         loading.value = false
 
         nextTick(() => {
@@ -1698,13 +1747,13 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     const id = getRoomId()
     if (!id) return
 
-    const tree = chatRoomsStore.getMessageTree(id)
-    const parentNode = chatRoomsStore.findParentNode(tree, messageId)
+    const parentNode = chatRoomsStore.getParentNodeByMessageId(id, messageId)
 
     if (parentNode && parentNode.children && parentNode.children.length > 0) {
       const currentIndex = parentNode.currentIndex ?? 0
       if (currentIndex < parentNode.children.length - 1) {
         parentNode.currentIndex = currentIndex + 1
+        syncPagingMetaForChildren(parentNode)
         loading.value = false
 
         nextTick(() => {
@@ -1756,15 +1805,14 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     const id = getRoomId()
     if (!id) return
 
-    const tree = chatRoomsStore.getMessageTree(id)
-    const currentUserMessageNode = chatRoomsStore.findNodeById(tree, messageId)
+    const currentUserMessageNode = chatRoomsStore.getMessageById(id, messageId)
 
     if (!currentUserMessageNode) {
       showMessage('无法找到对应的消息', { type: 'error' })
       return
     }
 
-    const parentNode = chatRoomsStore.findParentNode(tree, messageId)
+    const parentNode = chatRoomsStore.getParentNodeByMessageId(id, messageId)
     if (!parentNode) {
       showMessage('无法找到父节点', { type: 'error' })
       return
@@ -1786,7 +1834,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
         : [],
       mcpServerIds: selectedMcpServerIds,
       createdAt: new Date().toISOString(),
-      parentId: parentNode === tree ? null : parentNode.id,
+      parentId: parentNode?.id || null,
       children: [],
       currentIndex: 0
     }
@@ -1813,9 +1861,15 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     }
     parentNode.children.push(newUserMessage)
     parentNode.currentIndex = parentNode.children.length - 1
+    syncPagingMetaForChildren(parentNode)
 
     // 将助手消息添加到新用户消息
     newUserMessage.children.push(newAssistantMessage)
+    syncPagingMetaForChildren(newUserMessage)
+
+    // 预热索引，避免后续 updateMessage 首次回退到递归查找
+    chatRoomsStore.getMessageById(id, newUserMessageId)
+    chatRoomsStore.getMessageById(id, newAssistantMessageId)
 
     editingMessageId.value = null
 
