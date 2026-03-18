@@ -41,132 +41,22 @@
 import AgentSender from '@/components/sender/index.vue'
 import ApiSettingsDialog from '@/components/api-settings-dialog/index.vue'
 import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
-import { useRouter } from 'vue-router'
-import { ref, computed, watch } from 'vue'
-import { useApiSettingsStore } from '@/stores/api-settings'
-import { useMcpSettingsStore } from '@/stores/mcp-settings'
-import { useChatRoomsStore } from '@/stores/chat-rooms'
-import { useEventBus } from '@vueuse/core'
-import { OPEN_SETTINGS_COMMAND } from '@/config/symbol'
-import { setPendingCompletionsMessage } from './utils'
+import { useCompletionsEntry } from './hooks/use-completions-entry'
 
-const router = useRouter()
-const apiSettingsStore = useApiSettingsStore()
-const mcpSettingsStore = useMcpSettingsStore()
-const chatRoomsStore = useChatRoomsStore()
-
-const senderRef = ref(null)
-
-// 设置对话框显示状态
-const showSettingsDialog = ref(false)
-
-// 监听打开设置事件
-const eventBus = useEventBus(OPEN_SETTINGS_COMMAND)
-eventBus.on(() => {
-  showSettingsDialog.value = true
-})
-
-// 输入框内容
-const inputMessage = ref('')
-const sessionMcpEnabled = ref(mcpSettingsStore.globalEnabled)
-const selectedMcpServerIds = ref([])
-
-// 当前选中的模型（支持用户手动切换）
-const currentModel = ref(apiSettingsStore.effectiveDefaultChatModel || '')
-const isCurrentModelSupportsVision = computed(() => {
-  return apiSettingsStore.modelSupportsCapability(currentModel.value, 'vision')
-})
-const isCurrentModelSupportsToolCall = computed(() => {
-  return apiSettingsStore.modelSupportsCapability(currentModel.value, 'tool_call')
-})
-
-// 监听默认模型变化，如果当前模型是默认值且用户没有手动修改过，则更新
-watch(
-  () => apiSettingsStore.effectiveDefaultChatModel,
-  newModel => {
-    if (newModel && newModel !== currentModel.value) {
-      currentModel.value = newModel
-    }
-  },
-  { immediate: false }
-)
-
-watch(
-  () => mcpSettingsStore.globalEnabled,
-  enabled => {
-    sessionMcpEnabled.value = !!enabled
-  }
-)
-
-// 模型列表，转换为 ModelSelector 所需格式
-const modelList = computed(() => {
-  return apiSettingsStore.selectedModels.map(model => ({
-    code: model,
-    name: model
-  }))
-})
-
-const availableMcpServers = computed(() => {
-  return mcpSettingsStore.servers.filter(server => server.enabled)
-})
-
-/**
- * 处理消息提交
- * @param {Object} payload - 提交的消息数据
- * @param {string} payload.message - 用户输入的消息
- */
-const handleMessageSubmit = (payload = {}) => {
-  const { message, fileList = [], mcpServerIds = [] } = payload
-  const safeMessage = typeof message === 'string' ? message : ''
-  const model = currentModel.value || apiSettingsStore.effectiveDefaultChatModel
-  const safeMcpServerIds = Array.isArray(mcpServerIds)
-    ? mcpServerIds
-    : [...selectedMcpServerIds.value]
-  const effectiveMcpServerIds = isCurrentModelSupportsToolCall.value ? safeMcpServerIds : []
-
-  if (!safeMessage.trim() && (!Array.isArray(fileList) || fileList.length === 0)) {
-    return
-  }
-
-  // 检查是否有可用模型
-  if (!apiSettingsStore.hasModels) {
-    // 不显示错误提示，因为按钮已经不可用
-    return
-  }
-
-  // 1. 创建新房间，使用用户第一句话作为标题（截取前50个字符）
-  const title = safeMessage.trim() ? safeMessage.trim().slice(0, 50) : '图片识别'
-  const roomId = chatRoomsStore.createRoom(model, title, {
-    mcpEnabled: !!sessionMcpEnabled.value,
-    mcpServerIds: effectiveMcpServerIds
-  })
-
-  // 2. 存储待发送的消息到 sessionStorage
-  setPendingCompletionsMessage({
-    message: safeMessage,
-    model,
-    fileList,
-    mcpServerIds: effectiveMcpServerIds
-  })
-  try {
-    window.sessionStorage.setItem(
-      'COMPLETIONS_WILL_SEND_MESSAGE',
-      JSON.stringify({
-        message: safeMessage,
-        model,
-        mcpServerIds: effectiveMcpServerIds
-      })
-    )
-  } catch (error) {
-    console.warn('[Completions] 存储待发送消息失败，将使用内存缓存', error)
-  }
-
-  // 3. 跳转到对话页面
-  router.push({
-    name: 'CompletionsChat',
-    query: { roomId }
-  })
-}
+const {
+  senderRef,
+  showSettingsDialog,
+  inputMessage,
+  sessionMcpEnabled,
+  selectedMcpServerIds,
+  currentModel,
+  modelList,
+  availableMcpServers,
+  isCurrentModelSupportsVision,
+  isCurrentModelSupportsToolCall,
+  handleMessageSubmit,
+  mcpSettingsStore
+} = useCompletionsEntry()
 </script>
 
 <style lang="scss" scoped>
