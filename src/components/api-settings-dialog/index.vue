@@ -49,7 +49,6 @@ import { MENU_LIST } from './config'
 import UserProfilePanel from './components/user-profile-panel/index.vue'
 import ApiModelPanel from './components/api-model-panel/index.vue'
 import AppearancePanel from './components/appearance-panel/index.vue'
-import KnowledgePanel from './components/knowledge-panel/index.vue'
 import McpPanel from './components/mcp-panel/index.vue'
 import BackupPanel from './components/backup-panel/index.vue'
 import WebdavPanel from './components/webdav-panel/index.vue'
@@ -85,7 +84,6 @@ const panelComponents = {
   'model-list': markRaw(ApiModelPanel),
   'default-model': markRaw(ApiModelPanel),
   appearance: markRaw(AppearancePanel),
-  knowledge: markRaw(KnowledgePanel),
   mcp: markRaw(McpPanel),
   backup: markRaw(BackupPanel),
   webdav: markRaw(WebdavPanel)

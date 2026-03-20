@@ -47,7 +47,6 @@ declare module 'vue' {
     ImageItem: typeof import('./src/components/completions-message/image-item.vue')['default']
     ImageUpload: typeof import('./src/components/sender/components/image-upload.vue')['default']
     IndexV2: typeof import('./src/components/header/index-v2.vue')['default']
-    KnowledgePanel: typeof import('./src/components/api-settings-dialog/components/knowledge-panel/index.vue')['default']
     Loading: typeof import('./src/components/completions-message/loading.vue')['default']
     LoadingButton: typeof import('./src/components/mention-sender/components/loading-button/index.vue')['default']
     LoadingIcon: typeof import('./src/components/mention-sender/components/loading-button/loading-icon.vue')['default']

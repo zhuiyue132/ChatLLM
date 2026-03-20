@@ -69,10 +69,7 @@ export const useWebdavBackup = ({ autoStart = false } = {}) => {
         defaultModel: apiSettingsStore.defaultChatModel,
         defaultChatModel: apiSettingsStore.defaultChatModel,
         defaultSummaryModel: apiSettingsStore.defaultSummaryModel,
-        defaultTranslateModel: apiSettingsStore.defaultTranslateModel,
-        knowledgeBase: {
-          ...(apiSettingsStore.knowledgeBase || {})
-        }
+        defaultTranslateModel: apiSettingsStore.defaultTranslateModel
       },
       backupSettings: backupSettingsSnapshot,
       themeSettings: {
@@ -109,9 +106,6 @@ export const useWebdavBackup = ({ autoStart = false } = {}) => {
       }
       if (apiSettings.modelCapabilities !== undefined) {
         apiSettingsStore.updateModelCapabilitiesMap(apiSettings.modelCapabilities || {})
-      }
-      if (apiSettings.knowledgeBase !== undefined) {
-        apiSettingsStore.updateKnowledgeBase(apiSettings.knowledgeBase || {})
       }
       apiSettingsStore.setApiValidationPassed(true)
     }

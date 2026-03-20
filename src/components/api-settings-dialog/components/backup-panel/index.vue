@@ -117,10 +117,7 @@ const buildApiSettingsSnapshot = () => {
     defaultModel: apiSettingsStore.defaultChatModel,
     defaultChatModel: apiSettingsStore.defaultChatModel,
     defaultSummaryModel: apiSettingsStore.defaultSummaryModel,
-    defaultTranslateModel: apiSettingsStore.defaultTranslateModel,
-    knowledgeBase: {
-      ...(apiSettingsStore.knowledgeBase || {})
-    }
+    defaultTranslateModel: apiSettingsStore.defaultTranslateModel
   }
 }
 
@@ -168,9 +165,6 @@ const applyAppSettings = appSettings => {
     }
     if (apiSettings.modelCapabilities !== undefined) {
       apiSettingsStore.updateModelCapabilitiesMap(apiSettings.modelCapabilities || {})
-    }
-    if (apiSettings.knowledgeBase !== undefined) {
-      apiSettingsStore.updateKnowledgeBase(apiSettings.knowledgeBase || {})
     }
     apiSettingsStore.setApiValidationPassed(true)
   }

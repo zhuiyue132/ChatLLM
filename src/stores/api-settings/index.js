@@ -61,14 +61,6 @@ export const useApiSettingsStore = defineStore(
     const defaultSummaryModel = ref('') // 标题总结模型
     const defaultTranslateModel = ref('') // 翻译模型
 
-    // 知识库设置
-    const knowledgeBase = ref({
-      enabled: false,
-      apiUrl: '',
-      apiKey: '',
-      defaultCollection: ''
-    })
-
     // 兼容旧版本的 defaultModel
     const defaultModel = computed({
       get: () => defaultChatModel.value,
@@ -194,13 +186,6 @@ export const useApiSettingsStore = defineStore(
       return getModelCapabilities(modelId).includes(capability)
     }
 
-    // 更新知识库设置
-    const updateKnowledgeBase = config => {
-      if (config) {
-        knowledgeBase.value = { ...knowledgeBase.value, ...config }
-      }
-    }
-
     // 重置配置（恢复到环境变量默认值）
     const resetSettings = () => {
       const defaultConfig = getDefaultApiConfig()
@@ -213,12 +198,6 @@ export const useApiSettingsStore = defineStore(
       availableModels.value = []
       modelCapabilities.value = {}
       apiValidationPassed.value = false
-      knowledgeBase.value = {
-        enabled: false,
-        apiUrl: '',
-        apiKey: '',
-        defaultCollection: ''
-      }
     }
 
     return {
@@ -233,7 +212,6 @@ export const useApiSettingsStore = defineStore(
       selectedModels,
       availableModels,
       modelCapabilities,
-      knowledgeBase,
       // 计算属性
       settings,
       isConfigured,
@@ -251,7 +229,6 @@ export const useApiSettingsStore = defineStore(
       toggleModelCapability,
       getModelCapabilities,
       modelSupportsCapability,
-      updateKnowledgeBase,
       resetSettings
     }
   },
