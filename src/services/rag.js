@@ -8,6 +8,7 @@
  */
 
 import { getEmbeddings } from '@/api/embedding'
+import { rerank } from '@/api/rerank'
 import { searchVectors } from '@/services/vector-store'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useKnowledgeBaseStore } from '@/stores/knowledge-base'
@@ -87,9 +88,51 @@ export const queryKnowledgeBases = async ({ query, kbIds, topK = 5 }) => {
 
   if (allResults.length === 0) return null
 
-  // 按 score 降序排序（score 越高越相似），取 topK 个结果
-  allResults.sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-  const topResults = allResults.slice(0, topK)
+  // 收集所有涉及的知识库的 rerankModel（取第一个非空的）
+  let rerankModel = ''
+  for (const kbId of kbIds) {
+    const kb = kbStore.getKnowledgeBaseById(kbId)
+    if (kb?.rerankModel) {
+      rerankModel = kb.rerankModel
+      break
+    }
+  }
+
+  let topResults
+
+  if (rerankModel && allResults.length > 1) {
+    // 使用 Rerank 模型对召回结果重排序
+    try {
+      const documents = allResults.map(r => r.metadata?.text || '')
+      const rerankResults = await rerank({
+        baseURL: apiSettingsStore.baseURL,
+        apiKey: apiSettingsStore.apiKey,
+        model: rerankModel,
+        query,
+        documents,
+        topN: topK
+      })
+
+      topResults = rerankResults.map(r => ({
+        ...allResults[r.index],
+        rerankScore: r.relevance_score
+      }))
+
+      console.log('[RAG] Rerank 完成', {
+        model: rerankModel,
+        inputCount: allResults.length,
+        outputCount: topResults.length
+      })
+    } catch (error) {
+      console.warn('[RAG] Rerank 失败，降级为向量相似度排序', error)
+      allResults.sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+      topResults = allResults.slice(0, topK)
+    }
+  } else {
+    // 没有配置 rerank 模型或只有 1 条结果，按向量相似度排序
+    allResults.sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    topResults = allResults.slice(0, topK)
+  }
 
   // 构建上下文文本
   const contextText = topResults

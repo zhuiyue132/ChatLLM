@@ -41,6 +41,26 @@
           </div>
         </el-form-item>
 
+        <el-form-item label="Rerank 模型（可选）">
+          <el-select
+            v-model="form.rerankModel"
+            placeholder="不使用 Rerank"
+            filterable
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="model in rerankModels"
+              :key="model"
+              :label="model"
+              :value="model"
+            />
+          </el-select>
+          <div class="form-item-tip">
+            配置后将对向量召回结果进行语义重排序，提升检索精度
+          </div>
+        </el-form-item>
+
         <el-form-item label="向量维度">
           <el-input-number
             v-model="form.dimensions"
@@ -137,9 +157,16 @@ const embeddingModels = computed(() => {
   )
 })
 
+const rerankModels = computed(() => {
+  return apiSettingsStore.selectedModels.filter(modelId =>
+    apiSettingsStore.modelSupportsCapability(modelId, 'rerank')
+  )
+})
+
 const createEmptyForm = () => ({
   name: '',
   embeddingModel: '',
+  rerankModel: '',
   dimensions: 1536,
   chunkSize: 512,
   chunkOverlap: 64,
@@ -152,6 +179,7 @@ const fillForm = data => {
   const source = data || createEmptyForm()
   form.name = source.name || ''
   form.embeddingModel = source.embeddingModel || ''
+  form.rerankModel = source.rerankModel || ''
   form.dimensions = source.dimensions || 1536
   form.chunkSize = source.chunkSize || 512
   form.chunkOverlap = source.chunkOverlap || 64
@@ -180,6 +208,7 @@ const handleSave = () => {
   emit('save', {
     name: form.name.trim(),
     embeddingModel: form.embeddingModel,
+    rerankModel: form.rerankModel,
     dimensions: form.dimensions,
     chunkSize: form.chunkSize,
     chunkOverlap: form.chunkOverlap,

@@ -20,6 +20,7 @@ const normalizeKnowledgeBase = kb => {
     id: normalized.id || generateId(),
     name: `${normalized.name || ''}`.trim(),
     embeddingModel: `${normalized.embeddingModel || ''}`.trim(),
+    rerankModel: `${normalized.rerankModel || ''}`.trim(),
     dimensions: Math.max(1, Math.floor(Number(normalized.dimensions) || 1536)),
     chunkSize: Math.max(64, Math.floor(Number(normalized.chunkSize) || 512)),
     chunkOverlap: Math.max(0, Math.floor(Number(normalized.chunkOverlap) || 64)),
