@@ -243,6 +243,9 @@ export const useChatDisplayHistory = ({ chatHistory, loading, receivingMessageId
       if (msg.model) {
         pendingAssistantNode.model = msg.model
       }
+      if (Array.isArray(msg.ragSources) && msg.ragSources.length > 0) {
+        pendingAssistantNode.ragSources = msg.ragSources
+      }
       if (msg.id && !pendingAssistantNode.mergedAssistantIds.includes(msg.id)) {
         pendingAssistantNode.mergedAssistantIds.push(msg.id)
       }

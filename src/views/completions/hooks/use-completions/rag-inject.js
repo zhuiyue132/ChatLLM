@@ -15,14 +15,14 @@ import { queryKnowledgeBases, buildRAGSystemMessage } from '@/services/rag'
  * @param {string} options.query - 用户消息文本
  * @param {string[]} options.kbIds - 知识库 ID 列表
  * @param {Object[]} options.openAIMessages - 已构建的 OpenAI 消息数组（会被修改）
- * @returns {Promise<void>}
+ * @returns {Promise<Array|null>} 检索到的 sources，供消息组件展示引用来源
  */
 export const injectRAGContext = async ({ query, kbIds, openAIMessages }) => {
   console.log('[RAG] injectRAGContext 被调用', { query: query?.slice(0, 50), kbIds })
 
   if (!query?.trim() || !Array.isArray(kbIds) || kbIds.length === 0) {
     console.log('[RAG] 跳过注入: query 为空或 kbIds 为空')
-    return
+    return null
   }
 
   try {
@@ -38,8 +38,11 @@ export const injectRAGContext = async ({ query, kbIds, openAIMessages }) => {
         kbIds,
         resultCount: ragResult.sources?.length || 0
       })
+      return ragResult.sources || null
     }
   } catch (error) {
     console.warn('[RAG] 知识库检索失败，已降级为普通对话', error)
   }
+
+  return null
 }

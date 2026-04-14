@@ -59,6 +59,7 @@
               :total-pages="msg.siblingCount || 1"
               :usage="msg.usage"
               :segments="msg.assistantSegments"
+              :rag-sources="msg.ragSources"
               @regenerate="handleRegenerateAnswer"
               @prev="handleAssistantPrevPage(msg.parentId)"
               @next="handleAssistantNextPage(msg.parentId)"

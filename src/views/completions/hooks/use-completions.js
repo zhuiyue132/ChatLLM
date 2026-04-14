@@ -645,11 +645,16 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     })
 
     // RAG 知识库检索注入
-    await injectRAGContext({
+    const ragSources = await injectRAGContext({
       query: sentMessage,
       kbIds: sentKbIds,
       openAIMessages
     })
+
+    // 将 RAG 引用来源存入 assistant 消息节点
+    if (ragSources && ragSources.length > 0) {
+      chatRoomsStore.updateMessage(id, assistantMessageId, { ragSources })
+    }
 
     await sendMessageWithMcp({
       assistantMessageId,
@@ -772,11 +777,15 @@ export function useCompletions({ roomId, scrollContainer = null }) {
 
       // RAG 知识库检索注入
       const userContent = userMessageNode.content || ''
-      await injectRAGContext({
+      const ragSources = await injectRAGContext({
         query: userContent,
         kbIds: resolveRoomSelectedKbIds(),
         openAIMessages
       })
+
+      if (ragSources && ragSources.length > 0) {
+        chatRoomsStore.updateMessage(id, newAssistantMessageId, { ragSources })
+      }
 
       await sendMessageWithMcp({
         assistantMessageId: newAssistantMessageId,
@@ -1016,11 +1025,15 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       })
 
       // RAG 知识库检索注入
-      await injectRAGContext({
+      const ragSources = await injectRAGContext({
         query: editedContent,
         kbIds: resolveRoomSelectedKbIds(),
         openAIMessages
       })
+
+      if (ragSources && ragSources.length > 0) {
+        chatRoomsStore.updateMessage(id, newAssistantMessageId, { ragSources })
+      }
 
       await sendMessageWithMcp({
         assistantMessageId: newAssistantMessageId,

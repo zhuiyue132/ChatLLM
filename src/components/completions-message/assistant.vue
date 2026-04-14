@@ -179,6 +179,38 @@
         </template>
       </template>
 
+      <!-- RAG 知识库引用来源 -->
+      <div v-if="hasRagSources && finished" class="rag-sources-section">
+        <button
+          type="button"
+          class="rag-sources-toggle"
+          @click="showRagSources = !showRagSources"
+        >
+          <div class="rag-sources-label">
+            <i class="iconfont icon-wendang" style="font-size: 14px"></i>
+            <span>引用来源 ({{ ragSourcesCount }})</span>
+          </div>
+          <i
+            class="iconfont icon-arrowDown rag-toggle-icon"
+            :class="{ expanded: showRagSources }"
+          ></i>
+        </button>
+
+        <div v-show="showRagSources" class="rag-sources-list">
+          <div v-for="(source, idx) in ragSources" :key="idx" class="rag-source-item">
+            <div class="rag-source-header">
+              <span class="rag-source-name">{{ source.metadata?.source || source.kbName || '未知来源' }}</span>
+              <span v-if="source.score != null || source.rerankScore != null" class="rag-source-score">
+                {{ (source.rerankScore ?? source.score ?? 0).toFixed(3) }}
+              </span>
+            </div>
+            <div v-if="source.metadata?.text" class="rag-source-text">
+              {{ source.metadata.text.length > 200 ? source.metadata.text.slice(0, 200) + '...' : source.metadata.text }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 操作按钮栏，只在消息完成时显示 -->
       <div v-if="finished" class="message-actions">
         <div class="action-button">
@@ -310,6 +342,11 @@ const props = defineProps({
   mcpLogs: {
     type: Array,
     default: () => []
+  },
+  // RAG 知识库引用来源
+  ragSources: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -323,6 +360,15 @@ const LoadingComponent = computed(() => {
 const showThinking = ref(false)
 const segmentThinkingVisibility = ref({})
 const mcpSegmentExpanded = ref({})
+const showRagSources = ref(false)
+
+const hasRagSources = computed(() => {
+  return Array.isArray(props.ragSources) && props.ragSources.length > 0
+})
+
+const ragSourcesCount = computed(() => {
+  return hasRagSources.value ? props.ragSources.length : 0
+})
 
 const normalizeAssistantText = value => {
   if (typeof value === 'string') {
@@ -1034,6 +1080,94 @@ const regenerateMessage = () => {
         /* 88.889% */
 
         @include flex-gap(8px, row);
+      }
+    }
+  }
+
+  // RAG 引用来源
+  .rag-sources-section {
+    width: 100%;
+    margin-top: 4px;
+
+    .rag-sources-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: auto;
+      padding: 6px 12px;
+      cursor: pointer;
+      border: 0;
+      border-radius: 6px;
+      background: var(--bg-highlight);
+      font-size: 13px;
+      gap: 8px;
+
+      .rag-sources-label {
+        display: flex;
+        align-items: center;
+        color: var(--text-light-color);
+        gap: 6px;
+      }
+
+      .rag-toggle-icon {
+        transition: transform 0.2s ease;
+        color: var(--text-dblight-color);
+        font-size: 12px;
+
+        &.expanded {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    .rag-sources-list {
+      margin-top: 8px;
+      border: 1px solid var(--border-color-muted);
+      border-radius: 8px;
+      background: var(--bg-panel);
+    }
+
+    .rag-source-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color-muted);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .rag-source-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+
+        .rag-source-name {
+          overflow: hidden;
+          flex: 1;
+          min-width: 0;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          color: var(--text-normal-color);
+          font-size: 13px;
+          font-weight: 500;
+        }
+
+        .rag-source-score {
+          flex-shrink: 0;
+          margin-left: 8px;
+          color: var(--text-dblight-color);
+          font-family: monospace;
+          font-size: 12px;
+        }
+      }
+
+      .rag-source-text {
+        overflow: hidden;
+        max-height: 80px;
+        color: var(--text-light-color);
+        font-size: 12px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
       }
     }
   }
