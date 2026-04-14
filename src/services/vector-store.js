@@ -245,6 +245,55 @@ export const deleteVectorStore = async kbId => {
 }
 
 /**
+ * 获取知识库中的文档列表（按文件名去重）
+ * @param {string} kbId
+ * @returns {Promise<Array<{ source: string, chunkCount: number, createdAt: string }>>}
+ */
+export const getDocumentList = async kbId => {
+  const rawItems = await readRawData(kbId)
+  if (!rawItems || rawItems.length === 0) return []
+
+  const docMap = new Map()
+  for (const item of rawItems) {
+    const source = item.metadata?.source || '未知文件'
+    if (!docMap.has(source)) {
+      docMap.set(source, { source, chunkCount: 0, createdAt: item.metadata?.createdAt || '' })
+    }
+    docMap.get(source).chunkCount++
+  }
+
+  return Array.from(docMap.values()).sort((a, b) => {
+    if (!a.createdAt || !b.createdAt) return 0
+    return a.createdAt < b.createdAt ? -1 : 1
+  })
+}
+
+/**
+ * 删除知识库中某个文件的所有向量
+ * @param {string} kbId
+ * @param {string} source - 文件名（metadata.source）
+ * @returns {Promise<number>} 被删除的分块数
+ */
+export const removeDocumentBySource = async (kbId, source) => {
+  const rawItems = await readRawData(kbId)
+  if (!rawItems || rawItems.length === 0) return 0
+
+  const before = rawItems.length
+  const remaining = rawItems.filter(item => item.metadata?.source !== source)
+  const removedCount = before - remaining.length
+
+  if (removedCount === 0) return 0
+
+  // 重写 IndexedDB
+  await writeRawData(kbId, remaining)
+
+  // 清除内存缓存，下次访问时从新数据重建索引
+  instanceCache.delete(kbId)
+
+  return removedCount
+}
+
+/**
  * 清除全部内存缓存
  */
 export const clearVectorStoreCache = () => {

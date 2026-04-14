@@ -91,6 +91,15 @@ export const useKnowledgeBaseStore = defineStore(
       })
     }
 
+    const decrementDocumentCount = (kbId, removedDocuments = 1, removedChunks = 0) => {
+      const kb = getKnowledgeBaseById(kbId)
+      if (!kb) return
+      return updateKnowledgeBase(kbId, {
+        documentCount: Math.max(0, kb.documentCount - removedDocuments),
+        chunkCount: Math.max(0, kb.chunkCount - removedChunks)
+      })
+    }
+
     const resetSettings = () => {
       knowledgeBases.value = []
     }
@@ -104,6 +113,7 @@ export const useKnowledgeBaseStore = defineStore(
       deleteKnowledgeBase,
       toggleEnabled,
       incrementDocumentCount,
+      decrementDocumentCount,
       resetSettings
     }
   },

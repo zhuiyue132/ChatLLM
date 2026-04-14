@@ -44,6 +44,7 @@
                 size="small"
                 @update:model-value="handleToggleEnabled(kb.id, $event)"
               />
+              <el-button link size="small" @click="handleViewDocuments(kb)">文件</el-button>
               <el-button link size="small" @click="handleUploadDocuments(kb)">上传</el-button>
               <el-button link size="small" @click="handleEditKb(kb)">编辑</el-button>
               <el-button link size="small" type="danger" @click="handleDeleteKb(kb.id)">
@@ -64,6 +65,38 @@
       :knowledge-base="uploadingKb"
       @uploaded="handleDocumentsUploaded"
     />
+
+    <!-- 文件列表对话框 -->
+    <el-dialog
+      v-model="docListDialogVisible"
+      :title="`文件列表 - ${viewingKb?.name || ''}`"
+      width="560px"
+      append-to-body
+      destroy-on-close
+      class="doc-list-dialog"
+    >
+      <div class="doc-list-body">
+        <div v-if="docListLoading" class="doc-list-loading">加载中...</div>
+        <div v-else-if="documentList.length === 0" class="doc-list-empty">暂无文件</div>
+        <div v-else class="doc-list">
+          <div v-for="doc in documentList" :key="doc.source" class="doc-item">
+            <div class="doc-info">
+              <div class="doc-name">{{ doc.source }}</div>
+              <div class="doc-meta">{{ doc.chunkCount }} 个分块</div>
+            </div>
+            <el-button
+              link
+              size="small"
+              type="danger"
+              :loading="deletingSource === doc.source"
+              @click="handleDeleteDocument(doc.source)"
+            >
+              删除
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -71,7 +104,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useKnowledgeBaseStore } from '@/stores/knowledge-base'
-import { deleteVectorStore } from '@/services/vector-store'
+import { deleteVectorStore, getDocumentList, removeDocumentBySource } from '@/services/vector-store'
 import KbEditorDialog from './kb-editor-dialog.vue'
 import DocumentUpload from './document-upload.vue'
 
@@ -87,6 +120,12 @@ const editorDialogVisible = ref(false)
 const editingKb = ref(null)
 const uploadDialogVisible = ref(false)
 const uploadingKb = ref(null)
+
+const docListDialogVisible = ref(false)
+const viewingKb = ref(null)
+const documentList = ref([])
+const docListLoading = ref(false)
+const deletingSource = ref('')
 
 const handleCreateKb = () => {
   editingKb.value = null
@@ -143,7 +182,62 @@ const handleUploadDocuments = kb => {
 }
 
 const handleDocumentsUploaded = () => {
-  // 上传完成后可刷新列表（store 已自动更新）
+  // 上传完成后刷新文件列表（如果正在查看同一个知识库）
+  if (viewingKb.value?.id === uploadingKb.value?.id && docListDialogVisible.value) {
+    loadDocumentList(viewingKb.value.id)
+  }
+}
+
+const loadDocumentList = async kbId => {
+  docListLoading.value = true
+  try {
+    documentList.value = await getDocumentList(kbId)
+  } catch (error) {
+    console.warn('[KB] 加载文件列表失败:', error)
+    documentList.value = []
+  } finally {
+    docListLoading.value = false
+  }
+}
+
+const handleViewDocuments = async kb => {
+  viewingKb.value = kb
+  docListDialogVisible.value = true
+  await loadDocumentList(kb.id)
+}
+
+const handleDeleteDocument = async source => {
+  if (!viewingKb.value) return
+
+  const confirmed = await ElMessageBox.confirm(
+    `删除文件「${source}」将移除其所有分块数据，此操作不可恢复。`,
+    '确认删除文件',
+    {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    }
+  )
+    .then(() => true)
+    .catch(() => false)
+
+  if (!confirmed) return
+
+  const kbId = viewingKb.value.id
+  deletingSource.value = source
+
+  try {
+    const removedChunks = await removeDocumentBySource(kbId, source)
+    if (removedChunks > 0) {
+      kbStore.decrementDocumentCount(kbId, 1, removedChunks)
+    }
+    ElMessage.success(`已删除文件「${source}」（${removedChunks} 个分块）`)
+    await loadDocumentList(kbId)
+  } catch (error) {
+    ElMessage.error(`删除失败: ${error.message || '未知错误'}`)
+  } finally {
+    deletingSource.value = ''
+  }
 }
 </script>
 
@@ -285,6 +379,70 @@ const handleDocumentsUploaded = () => {
       width: 100%;
       margin-left: 0;
     }
+  }
+}
+
+.doc-list-body {
+  .doc-list-loading,
+  .doc-list-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    color: var(--text-dblight-color);
+    font-size: 13px;
+  }
+
+  .doc-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .doc-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color-muted);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .doc-info {
+      overflow: hidden;
+      flex: 1;
+      min-width: 0;
+
+      .doc-name {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        color: var(--text-normal-color);
+        font-size: 14px;
+      }
+
+      .doc-meta {
+        margin-top: 2px;
+        color: var(--text-dblight-color);
+        font-size: 12px;
+      }
+    }
+  }
+}
+</style>
+
+<style lang="scss">
+.doc-list-dialog {
+  --el-dialog-padding-primary: 12px !important;
+
+  .el-dialog__header {
+    margin-right: 0;
+    padding: 12px 24px;
+  }
+
+  .el-dialog__body {
+    padding: 0 24px 24px;
   }
 }
 </style>
