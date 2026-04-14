@@ -4,14 +4,14 @@
 
 ![ChatLLM Logo](./src/assets/logo.svg)
 
-**一个功能强大的 AI 对话应用，支持多模型对话、深度思考和多分支对话树**
+**一个本地优先的 AI 对话应用，支持多模型对话、树形分支、深度思考、本地知识库 RAG 与 MCP 工具调用**
 
 [![Vue 3](https://img.shields.io/badge/Vue-3.5+-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-7.0+-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Element Plus](https://img.shields.io/badge/Element%20Plus-2.11+-409EFF?style=flat-square&logo=element&logoColor=white)](https://element-plus.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-[在线演示](https://chatllm-demo.example.com) · [功能介绍](#-核心功能) · [快速开始](#-快速开始) · [文档](./docs)
+[功能介绍](#-核心功能) · [快速开始](#-快速开始) · [使用指南](#-使用指南) · [开发指南](#-开发指南)
 
 </div>
 
@@ -19,181 +19,237 @@
 
 ### 🌳 树形对话结构
 - **多分支对话**：编辑消息或重新生成时自动创建新分支
-- **历史浏览**：在分支间自由切换，探索不同的对话路径
-- **完整保留**：所有对话版本都被保存，方便回顾和对比
+- **历史浏览**：在分支间自由切换，探索不同对话路径
+- **完整保留**：所有对话版本都会保存在本地
 
-### 🧠 深度思考展示
-- **推理过程可视化**：实时显示 AI 的推理内容
-- **推理时长统计**：自动计算并显示思考时间
-- **双层展示**：推理过程与最终答案分离显示，更清晰
+### 🧠 深度思考 + 流式输出
+- **推理过程可视化**：支持展示 `reasoning_content`
+- **推理时长统计**：自动计算并显示思考耗时
+- **流式响应**：基于 SSE 实时更新内容
+- **分段渲染优化**：减少长消息流式输出时的重渲染开销
 
-### 🚀 流式响应体验
-- **实时流式输出**：基于 SSE 的流式响应，极速呈现
-- **多模型支持**：兼容 OpenAI API 格式的各类模型
-- **智能识别**：自动处理流式和非流式响应
+### 📚 本地知识库 RAG
+- **本地知识库管理**：在设置页创建、启用、编辑知识库
+- **文档上传与切分**：上传文档后自动分块、向量化并存入本地 IndexedDB
+- **检索增强对话**：发送消息时可按条选择知识库参与检索
+- **引用来源展示**：回答完成后可展开查看命中的引用来源
+- **Rerank 重排序**：可为知识库配置 rerank 模型，对召回结果进行重排
+- **文件查看与删除**：支持查看知识库内文件列表，并按文件删除已索引内容
 
-### 💾 数据管理
-- **本地持久化**：使用 IndexedDB 可靠存储对话数据
-- **数据导入导出**：支持备份和迁移对话历史
+### 🛠 MCP 工具调用
+- **Streamable HTTP MCP**：支持配置和管理 MCP 服务
+- **会话级开关 + 单条选择**：可按会话启用，再按消息选择具体服务
+- **工具调用日志**：对话中展示 MCP 工具调用过程与结果
+
+### 🖼 多模态与输入增强
+- **图片输入**：视觉模型下支持上传图片参与对话
+- **输入翻译**：输入框支持中英互译
+- **Markdown 渲染**：支持代码高亮、数学公式、Mermaid 图表
+
+### 💾 本地数据与备份
+- **本地持久化**：对话、配置、知识库配置等均持久化到浏览器本地
+- **导入导出**：支持对话数据备份与迁移
+- **WebDAV 备份**：支持通过 WebDAV 同步备份
 - **格式兼容**：支持 Cherry Studio 数据格式转换
-
-### 🎨 精美界面
-- **响应式设计**：完美适配桌面和移动设备
-- **主题定制**：支持深色/浅色主题切换
-- **动画效果**：流畅的过渡动画和加载效果
-- **Markdown 渲染**：支持数学公式、代码高亮、图表渲染
 
 ## 🛠 技术栈
 
 ### 核心框架
-- **[Vue 3](https://vuejs.org/)** - 渐进式 JavaScript 框架
-- **[Vite 7](https://vitejs.dev/)** - 新一代前端构建工具
-- **[Vue Router 4](https://router.vuejs.org/)** - 官方路由管理
-- **[Pinia](https://pinia.vuejs.org/)** - Vue 3 状态管理库
+- **[Vue 3](https://vuejs.org/)**
+- **[Vite 7](https://vitejs.dev/)**
+- **[Vue Router 4](https://router.vuejs.org/)**
+- **[Pinia](https://pinia.vuejs.org/)**
 
-### UI 组件
-- **[Element Plus](https://element-plus.org/)** - Vue 3 UI 组件库
-- **SCSS** - CSS 预处理器，支持主题定制
+### UI 与样式
+- **[Element Plus](https://element-plus.org/)**
+- **SCSS**
 
-### Markdown 渲染
-- **[unified](https://unifiedjs.com/)** - 强大的内容处理管道
-- **[remark](https://remark.js.org/)** - Markdown 处理器
-- **[rehype](https://rehypejs.com/)** - HTML 处理器
-- **[KaTeX](https://katex.org/)** - 数学公式渲染
-- **[Mermaid](https://mermaid-js.github.io/)** - 图表和流程图
+### Markdown / 内容处理
+- **[unified](https://unifiedjs.com/)**
+- **[remark](https://remark.js.org/)**
+- **[rehype](https://rehypejs.com/)**
+- **[KaTeX](https://katex.org/)**
+- **[Mermaid](https://mermaid.js.org/)**
 
-### 工具库
-- **[localforage](https://localforage.github.io/localForage/)** - 离线存储
-- **[dayjs](https://day.js.org/)** - 轻量级日期处理
-- **[@vueuse/core](https://vueuse.org/)** - Vue 组合式工具集
+### 本地数据与工具库
+- **[localforage](https://localforage.github.io/localForage/)**
+- **[edgevec](https://www.npmjs.com/package/edgevec)** - 本地向量检索
+- **[dayjs](https://day.js.org/)**
+- **[@vueuse/core](https://vueuse.org/)**
 
 ## 📦 快速开始
 
 ### 环境要求
 
-- Node.js >= 16.0.0
-- npm >= 8.0.0 或 yarn >= 1.22.0
+- 建议使用较新的 Node.js LTS 版本
+- npm / yarn / pnpm 任一可用
 
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 启动开发环境
+
+```bash
+npm run dev
+```
+
+默认会启动 Vite 开发服务器，并开启 `--host` 方便局域网访问。
+
+### 构建生产版本
+
+```bash
+npm run build
+npm run preview
+```
 
 ## 🐳 Docker 部署
 
 ### 使用 Docker Compose（推荐）
 
 ```bash
-# 构建并启动服务
 docker-compose up -d
-
-# 访问 http://localhost:3002
 ```
+
+访问 `http://localhost:3002`
 
 ### 使用 Dockerfile
 
 ```bash
-# 构建镜像
 docker build -t chatllm .
-
-# 运行容器
 docker run -p 3002:80 chatllm
 ```
 
 ## 📖 使用指南
 
-### 基础对话
+### 1. 配置模型
 
-1. 在输入框中输入您的问题
-2. 点击发送或按 `Ctrl+Enter` 发送消息
-3. AI 将以流式方式返回响应
+1. 打开设置
+2. 配置 OpenAI 兼容接口的 `baseURL` / `apiKey`
+3. 选择可用模型，并设置默认对话模型
 
-### 多分支对话
+### 2. 基础对话
 
-1. **编辑消息**：点击已发送消息旁的编辑图标，修改后发送将创建新分支
-2. **重新生成**：点击 AI 回答旁的重新生成按钮，获得不同答案
-3. **切换分支**：使用消息旁的分支切换按钮浏览不同对话路径
+1. 在输入框中输入问题
+2. 点击发送或按 `Enter`
+3. AI 以流式方式返回响应
 
-### 深度思考
+### 3. 多分支对话
 
-- 支持 `reasoning_content` 的模型会显示推理过程
-- 推理时长会自动计算并显示
-- 可以折叠/展开推理内容区域
+1. **编辑消息**：编辑已发送消息后再次发送，会创建新分支
+2. **重新生成**：对 assistant 消息重新生成，得到另一条分支
+3. **切换分支**：通过分页/分支切换查看不同回答路径
 
-### 数据管理
+### 4. 使用知识库
 
-1. **导出数据**：设置页面支持导出所有对话数据
-2. **导入数据**：支持导入之前备份的数据文件
-3. **格式转换**：可导入 Cherry Studio 导出的 JSON 文件
+1. 进入设置页的 **知识库**
+2. 新建知识库并配置 embedding 模型，可选配置 rerank 模型
+3. 上传文档，等待索引完成
+4. 在发送器里选择一个或多个知识库
+5. 回答完成后，可在 assistant 消息下展开 **引用来源**
 
-## 🏗 项目架构
+### 5. 使用 MCP
 
-```
+1. 进入设置页的 **MCP**
+2. 添加 Streamable HTTP MCP 服务
+3. 在发送器中打开会话 MCP 开关
+4. 为当前消息选择可用 MCP 服务
+5. 工具调用过程会以日志形式显示在消息流中
+
+### 6. 数据备份
+
+- 支持本地导入/导出
+- 支持 WebDAV 备份
+
+## 🏗 项目结构
+
+```text
 src/
-├── components/          # 可复用组件
-│   ├── sender/         # 消息发送器
-│   └── x-markdown/     # Markdown 渲染组件
-├── views/              # 页面组件
-│   ├── completions/    # 对话页面
-│   └── settings/       # 设置页面
-├── stores/             # Pinia 状态管理
-│   ├── chat-rooms/     # 对话房间管理
-│   └── api-settings/   # API 配置管理
-├── hooks/              # 组合式函数
-│   ├── use-sse/        # SSE 通信封装
-│   └── use-completions/ # 对话逻辑
-├── utils/              # 工具函数
-│   └── data-backup.js  # 数据备份工具
-└── styles/             # 样式文件
-    ├── mixins.scss     # 全局 mixins
-    └── element-plus/   # Element Plus 主题定制
+├── api/
+│   ├── mcp/                          # MCP Streamable HTTP 客户端
+│   └── rerank.js                     # /v1/rerank 调用
+├── components/
+│   ├── api-settings-dialog/          # 设置弹窗（含知识库/MCP/WebDAV）
+│   ├── completions-message/          # 对话消息渲染
+│   ├── sender/                       # 发送器（模型/MCP/知识库/翻译/图片）
+│   └── x-markdown/                   # Markdown 渲染组件
+├── services/
+│   ├── rag.js                        # RAG 检索与上下文构建
+│   ├── vector-store.js               # 本地向量存储
+│   └── document-processor.js         # 文档切分处理
+├── stores/
+│   ├── api-settings/                 # API 与模型配置
+│   ├── chat-rooms/                   # 房间与消息树
+│   ├── knowledge-base/               # 知识库配置
+│   └── mcp-settings/                 # MCP 配置
+├── views/
+│   └── completions/
+│       ├── hooks/use-completions.js  # 对话主流程
+│       └── hooks/use-completions/    # RAG / MCP / 文件 / 流式子模块
+└── hooks/
+    └── use-sse/                      # OpenAI SSE 封装
 ```
 
 ## 🔧 开发指南
 
-### 代码规范
-
-项目使用 ESLint + Prettier + Stylelint 确保代码质量：
+### 常用命令
 
 ```bash
-# 代码检查和修复
+# 开发
+npm run dev
+
+# 构建
+npm run build
+
+# 预览
+npm run preview
+
+# 代码检查
 npm run lint
 
 # 代码格式化
 npm run format
 
-# 样式检查和修复
+# 样式检查
 npm run stylelint
 ```
 
 ### 提交规范
 
-使用 Conventional Commits 规范：
+项目使用 Conventional Commits，提交历史中会配合 emoji 前缀：
 
 ```bash
-# 使用 commitizen 提交
 npm run commit
-
-# 提交类型
-feat: 新功能
-fix: 修复问题
-docs: 文档更新
-style: 代码格式
-refactor: 重构
-test: 测试
-chore: 构建/工具
 ```
 
-### 目录结构说明
+示例：
 
-- `components/` - 可复用的 Vue 组件
-- `views/` - 页面级组件，配合路由使用
-- `stores/` - Pinia 状态管理模块
-- `hooks/` - Vue 3 Composition API 组合式函数
-- `utils/` - 纯函数工具库
-- `assets/` - 静态资源（图片、字体等）
-- `styles/` - 全局样式文件
+- `✨ feat(knowledge-base): 展示 RAG 引用来源`
+- `♻️ refactor(completions): 拆分对话页逻辑并抽离 OpenAI/MCP 子模块`
+
+### 最低验证要求
+
+提交前至少执行：
+
+```bash
+npm run lint
+npm run stylelint
+npm run build
+```
+
+并手动验证：
+- 聊天发送 / 流式输出
+- 模型切换
+- 知识库上传 / 检索 / 引用展示
+- MCP 配置 / 调用日志
+- 数据导入导出
 
 ---
 
 <div align="center">
 
-**如果这个项目对您有帮助，请给我们一个 ⭐️**
+**如果这个项目对你有帮助，欢迎点个 ⭐️**
 
 </div>
