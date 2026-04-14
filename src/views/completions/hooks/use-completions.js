@@ -23,6 +23,7 @@ import { buildOpenAIMessages } from './use-completions/openai-messages'
 import { createStreamingSync } from './use-completions/streaming-sync'
 import { requestOpenAICompletion as requestOpenAICompletionRaw } from './use-completions/openai-stream'
 import { createMcpRunner } from './use-completions/mcp-runner'
+import { injectRAGContext } from './use-completions/rag-inject'
 
 /**
  * 单模型对话 Hook
@@ -374,6 +375,10 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     return Array.isArray(currentRoom.value?.mcpServerIds) ? [...currentRoom.value.mcpServerIds] : []
   }
 
+  const resolveRoomSelectedKbIds = () => {
+    return Array.isArray(currentRoom.value?.kbIds) ? [...currentRoom.value.kbIds] : []
+  }
+
   const resolveActiveMcpServerIds = ({ requestedServerIds, model }) => {
     if (!apiSettingsStore.modelSupportsCapability(model, 'tool_call')) {
       return []
@@ -549,6 +554,7 @@ export function useCompletions({ roomId, scrollContainer = null }) {
     const effectiveMcpServerIds = apiSettingsStore.modelSupportsCapability(targetModel, 'tool_call')
       ? sentMcpServerIds
       : []
+    const sentKbIds = Array.isArray(payload.kbIds) ? [...payload.kbIds] : resolveRoomSelectedKbIds()
     const storedFileList = sanitizeFileListForStorage(sentFileList)
 
     if (!sentMessage.trim() && sentFileList.length === 0) {
@@ -636,6 +642,13 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       overrideImageDataUrlsByMessageId: {
         [userMessageId]: getImageDataUrls(sentFileList)
       }
+    })
+
+    // RAG 知识库检索注入
+    await injectRAGContext({
+      query: sentMessage,
+      kbIds: sentKbIds,
+      openAIMessages
     })
 
     await sendMessageWithMcp({
@@ -756,6 +769,14 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       const selectedMcpServerIds = currentModelSupportsToolCall.value
         ? resolveRoomSelectedMcpServerIds()
         : []
+
+      // RAG 知识库检索注入
+      const userContent = userMessageNode.content || ''
+      await injectRAGContext({
+        query: userContent,
+        kbIds: resolveRoomSelectedKbIds(),
+        openAIMessages
+      })
 
       await sendMessageWithMcp({
         assistantMessageId: newAssistantMessageId,
@@ -992,6 +1013,13 @@ export function useCompletions({ roomId, scrollContainer = null }) {
       const userMsgIndex = allMessages.findIndex(msg => msg.id === newUserMessageId)
       const openAIMessages = buildOpenAIMessages(allMessages.slice(0, userMsgIndex + 1), {
         supportsVision: currentModelSupportsVision.value
+      })
+
+      // RAG 知识库检索注入
+      await injectRAGContext({
+        query: editedContent,
+        kbIds: resolveRoomSelectedKbIds(),
+        openAIMessages
       })
 
       await sendMessageWithMcp({

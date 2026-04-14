@@ -14,6 +14,7 @@ import { OPEN_SETTINGS_COMMAND } from '@/config/symbol'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useMcpSettingsStore } from '@/stores/mcp-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
+import { useKnowledgeBaseStore } from '@/stores/knowledge-base'
 import { setPendingCompletionsMessage } from '../utils'
 
 const WILL_SEND_SESSION_KEY = 'COMPLETIONS_WILL_SEND_MESSAGE'
@@ -23,12 +24,14 @@ export const useCompletionsEntry = () => {
   const apiSettingsStore = useApiSettingsStore()
   const mcpSettingsStore = useMcpSettingsStore()
   const chatRoomsStore = useChatRoomsStore()
+  const kbStore = useKnowledgeBaseStore()
 
   const senderRef = ref(null)
   const showSettingsDialog = ref(false)
   const inputMessage = ref('')
   const sessionMcpEnabled = ref(mcpSettingsStore.globalEnabled)
   const selectedMcpServerIds = ref([])
+  const selectedKbIds = ref([])
 
   const currentModel = ref(apiSettingsStore.effectiveDefaultChatModel || '')
   const isCurrentModelSupportsVision = computed(() => {
@@ -73,8 +76,12 @@ export const useCompletionsEntry = () => {
     return mcpSettingsStore.servers.filter(server => server.enabled)
   })
 
+  const availableKnowledgeBases = computed(() => {
+    return kbStore.enabledKnowledgeBases
+  })
+
   const handleMessageSubmit = (payload = {}) => {
-    const { message, fileList = [], mcpServerIds = [] } = payload
+    const { message, fileList = [], mcpServerIds = [], kbIds = [] } = payload
     const safeMessage = typeof message === 'string' ? message : ''
     const model = currentModel.value || apiSettingsStore.effectiveDefaultChatModel
     const safeMcpServerIds = Array.isArray(mcpServerIds)
@@ -94,9 +101,11 @@ export const useCompletionsEntry = () => {
 
     // 1. 创建新房间，使用用户第一句话作为标题（截取前50个字符）
     const title = safeMessage.trim() ? safeMessage.trim().slice(0, 50) : '图片识别'
+    const safeKbIds = Array.isArray(kbIds) ? kbIds : [...selectedKbIds.value]
     const roomId = chatRoomsStore.createRoom(model, title, {
       mcpEnabled: !!sessionMcpEnabled.value,
-      mcpServerIds: effectiveMcpServerIds
+      mcpServerIds: effectiveMcpServerIds,
+      kbIds: safeKbIds
     })
 
     // 2. 存储待发送的消息到 sessionStorage
@@ -104,7 +113,8 @@ export const useCompletionsEntry = () => {
       message: safeMessage,
       model,
       fileList,
-      mcpServerIds: effectiveMcpServerIds
+      mcpServerIds: effectiveMcpServerIds,
+      kbIds: safeKbIds
     })
     try {
       window.sessionStorage.setItem(
@@ -112,7 +122,8 @@ export const useCompletionsEntry = () => {
         JSON.stringify({
           message: safeMessage,
           model,
-          mcpServerIds: effectiveMcpServerIds
+          mcpServerIds: effectiveMcpServerIds,
+          kbIds: safeKbIds
         })
       )
     } catch (error) {
@@ -132,13 +143,16 @@ export const useCompletionsEntry = () => {
     inputMessage,
     sessionMcpEnabled,
     selectedMcpServerIds,
+    selectedKbIds,
     currentModel,
     modelList,
     availableMcpServers,
+    availableKnowledgeBases,
     isCurrentModelSupportsVision,
     isCurrentModelSupportsToolCall,
     handleMessageSubmit,
     apiSettingsStore,
-    mcpSettingsStore
+    mcpSettingsStore,
+    kbStore
   }
 }

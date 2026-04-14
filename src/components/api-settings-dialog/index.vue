@@ -29,7 +29,8 @@
           :class="{ active: activeMenu === item.key, disabled: isMenuDisabled(item.key) }"
           @click="handleMenuClick(item.key)"
         >
-          <i :class="item.icon"></i>
+          <component :is="iconComponents[item.icon]" v-if="iconComponents[item.icon]" :size="18" />
+          <i v-else :class="item.icon"></i>
           <span>{{ item.label }}</span>
         </div>
       </div>
@@ -50,8 +51,10 @@ import UserProfilePanel from './components/user-profile-panel/index.vue'
 import ApiModelPanel from './components/api-model-panel/index.vue'
 import AppearancePanel from './components/appearance-panel/index.vue'
 import McpPanel from './components/mcp-panel/index.vue'
+import KnowledgePanel from './components/knowledge-panel/index.vue'
 import BackupPanel from './components/backup-panel/index.vue'
 import WebdavPanel from './components/webdav-panel/index.vue'
+import KnowledgeBaseIcon from '@/components/icons/knowledge-base-icon.vue'
 import { useSidebar } from '@/hooks/use-sidebar'
 import { useApiModelWizard } from './hooks/use-api-model-wizard'
 
@@ -84,9 +87,15 @@ const panelComponents = {
   'model-list': markRaw(ApiModelPanel),
   'default-model': markRaw(ApiModelPanel),
   appearance: markRaw(AppearancePanel),
+  knowledge: markRaw(KnowledgePanel),
   mcp: markRaw(McpPanel),
   backup: markRaw(BackupPanel),
   webdav: markRaw(WebdavPanel)
+}
+
+// SVG 图标组件映射
+const iconComponents = {
+  'knowledge-base-icon': markRaw(KnowledgeBaseIcon)
 }
 
 const activeMenu = ref('user-profile')

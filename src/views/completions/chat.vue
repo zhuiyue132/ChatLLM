@@ -117,6 +117,7 @@
           v-model:model="currentModelValue"
           v-model:mcp-session-enabled="mcpSessionEnabled"
           v-model:mcp-server-ids="mcpSelectedServerIds"
+          v-model:kb-ids="selectedKbIds"
           :model-list="models"
           :mcp-server-list="availableMcpServers"
           :mcp-global-enabled="mcpSettingsStore.globalEnabled"
@@ -130,6 +131,8 @@
           :min-rows="2"
           :show-image-btn="isCurrentModelSupportsVision"
           :show-mcp-selector="isCurrentModelSupportsToolCall"
+          :show-kb-selector="true"
+          :kb-list="availableKnowledgeBases"
           :scroll-container="chatHistoryContainerRef"
           show-model-select
           show-mention-model
@@ -149,6 +152,7 @@ import { PLACEHOLDER_MAP } from '@/config/agent-placeholder'
 import { useApiSettingsStore } from '@/stores/api-settings'
 import { useMcpSettingsStore } from '@/stores/mcp-settings'
 import { useChatRoomsStore } from '@/stores/chat-rooms'
+import { useKnowledgeBaseStore } from '@/stores/knowledge-base'
 import { useRoute, useRouter } from 'vue-router'
 import { useElementSize } from '@vueuse/core'
 import { useCompletions } from './hooks/use-completions'
@@ -167,6 +171,7 @@ const router = useRouter()
 const apiSettingsStore = useApiSettingsStore()
 const mcpSettingsStore = useMcpSettingsStore()
 const chatRoomsStore = useChatRoomsStore()
+const kbStore = useKnowledgeBaseStore()
 
 const roomId = computed(() => route.query.roomId)
 const senderRef = ref(null)
@@ -247,6 +252,20 @@ const mcpSelectedServerIds = computed({
 
 const availableMcpServers = computed(() => {
   return mcpSettingsStore.servers.filter(server => server.enabled)
+})
+
+const selectedKbIds = computed({
+  get: () => {
+    return Array.isArray(currentRoom.value?.kbIds) ? currentRoom.value.kbIds : []
+  },
+  set: value => {
+    if (!currentRoom.value?.id) return
+    chatRoomsStore.updateRoomKbIds(currentRoom.value.id, value)
+  }
+})
+
+const availableKnowledgeBases = computed(() => {
+  return kbStore.enabledKnowledgeBases
 })
 
 const {

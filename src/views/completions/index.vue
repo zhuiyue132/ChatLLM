@@ -15,6 +15,7 @@
           v-model:model="currentModel"
           v-model:mcp-session-enabled="sessionMcpEnabled"
           v-model:mcp-server-ids="selectedMcpServerIds"
+          v-model:kb-ids="selectedKbIds"
           :model-list="modelList"
           :mcp-server-list="availableMcpServers"
           :mcp-global-enabled="mcpSettingsStore.globalEnabled"
@@ -25,6 +26,8 @@
           :allow-empty-message="false"
           :show-image-btn="isCurrentModelSupportsVision"
           :show-mcp-selector="isCurrentModelSupportsToolCall"
+          :show-kb-selector="true"
+          :kb-list="availableKnowledgeBases"
           :placeholder="PLACEHOLDER_MAP.DEFAULT"
           show-model-select
           show-mention-model
@@ -49,9 +52,11 @@ const {
   inputMessage,
   sessionMcpEnabled,
   selectedMcpServerIds,
+  selectedKbIds,
   currentModel,
   modelList,
   availableMcpServers,
+  availableKnowledgeBases,
   isCurrentModelSupportsVision,
   isCurrentModelSupportsToolCall,
   handleMessageSubmit,

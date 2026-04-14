@@ -19,6 +19,8 @@ import { visualizer } from 'rollup-plugin-visualizer'
 import { BASE_URL } from './src/config/app'
 import ElementPlus from 'unplugin-element-plus/vite'
 import { createDynamicHeaderProxyPlugin } from './vite.dynamic-proxy'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 
 const MCP_DYNAMIC_PROXY_PATH = '/mcp-proxy'
 const MCP_TARGET_HEADER = 'x-mcp-target'
@@ -33,6 +35,9 @@ export default defineConfig(({ mode }) => {
     envDir: './env',
 
     plugins: [
+      // WASM 支持（edgevec 向量数据库）
+      wasm(),
+      topLevelAwait(),
       // 生产环境开启浏览器兼容性处理
       ...(isProd ? [legacy({ targets: ['defaults'] })] : []),
       vue(),
@@ -103,6 +108,11 @@ export default defineConfig(({ mode }) => {
         '@img': fileURLToPath(new URL('./src/assets/images', import.meta.url))
       }
     },
+    // edgevec 包含 .wasm 文件，必须排除在 esbuild 预构建之外
+    // 否则 esbuild 无法处理 .wasm 导入，vite-plugin-wasm 也无法正确介入
+    optimizeDeps: {
+      exclude: ['edgevec']
+    },
     server: {
       port: 3002,
       open: false,
@@ -156,6 +166,10 @@ export default defineConfig(({ mode }) => {
               // 工具库
               if (['lodash-es', 'dayjs'].some(pkg => id.includes(`/node_modules/${pkg}/`))) {
                 return 'vendor-utils'
+              }
+              // edgevec 向量数据库（WASM）
+              if (id.includes('edgevec')) {
+                return 'vendor-edgevec'
               }
               // 其他依赖单独分包
               return id.toString().split('node_modules/')[1].split('/')[0].toString()

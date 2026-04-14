@@ -86,6 +86,13 @@
               :server-list="mcpServerList"
               :disabled="loading"
             />
+            <!-- 知识库选择 -->
+            <KbSelector
+              v-if="showKbSelector && kbList.length > 0"
+              v-model="selectedKbIds"
+              :kb-list="kbList"
+              :disabled="loading"
+            />
             <!-- 没有模型时显示配置按钮 -->
             <el-button
               v-if="showModelSelect && modelList.length === 0"
@@ -148,6 +155,7 @@ import { showMessage } from '@/hooks'
 import FloatButton from '../float-button/index.vue'
 import ModelSelector from './components/model-select.vue'
 import McpSelector from './components/mcp-selector.vue'
+import KbSelector from './components/kb-selector.vue'
 import ModelIcon from '@/components/model-icon/index.vue'
 import FileItem from './components/file-item.vue'
 import ImageUploadButton from './components/image-upload.vue'
@@ -384,6 +392,23 @@ const props = defineProps({
   mcpServerIds: {
     type: Array,
     default: () => []
+  },
+
+  // ========== 知识库相关 ==========
+  // 是否显示知识库选择器
+  showKbSelector: {
+    type: Boolean,
+    default: false
+  },
+  // 知识库列表
+  kbList: {
+    type: Array,
+    default: () => []
+  },
+  // 选中的知识库 ID 列表
+  kbIds: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -404,6 +429,7 @@ const emits = defineEmits([
   'update:customTemplateId',
   'update:mcpSessionEnabled',
   'update:mcpServerIds',
+  'update:kbIds',
   'template-setting-confirmed'
 ])
 
@@ -511,6 +537,9 @@ const mcpSessionEnabled = useVModel(props, 'mcpSessionEnabled', emits)
 // 会话级 MCP 服务列表
 const selectedMcpServerIds = useVModel(props, 'mcpServerIds', emits)
 
+// 选中的知识库 ID 列表
+const selectedKbIds = useVModel(props, 'kbIds', emits)
+
 const shouldShowMcpSelector = computed(() => {
   return props.showMcpSelector && props.mcpSupported
 })
@@ -547,7 +576,8 @@ const footerEnable = computed(() => {
     props.showPriceBtn ||
     props.showSelectionBtn ||
     props.showTemplateSettingBtn ||
-    shouldShowMcpSelector.value
+    shouldShowMcpSelector.value ||
+    props.showKbSelector
   )
 })
 
@@ -666,6 +696,7 @@ const handleSendClick = (extraData = {}) => {
       mcpServerIds: canUseMcpForCurrentMessage.value
         ? [...(Array.isArray(selectedMcpServerIds.value) ? selectedMcpServerIds.value : [])]
         : [],
+      kbIds: [...(Array.isArray(selectedKbIds.value) ? selectedKbIds.value : [])],
       priceRangeTemplateId: priceRangeTemplateId.value,
       selectionTemplateId: selectionTemplateId.value,
       customTemplateId: customTemplateId.value,
@@ -684,6 +715,7 @@ const handleSendClick = (extraData = {}) => {
       mcpServerIds: canUseMcpForCurrentMessage.value
         ? [...(Array.isArray(selectedMcpServerIds.value) ? selectedMcpServerIds.value : [])]
         : [],
+      kbIds: [...(Array.isArray(selectedKbIds.value) ? selectedKbIds.value : [])],
       priceRangeTemplateId: priceRangeTemplateId.value,
       selectionTemplateId: selectionTemplateId.value,
       customTemplateId: customTemplateId.value,
